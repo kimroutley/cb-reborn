@@ -47,6 +47,9 @@ class PlayerGameState {
   final String? activeEffect;
   final Map<String, dynamic>? activeEffectPayload;
 
+  // New: Host info
+  final String? hostName;
+
   const PlayerGameState({
     this.phase = 'lobby',
     this.dayCount = 0,
@@ -74,6 +77,7 @@ class PlayerGameState {
     this.myPlayerSnapshot,
     this.activeEffect,
     this.activeEffectPayload,
+    this.hostName,
   });
 
   bool get isLobby => phase == 'lobby';
@@ -101,6 +105,13 @@ class PlayerGameState {
     bool? isConnected,
     dynamic joinError = _undefined,
     bool? joinAccepted,
+    String? claimError,
+    String? kickedMessage,
+    String? myPlayerId,
+    PlayerSnapshot? myPlayerSnapshot,
+    String? activeEffect,
+    Map<String, dynamic>? activeEffectPayload,
+    String? hostName,
     dynamic claimError = _undefined,
     dynamic kickedMessage = _undefined,
     dynamic myPlayerId = _undefined,
@@ -131,6 +142,14 @@ class PlayerGameState {
       isConnected: isConnected ?? this.isConnected,
       joinError: joinError == _undefined ? this.joinError : joinError as String?,
       joinAccepted: joinAccepted ?? this.joinAccepted,
+      claimError: claimError ?? this.claimError,
+      kickedMessage: kickedMessage ?? this.kickedMessage,
+      myPlayerId: myPlayerId ?? this.myPlayerId,
+      myPlayerSnapshot: myPlayerSnapshot ?? this.myPlayerSnapshot,
+      activeEffect:
+          activeEffect, // Note: Always replace with new effect, not merge
+      activeEffectPayload: activeEffectPayload,
+      hostName: hostName ?? this.hostName,
       claimError:
           claimError == _undefined ? this.claimError : claimError as String?,
       kickedMessage: kickedMessage == _undefined
@@ -614,6 +633,7 @@ class PlayerBridge extends Notifier<PlayerGameState>
       claimError: state.claimError,
       myPlayerId: updatedMyPlayerId, // Set updated ID
       myPlayerSnapshot: updatedMyPlayerSnapshot, // Set updated snapshot
+      hostName: payload['hostName'] as String?,
     );
 
     state = nextState;

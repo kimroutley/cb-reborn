@@ -248,6 +248,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   CBTextField(
                     controller: _joinCodeController,
                     hintText: 'XXXX-XXXX',
+                    textStyle: CBTypography.code.copyWith(fontSize: 20, letterSpacing: 4),
                     textStyle: CBTypography.code
                         .copyWith(fontSize: 20, letterSpacing: 4),
                     textAlign: TextAlign.center,
