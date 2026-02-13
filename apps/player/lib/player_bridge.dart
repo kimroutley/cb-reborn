@@ -11,6 +11,8 @@ import 'player_stats.dart';
 /// Constant for the 'day_vote' step ID.
 const String kDayVoteStepId = 'day_vote';
 
+const Object _undefined = Object();
+
 /// Lightweight local state mirrored from Host via WebSocket.
 ///
 /// The player app does NOT run its own GameProvider — it receives
@@ -82,10 +84,10 @@ class PlayerGameState {
     String? phase,
     int? dayCount,
     List<PlayerSnapshot>? players,
-    StepSnapshot? currentStep,
+    dynamic currentStep = _undefined,
     List<BulletinEntry>? bulletinBoard,
     bool? eyesOpen,
-    String? winner,
+    dynamic winner = _undefined,
     List<String>? endGameReport,
     Map<String, int>? voteTally,
     Map<String, String>? votesByVoter,
@@ -97,23 +99,25 @@ class PlayerGameState {
     Map<String, String>? deadPoolBets,
     List<String>? ghostChatMessages,
     bool? isConnected,
-    String? joinError,
+    dynamic joinError = _undefined,
     bool? joinAccepted,
-    String? claimError,
-    String? kickedMessage,
-    String? myPlayerId,
-    PlayerSnapshot? myPlayerSnapshot,
-    String? activeEffect,
-    Map<String, dynamic>? activeEffectPayload,
+    dynamic claimError = _undefined,
+    dynamic kickedMessage = _undefined,
+    dynamic myPlayerId = _undefined,
+    dynamic myPlayerSnapshot = _undefined,
+    dynamic activeEffect = _undefined,
+    dynamic activeEffectPayload = _undefined,
   }) {
     return PlayerGameState(
       phase: phase ?? this.phase,
       dayCount: dayCount ?? this.dayCount,
       players: players ?? this.players,
-      currentStep: currentStep ?? this.currentStep,
+      currentStep: currentStep == _undefined
+          ? this.currentStep
+          : currentStep as StepSnapshot?,
       bulletinBoard: bulletinBoard ?? this.bulletinBoard,
       eyesOpen: eyesOpen ?? this.eyesOpen,
-      winner: winner ?? this.winner,
+      winner: winner == _undefined ? this.winner : winner as String?,
       endGameReport: endGameReport ?? this.endGameReport,
       voteTally: voteTally ?? this.voteTally,
       votesByVoter: votesByVoter ?? this.votesByVoter,
@@ -125,15 +129,24 @@ class PlayerGameState {
       deadPoolBets: deadPoolBets ?? this.deadPoolBets,
       ghostChatMessages: ghostChatMessages ?? this.ghostChatMessages,
       isConnected: isConnected ?? this.isConnected,
-      joinError: joinError ?? this.joinError,
+      joinError: joinError == _undefined ? this.joinError : joinError as String?,
       joinAccepted: joinAccepted ?? this.joinAccepted,
-      claimError: claimError ?? this.claimError,
-      kickedMessage: kickedMessage ?? this.kickedMessage,
-      myPlayerId: myPlayerId ?? this.myPlayerId,
-      myPlayerSnapshot: myPlayerSnapshot ?? this.myPlayerSnapshot,
-      activeEffect:
-          activeEffect, // Note: Always replace with new effect, not merge
-      activeEffectPayload: activeEffectPayload,
+      claimError:
+          claimError == _undefined ? this.claimError : claimError as String?,
+      kickedMessage: kickedMessage == _undefined
+          ? this.kickedMessage
+          : kickedMessage as String?,
+      myPlayerId:
+          myPlayerId == _undefined ? this.myPlayerId : myPlayerId as String?,
+      myPlayerSnapshot: myPlayerSnapshot == _undefined
+          ? this.myPlayerSnapshot
+          : myPlayerSnapshot as PlayerSnapshot?,
+      activeEffect: activeEffect == _undefined
+          ? this.activeEffect
+          : activeEffect as String?,
+      activeEffectPayload: activeEffectPayload == _undefined
+          ? this.activeEffectPayload
+          : activeEffectPayload as Map<String, dynamic>?,
     );
   }
 }
@@ -280,6 +293,13 @@ class StepSnapshot {
 /// ```
 class PlayerBridge extends Notifier<PlayerGameState>
     implements PlayerBridgeActions {
+  /// Testing injection point for PlayerClient
+  @visibleForTesting
+  static PlayerClient Function({
+    void Function(GameMessage)? onMessage,
+    void Function(PlayerConnectionState)? onConnectionChanged,
+  })? mockClientFactory;
+
   PlayerClient? _client;
   PlayerConnectionState _connectionState = PlayerConnectionState.disconnected;
 
@@ -301,30 +321,40 @@ class PlayerBridge extends Notifier<PlayerGameState>
       _client = null;
     }
 
-    _client = PlayerClient(
-      onMessage: _handleMessage,
-      onConnectionChanged: (newState) {
-        final prevState = _connectionState;
-        _connectionState = newState;
-        debugPrint('[PlayerBridge] Connection: ${newState.name}');
+    final onMessage = _handleMessage;
+    final onConnectionChanged = (PlayerConnectionState newState) {
+      final prevState = _connectionState;
+      _connectionState = newState;
+      debugPrint('[PlayerBridge] Connection: ${newState.name}');
 
-        // On reconnection: send reconnect with claimed IDs to restore state
-        if (newState == PlayerConnectionState.connected &&
-            prevState == PlayerConnectionState.reconnecting &&
-            state.myPlayerId != null) {
-          debugPrint(
-              '[PlayerBridge] Reconnected — sending player_reconnect for ${state.myPlayerId}');
-          _client?.send(GameMessage.playerReconnect(
-            claimedPlayerIds: [state.myPlayerId!],
-          ));
-        }
+      // On reconnection: send reconnect with claimed IDs to restore state
+      if (newState == PlayerConnectionState.connected &&
+          prevState == PlayerConnectionState.reconnecting &&
+          state.myPlayerId != null) {
+        debugPrint(
+            '[PlayerBridge] Reconnected — sending player_reconnect for ${state.myPlayerId}');
+        _client?.send(GameMessage.playerReconnect(
+          claimedPlayerIds: [state.myPlayerId!],
+        ));
+      }
 
-        // Preserve join/claim state across reconnection
-        state = state.copyWith(
-          isConnected: newState == PlayerConnectionState.connected,
-        );
-      },
-    );
+      // Preserve join/claim state across reconnection
+      state = state.copyWith(
+        isConnected: newState == PlayerConnectionState.connected,
+      );
+    };
+
+    if (mockClientFactory != null) {
+      _client = mockClientFactory!(
+        onMessage: onMessage,
+        onConnectionChanged: onConnectionChanged,
+      );
+    } else {
+      _client = PlayerClient(
+        onMessage: onMessage,
+        onConnectionChanged: onConnectionChanged,
+      );
+    }
 
     try {
       await _client!.connect(url);
