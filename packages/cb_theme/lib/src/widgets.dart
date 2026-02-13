@@ -558,6 +558,7 @@ class CBTextField extends StatelessWidget {
     );
     return TextField(
       controller: controller,
+      textAlign: textAlign,
       autofocus: autofocus,
       maxLines: maxLines,
       minLines: minLines,
