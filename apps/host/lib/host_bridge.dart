@@ -194,6 +194,7 @@ class HostBridge {
         claimedPlayerIds: session.claimedPlayerIds,
         gameHistory: game.gameHistory.isNotEmpty ? game.gameHistory : null,
         deadPoolBets: game.deadPoolBets.isNotEmpty ? game.deadPoolBets : null,
+        hostName: session.hostName,
       );
 
       _server.sendTo(client, msg);

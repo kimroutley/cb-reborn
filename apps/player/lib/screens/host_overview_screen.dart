@@ -48,7 +48,15 @@ class HostOverviewScreen extends ConsumerWidget {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurface.withValues(alpha: 0.75)),
                 ),
-                // TODO: Add more host-specific info like host name if available in PlayerGameState
+                if (gameState.hostName != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      'Host: ${gameState.hostName}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurface.withValues(alpha: 0.75)),
+                    ),
+                  ),
               ],
             ),
           ),

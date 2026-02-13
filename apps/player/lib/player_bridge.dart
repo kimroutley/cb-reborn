@@ -45,6 +45,9 @@ class PlayerGameState {
   final String? activeEffect;
   final Map<String, dynamic>? activeEffectPayload;
 
+  // New: Host info
+  final String? hostName;
+
   const PlayerGameState({
     this.phase = 'lobby',
     this.dayCount = 0,
@@ -72,6 +75,7 @@ class PlayerGameState {
     this.myPlayerSnapshot,
     this.activeEffect,
     this.activeEffectPayload,
+    this.hostName,
   });
 
   bool get isLobby => phase == 'lobby';
@@ -105,6 +109,7 @@ class PlayerGameState {
     PlayerSnapshot? myPlayerSnapshot,
     String? activeEffect,
     Map<String, dynamic>? activeEffectPayload,
+    String? hostName,
   }) {
     return PlayerGameState(
       phase: phase ?? this.phase,
@@ -134,6 +139,7 @@ class PlayerGameState {
       activeEffect:
           activeEffect, // Note: Always replace with new effect, not merge
       activeEffectPayload: activeEffectPayload,
+      hostName: hostName ?? this.hostName,
     );
   }
 }
@@ -584,6 +590,7 @@ class PlayerBridge extends Notifier<PlayerGameState>
       claimError: state.claimError,
       myPlayerId: updatedMyPlayerId, // Set updated ID
       myPlayerSnapshot: updatedMyPlayerSnapshot, // Set updated snapshot
+      hostName: payload['hostName'] as String?,
     );
 
     state = nextState;

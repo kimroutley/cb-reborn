@@ -238,7 +238,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     controller: _joinCodeController,
                     hintText: 'XXXX-XXXX',
                     textStyle: CBTypography.code.copyWith(fontSize: 20, letterSpacing: 4),
-                    textAlign: TextAlign.center,
                     decoration: const InputDecoration(
                       labelText: 'ACCESS CODE',
                       prefixIcon: Icon(Icons.key),
