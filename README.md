@@ -14,11 +14,11 @@ The game is designed to feel like you're inside a dark, upscale nightclub with n
 ### Key Features
 
 - **🎭 30+ Unique Roles** - From the **Bouncer** and **Medic** to the chaotic **Messy Bitch** and **Drama Queen**.
+- **🤖 Autonomous Bots** - Host can add bot players to fill the roster. Bots play autonomously (voting, using abilities) via the "Simulate Bots" command, allowing for single-device testing and gameplay simulation.
 - **💬 Chat Feed Interface** - Game events, narration, and actions are presented as a live, interactive chat stream.
 - **⚡ God Mode** - The Host has full control with a **"Nerve Center" Dashboard**: **Sin Bin** (temporarily remove disruptive players), **Shadow Ban** (allow speech while hiding messages), and **Mute** (silence players instantly).
 - **✨ Prismatic Glass UI** - Optional "oil slick" shimmer overlay for glass tiles (`CBGlassTile.isPrismatic`).
-- **👻 Ghost Lounge** *(roadmap)* - Eliminated players enter a spectator area with a "Dead Pool" betting system.
-- **📱 Biometric ID** *(roadmap)* - "Hold to Reveal" role identity header for secure, dramatic role checking.
+- **📱 Biometric ID Cards** - Immersive role reveal cards and "Club Bible" operatives list featuring "Hold to Reveal" style secure identity headers.
 - **☁️ Dual-Mode Sync** - Play locally via WebSocket (low latency) or online via Firebase (cloud sync).
 - **📊 Spicy Recap** - Dual-track game reports: detailed truths for the Host, teasers for the players.
 - **🌃 Games Night Stats** - Track sessions across multiple games with a "Spotify Wrapped" style recap.
@@ -78,34 +78,6 @@ Both Host and Player now use **Firebase Email Link (passwordless)** sign-in.
 
 If these package/bundle IDs differ in your Firebase projects, update the auth gate settings before release.
 
-### Firebase Auth Preflight (Quick Check)
-
-Before testing sign-in, confirm all 5 are true:
-
-- [ ] **Email/Password** provider is enabled.
-- [ ] **Email link (passwordless)** provider is enabled.
-- [ ] `cb-reborn.web.app` is listed in Authentication authorized domains.
-- [ ] Continue URL matches implementation (`/email-link-signin?app=host|player`).
-- [ ] Host/Player Android+iOS IDs in code match Firebase app registrations.
-
-### Firebase Email Link Troubleshooting
-
-- `auth/invalid-action-code`
-   - Cause: expired/consumed/malformed email link.
-   - Fix: request a fresh sign-in link and open the newest email only.
-- `auth/unauthorized-continue-uri`
-   - Cause: continue URL domain is not authorized in Firebase Auth.
-   - Fix: add `cb-reborn.web.app` (or your custom domain) in Authentication authorized domains.
-- `auth/invalid-email` or `auth/missing-email`
-   - Cause: callback is opened without matching pending email context.
-   - Fix: complete link sign-in on the same device/browser used to request the link, or re-enter the same email and retry.
-- `auth/operation-not-allowed`
-   - Cause: Email Link provider not enabled.
-   - Fix: enable both **Email/Password** and **Email link (passwordless)** in Firebase Console.
-- Link opens app but does not sign in
-   - Cause: bundle/package IDs in `ActionCodeSettings` do not match your Firebase app registration.
-   - Fix: align Host/Player Android package + iOS bundle IDs with Firebase project app settings.
-
 ### Installation
 
 1. **Clone the repository**
@@ -152,18 +124,25 @@ Before testing sign-in, confirm all 5 are true:
 
 5. **Launch the apps**
 
+   **Gemini API key (required for AI narration):**
+
+   ```powershell
+   # Current key for this environment
+   $env:GEMINI_API_KEY="<YOUR_GEMINI_API_KEY>"
+   ```
+
    **Player App (Mobile/Web):**
 
    ```bash
    cd apps/player
-   flutter run
+   flutter run --dart-define=GEMINI_API_KEY=$env:GEMINI_API_KEY
    ```
 
    **Host App (Desktop/Tablet):**
 
    ```bash
    cd apps/host
-   flutter run -d <device-id>
+   flutter run -d <device-id> --dart-define=GEMINI_API_KEY=$env:GEMINI_API_KEY
    ```
 
 ### Build + Install (Android Host, Windows)
@@ -218,7 +197,7 @@ Notes:
 
 The visual heart of the app. Implements the "Neon Glass" aesthetic using Material 3.
 
-- **Key Components**: `CBMessageBubble`, `CBGlassTile`, `CBPhaseInterrupt`.
+- **Key Components**: `CBMessageBubble`, `CBGlassTile`, `CBPhaseInterrupt`, `CBRoleIDCard`.
 - **Typography**: Roboto Condensed (headers) + Roboto (body/labels) via `CBTypography`.
 - **Colors**: Radiant neon palette (turquoise + pink) via `CBColors`, with role-hue shimmer helpers for role cards and guide surfaces.
 
@@ -226,7 +205,7 @@ The visual heart of the app. Implements the "Neon Glass" aesthetic using Materia
 
 The brain of the operation.
 
-- **GameProvider**: Manages the entire game state, rules, and "God Mode" logic.
+- **GameProvider**: Manages the entire game state, rules, "God Mode" logic, and **Bot Simulation**.
 - **Persistence**: Handles saving/loading games and tracking "Games Night" stats.
 
 ### `cb_comms`
@@ -236,24 +215,23 @@ The nervous system.
 - **GameSessionManager**: Handles heartbeat logic, presence, and action queues.
 - **Bridges**: Abstracts communication strategies (WebSocket vs. Firestore).
 
-## ✅ Feb 12, 2026 Update (for future builds)
+## ✅ Latest Updates (Feb 2026)
 
-- **Host Android splash hang fix:** ensure Host calls `Hive.initFlutter()` before `PersistenceService.init()`.
+- **Autonomous Bots:** Added capability to add bot players in Lobby and simulate their turns in Game Control. Useful for solo testing and filling rosters.
+- **Streamlined Auth & Onboarding:**
+    - **Player App:** "Guest List Check" -> "VIP Pass" flow. Merged connection screen into Home for a seamless "Lobby" feel.
+    - **Host App:** "Biometric Security" -> "Manager License" flow.
+- **Navigation Overhaul:** Host App now uses a robust `NavigationDrawer` with Riverpod state management, eliminating "double scaffold" visual bugs.
+- **Club Bible Polish:** The "Operatives" tab now uses the high-fidelity `CBRoleIDCard` widget for a consistent visual identity.
 - **Prismatic/Shimmer UI:** `CBGlassTile(isPrismatic: true)` enables the animated oil-slick overlay (“The Shimmer”).
-- **Radiant palette default:** `CBColors.neonBlue/neonPink` now alias to the radiant turquoise/pink palette.
-- **Role-hue shimmer exceptions:** role cards and role-guide surfaces now use role-derived shimmer (`roleColorFromHex`, `roleShimmerStops`) instead of forcing pink/turquoise only.
-- **Club Bible parity:** Host guides now mirror Player trading-card style and role detail polish.
-- **Global background + dynamic seed:** all screens default to the shared background asset via `CBPrismScaffold`, and Host/Player startup sample a seed color from that image with safe fallback.
-- **Host build verified:** latest Host Android release APK was built successfully with these updates.
+- **Global background + dynamic seed:** all screens default to the shared background asset via `CBPrismScaffold`.
 
 ## 🔜 TODO (Next Implementation Targets)
 
-- **Ghost Lounge + Dead Pool** (player + host experience)
-- **Biometric/secure role reveal UX**
+- **Ghost Lounge + Dead Pool** (full player + host experience integration)
 - **Multi-slot save system** (beyond single active recovery save)
-- **Navigation audit** (back-stack consistency + drawer parity across screens)
 - **Release signing** (proper keystore + CI build artifacts)
-- **Host parity checklist** (canonical list lives in `AGENT_CONTEXT.md` → “Forward TODO (Host parity)”)
+- **Host parity checklist** (canonical list lives in `AGENT_CONTEXT.md`)
 
 ## 🤝 Contributing
 

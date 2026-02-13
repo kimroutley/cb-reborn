@@ -13,7 +13,8 @@ Player app for Club Blackout Reborn.
 
 ```powershell
 cd apps/player
-flutter run
+$env:GEMINI_API_KEY="<YOUR_GEMINI_API_KEY>"
+flutter run --dart-define=GEMINI_API_KEY=$env:GEMINI_API_KEY
 ```
 
 ## Firebase Auth Setup (Email Link)

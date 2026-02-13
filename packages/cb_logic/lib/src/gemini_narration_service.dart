@@ -23,8 +23,7 @@ class GeminiNarrationService {
     const google = String.fromEnvironment('GOOGLE_API_KEY');
     if (google.isNotEmpty) return google;
 
-    // 2. Baked-in Fallback (Your project key)
-    return 'AIzaSyDKRExW3dwk0AZMJTNBWysp67B_KN84EVM';
+    return '';
   }
 
   Future<String> generateNightNarration({

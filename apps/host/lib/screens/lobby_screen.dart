@@ -111,12 +111,36 @@ class LobbyScreen extends ConsumerWidget {
           const SizedBox(height: 32),
 
           // ── SYSTEM: ROSTER STATUS ──
-          CBSectionHeader(
-            title: gameState.players.isEmpty
-                ? "WAITING FOR PATRONS..."
-                : "ROSTER ACTIVE: ${gameState.players.length} PATRONS",
-            color: theme
-                .colorScheme.tertiary, // Migrated from CBColors.matrixGreen
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: CBSectionHeader(
+                  title: gameState.players.isEmpty
+                      ? "WAITING FOR PATRONS..."
+                      : "ROSTER ACTIVE: ${gameState.players.length} PATRONS",
+                  color: theme.colorScheme.tertiary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {
+                  HapticService.light();
+                  controller.addBot();
+                },
+                tooltip: 'Add Bot Player',
+                icon: Icon(
+                  Icons.smart_toy_rounded,
+                  color: theme.colorScheme.tertiary,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor:
+                      theme.colorScheme.tertiary.withValues(alpha: 0.1),
+                  side: BorderSide(
+                      color: theme.colorScheme.tertiary.withValues(alpha: 0.3)),
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 16),
@@ -159,7 +183,9 @@ class LobbyScreen extends ConsumerWidget {
                 child: CBMessageBubble(
                   variant: CBMessageVariant.narrative,
                   senderName: "SECURITY",
-                  content: "${descriptor.toUpperCase()} HAS ENTERED THE CLUB.",
+                  content: player.isBot
+                      ? "${player.name.toUpperCase()} (BOT) HAS BEEN ACTIVATED."
+                      : "${descriptor.toUpperCase()} HAS ENTERED THE CLUB.",
                   accentColor: theme.colorScheme
                       .tertiary, // Migrated from CBColors.matrixGreen
                   avatar: CBRoleAvatar(
@@ -167,6 +193,7 @@ class LobbyScreen extends ConsumerWidget {
                         .tertiary, // Migrated from CBColors.matrixGreen
                     size: 32,
                     breathing: true,
+                    // assetPath: player.isBot ? 'assets/roles/bot_avatar.png' : null, // Future polish
                   ),
                   actions: [
                     CBCompactPlayerChip(

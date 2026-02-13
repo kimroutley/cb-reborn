@@ -33,27 +33,40 @@ class GameBottomControls extends StatelessWidget {
         step!.actionType == ScriptActionType.multiSelect ||
         step!.actionType == ScriptActionType.binaryChoice;
 
+    final theme = Theme.of(context);
+
     return CBPanel(
       margin: const EdgeInsets.all(12),
-      borderColor: CBColors.primary,
+      borderColor: theme.colorScheme.primary,
       child: Row(
         children: [
           if (canSimulate)
             Expanded(
               child: CBGhostButton(
-                label: 'SIMULATE PLAYERS',
-                color: CBColors.matrixGreen,
+                label: 'SIMULATE BOTS',
+                color: theme.colorScheme.tertiary,
                 onPressed: () {
-                  final count = controller.simulatePlayersForCurrentStep();
-                  showThemedSnackBar(
-                    context,
-                    count > 0
-                        ? 'Simulated $count player action${count == 1 ? '' : 's'}.'
-                        : 'No simulated input available for this step.',
-                    accentColor:
-                        count > 0 ? CBColors.matrixGreen : CBColors.warning,
-                    duration: const Duration(seconds: 2),
-                  );
+                  final count = controller.simulateBotTurns();
+
+                  // If no bots acted, try falling back to full simulation if no real players exist (Legacy Sandbox support)
+                  // Or just inform user.
+                  if (count == 0) {
+                     // Check if we should fallback to legacy simulation (e.g. if I am testing alone without bots added explicitly)
+                     // For now, let's stick to the requested bot logic.
+                     showThemedSnackBar(
+                      context,
+                      'No active bots found for this step.',
+                      accentColor: theme.colorScheme.error,
+                      duration: const Duration(seconds: 2),
+                    );
+                  } else {
+                    showThemedSnackBar(
+                      context,
+                      'Simulated $count bot action${count == 1 ? '' : 's'}.',
+                      accentColor: theme.colorScheme.tertiary,
+                      duration: const Duration(seconds: 2),
+                    );
+                  }
                 },
               ),
             ),

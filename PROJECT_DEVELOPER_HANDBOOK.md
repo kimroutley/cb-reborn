@@ -1,6 +1,6 @@
 # Club Blackout Reborn: Developer Handbook
 
-> **Last Updated:** February 13, 2026 (Comprehensive AI, Auth & UX Parity Update)
+> **Last Updated:** February 13, 2026 (Bot Simulation, Auth Streamline & UX Refactor)
 > **Project Location:** `C:\Club Blackout Reborn\`
 
 ---
@@ -12,10 +12,10 @@
 Club Blackout is a **social deduction party game** set in a neon-drenched nightclub. It features a high-utility **Host App** (Command Center) and a high-fidelity **Player App** (Companion).
 
 **Core Gameplay Loop:**
-1. **Lobby** — Dynamic join via IP/QR or Cloud Code.
+1. **Lobby** — Dynamic join via IP/QR or Cloud Code. **Bot Support**: Hosts can add automated bots to fill the roster.
 2. **Setup** — Lore-driven role assignment with immersive flicker effects.
 3. **Night** — Synced cinematic narration. Host triggers global effects (Bass Drops, Glitches).
-4. **Day** — Casualty reports and social deduction.
+4. **Day** — Casualty reports and social deduction. **Bot Simulation**: Bots can autonomously vote and perform roles via the Host's "Simulate Bots" command.
 5. **Resolution** — Death triggers and win condition checks.
 
 ### Alliances & Lore (Strict Enforcement)
@@ -25,7 +25,7 @@ Club Blackout is a **social deduction party game** set in a neon-drenched nightc
 
 ### The Vibe: "Radiant Neon Nightclub"
 - **Dark-First**: Deep blacks (`voidBlack`) providing high contrast for neons.
-- **Glassmorphism**: 10.0 sigma blur, subtle borders, and animated "Oil Slick" shimmer.
+- **Glassmorphism**: 10.0 sigma blur, subtle borders, and animated "Oil Slick" shimmer (`CBGlassTile`).
 - **Synced Immersion**: Haptics, sounds, and visual effects are synchronized between Host and Player devices via the Script Engine.
 
 ---
@@ -49,10 +49,10 @@ Club Blackout is a **social deduction party game** set in a neon-drenched nightc
 - **Zero-Config**: API Key is baked into the logic for immediate out-of-the-box functionality.
 - **Live Preview**: Hosts can "Preview Voice" directly in settings to test personality styles.
 
-### Authentication & Identity Gate
+### Authentication & Identity Gate (Updated Flow)
 - **Unified Onboarding**: Both apps follow a cinematic Splash -> Auth -> Moniker Setup flow.
-- **Google Sign-In**: Primary, high-utility "one-tap" authentication.
-- **Email Link (Fallback)**: Encrypted passwordless sign-in for Host Terminals.
+- **Player App**: "Guest List Check" -> "VIP Pass" (Google) -> "Print ID" (Moniker). The Home Screen now serves as the primary Lobby entry point.
+- **Host App**: "Biometric Security" -> "Manager Badge" (Google) -> "Issue License" (Moniker).
 - **The Moniker Gate**: A mandatory Firestore profile check. Users cannot enter the club until a unique moniker is established and linked to their UUID.
 
 ---
@@ -65,6 +65,7 @@ The **CB Visuals** folder defines character colors. UI must derive colors from `
 ### UI Philosophy: "Neon Glass"
 - **High Friction, High Reward**: Use animations (`CBFadeSlide`) and haptics to make every button press feel like interacting with a physical nightclub terminal.
 - **Tertiary Accents**: Use the `tertiary` color scheme for AI and narrative-driven components to separate them from game logic (primary) and system settings (secondary).
+- **ID Cards**: Use `CBRoleIDCard` for consistent, high-fidelity role presentation in both apps (Reveal Screen & Club Bible).
 
 ---
 
@@ -92,10 +93,12 @@ cd ../../apps/host ; dart run build_runner build --delete-conflicting-outputs
 ## 4. Current Status & Roadmap
 
 ### Recent Achievements
+- [x] **Autonomous Bots**: Added bot player logic (`addBot`, `simulateBotTurns`) for solo testing and roster filling.
+- [x] **Streamlined Auth**: Replaced multi-step wizards with direct, immersive "Club Entry" flows.
+- [x] **Navigation Refactor**: Implemented `NavigationDrawer` with Riverpod state in Host App to fix UI layering bugs.
+- [x] **Club Bible Polish**: Updated "Operatives" list to use high-fidelity ID Cards.
 - [x] **Antagonistic AI Overhaul**: 5 selectable pragmatic host personalities.
 - [x] **Unified Auth**: Google Sign-In + Moniker Gate implemented for Host & Player.
-- [x] **Onboarding Polish**: Cinematic splash screens and blurb integration.
-- [x] **Lobby Optimization**: Consolidated network protocols and dynamic roster status.
 
 ### Build Status (Feb 13, 2026)
 | App | Status | Notes |

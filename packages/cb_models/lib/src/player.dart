@@ -20,6 +20,7 @@ abstract class Player with _$Player {
     @Default(1) int lives,
     required Team alliance,
     @Default(false) bool needsSetup,
+    @Default(false) bool isBot, // Added isBot flag
 
     // Host God Mode Controls
     @Default(false) bool isMuted,

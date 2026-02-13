@@ -14,7 +14,7 @@ class HostAuthScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return CBPrismScaffold(
-      title: 'HOST COMMAND',
+      title: '', // No App bar title
       showAppBar: false,
       showBackgroundRadiance: true,
       body: AnimatedSwitcher(
@@ -42,10 +42,10 @@ class HostAuthScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CBBreathingSpinner(),
-              const SizedBox(height: 24),
+              const CBBreathingSpinner(size: 64),
+              const SizedBox(height: 32),
               Text(
-                'VERIFYING BIOMETRICS...',
+                'VERIFYING SECURITY CLEARANCE...',
                 style: CBTypography.labelSmall.copyWith(
                   color: scheme.primary,
                   letterSpacing: 3.0,
@@ -78,209 +78,229 @@ class _AuthSplash extends ConsumerWidget {
     final isSignInLink =
         FirebaseAuth.instance.isSignInWithEmailLink(currentLink);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 64),
-      child: Column(
-        children: [
-          // ── CINEMATIC LOGO ──
-          CBFadeSlide(
-            key: const ValueKey('auth_logo'),
-            beginOffset: const Offset(0, -0.1),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                    color: scheme.primary.withValues(alpha: 0.4), width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: scheme.primary.withValues(alpha: 0.15),
-                    blurRadius: 30,
-                    spreadRadius: 10,
-                  ),
-                ],
-              ),
-              child: Hero(
-                tag: 'auth_icon',
-                child: Icon(
-                  Icons.terminal_rounded,
-                  color: scheme.primary,
-                  size: 80,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 48),
-
-          // ── HYPE / BLURB SECTION ──
-          CBFadeSlide(
-            delay: const Duration(milliseconds: 200),
-            child: Column(
-              children: [
-                Text(
-                  'HOST COMMAND',
-                  style: textTheme.displaySmall?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 8,
-                    shadows: CBColors.textGlow(scheme.primary),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: scheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'ARCHITECT PROTOCOL ACTIVE',
-                    style: textTheme.labelSmall?.copyWith(
-                      color: scheme.secondary,
-                      letterSpacing: 2,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'Welcome, Architect. You are about to orchestrate a night of neon-drenched deception. Control the pulse of the club, manage the chaos, and ensure the House always wins.',
-                    textAlign: TextAlign.center,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurface.withValues(alpha: 0.7),
-                      height: 1.6,
-                      fontStyle: FontStyle.italic,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 64),
-
-          // ── AUTH PANEL ──
-          CBFadeSlide(
-            delay: const Duration(milliseconds: 400),
-            child: CBGlassTile(
-              title: 'ESTABLISH TERMINAL LINK',
-              accentColor: scheme.primary,
-              isPrismatic: true,
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Identify yourself to assume command.',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurface.withValues(alpha: 0.5),
-                      letterSpacing: 1.0,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Enhanced Google Button
-                  _buildGoogleButton(context, notifier, scheme),
-
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                          child: Divider(
-                              color: scheme.onSurface.withValues(alpha: 0.1))),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'SECURE FALLBACK',
-                          style: textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurface.withValues(alpha: 0.3),
-                            fontSize: 8,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                          child: Divider(
-                              color: scheme.onSurface.withValues(alpha: 0.1))),
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // ── CINEMATIC LOGO ──
+            CBFadeSlide(
+              key: const ValueKey('auth_logo'),
+              beginOffset: const Offset(0, -0.1),
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      scheme.primary.withValues(alpha: 0.1),
+                      scheme.primary.withValues(alpha: 0.0),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  border: Border.all(
+                      color: scheme.primary.withValues(alpha: 0.5), width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: scheme.primary.withValues(alpha: 0.2),
+                      blurRadius: 40,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Hero(
+                  tag: 'auth_icon',
+                  child: Icon(
+                    Icons.terminal_rounded,
+                    color: scheme.primary,
+                    size: 80,
+                  ),
+                ),
+              ),
+            ),
 
-                  // Email Field
-                  CBTextField(
-                    controller: notifier.emailController,
-                    hintText: 'REGISTERED EMAIL',
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.alternate_email_rounded,
-                          size: 18, color: scheme.primary.withValues(alpha: 0.5)),
+            const SizedBox(height: 48),
+
+            // ── HYPE / BLURB SECTION ──
+            CBFadeSlide(
+              delay: const Duration(milliseconds: 200),
+              child: Column(
+                children: [
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [scheme.primary, scheme.tertiary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds),
+                    child: Text(
+                      'CLUB MANAGEMENT',
+                      textAlign: TextAlign.center,
+                      style: textTheme.displayMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 4,
+                        height: 0.9,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  CBPrimaryButton(
-                    label: 'SEND ACCESS LINK',
-                    onPressed: () => notifier.sendSignInLink(),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: scheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(
+                          color: scheme.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      'ARCHITECT PROTOCOL',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: scheme.tertiary,
+                        letterSpacing: 3,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
-
-                  if (isSignInLink) ...[
-                    const SizedBox(height: 12),
-                    CBGhostButton(
-                      label: 'COMPLETE OPEN LINK',
-                      color: scheme.tertiary,
-                      onPressed: () => notifier.completeSignInFromCurrentLink(),
-                    ),
-                  ],
-
-                  if (errorMessage != null) ...[
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: scheme.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border:
-                            Border.all(color: scheme.error.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.gpp_bad_rounded,
-                              color: scheme.error, size: 20),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'ACCESS DENIED: ${errorMessage!.toUpperCase()}',
-                              style: textTheme.labelSmall?.copyWith(
-                                color: scheme.error,
-                                fontWeight: FontWeight.bold,
-                                height: 1.2,
-                              ),
-                            ),
-                          ),
-                        ],
+                  const SizedBox(height: 32),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'You run this town. Control the music, the lights, and the fate of everyone on the floor.\n\nKeep the party alive... or shut it down.',
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.8),
+                        height: 1.6,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
-          ),
 
-          const SizedBox(height: 64),
-          Text(
-            'TERMINAL v4.0.8 - ENCRYPTED VIA BLACKOUT-NET',
-            style: textTheme.bodySmall?.copyWith(
-              color: scheme.onSurface.withValues(alpha: 0.15),
-              fontSize: 9,
-              letterSpacing: 3,
-              fontWeight: FontWeight.bold,
+            const SizedBox(height: 64),
+
+            // ── AUTH PANEL ──
+            CBFadeSlide(
+              delay: const Duration(milliseconds: 400),
+              child: CBGlassTile(
+                title: 'BIOMETRIC SECURITY',
+                accentColor: scheme.primary,
+                isPrismatic: true,
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Manager clearance required.',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Enhanced Google Button
+                    _buildGoogleButton(context, notifier, scheme),
+
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: Divider(
+                                color:
+                                    scheme.onSurface.withValues(alpha: 0.1))),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'MANUAL OVERRIDE',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurface.withValues(alpha: 0.4),
+                              fontSize: 10,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                            child: Divider(
+                                color:
+                                    scheme.onSurface.withValues(alpha: 0.1))),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Email Field
+                    CBTextField(
+                      controller: notifier.emailController,
+                      hintText: 'REGISTERED EMAIL',
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.alternate_email_rounded,
+                            size: 20,
+                            color: scheme.primary.withValues(alpha: 0.5)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    CBPrimaryButton(
+                      label: 'SEND ACCESS LINK',
+                      onPressed: () => notifier.sendSignInLink(),
+                    ),
+
+                    if (isSignInLink) ...[
+                      const SizedBox(height: 12),
+                      CBGhostButton(
+                        label: 'COMPLETE OPEN LINK',
+                        color: scheme.tertiary,
+                        onPressed: () =>
+                            notifier.completeSignInFromCurrentLink(),
+                      ),
+                    ],
+
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: scheme.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: scheme.error.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.gpp_bad_rounded,
+                                color: scheme.error, size: 24),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                'ACCESS DENIED: ${errorMessage!.toUpperCase()}',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: scheme.error,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 48),
+            Text(
+              'ENCRYPTED VIA BLACKOUT-NET',
+              style: textTheme.labelSmall?.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.2),
+                fontSize: 10,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -292,17 +312,18 @@ class _AuthSplash extends ConsumerWidget {
         HapticService.heavy();
         notifier.signInWithGoogle();
       },
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest.withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: scheme.primary.withValues(alpha: 0.4)),
+          color: scheme.surface.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: scheme.primary.withValues(alpha: 0.5)),
           boxShadow: [
             BoxShadow(
               color: scheme.primary.withValues(alpha: 0.1),
               blurRadius: 12,
+              spreadRadius: 2,
             ),
           ],
         ),
@@ -311,18 +332,18 @@ class _AuthSplash extends ConsumerWidget {
           children: [
             Image.network(
               'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
-              height: 22,
+              height: 24,
               errorBuilder: (context, error, stackTrace) => Icon(
                   Icons.account_circle_outlined,
                   color: scheme.primary,
-                  size: 22),
+                  size: 24),
             ),
             const SizedBox(width: 16),
             Text(
-              'SYNC VIA GOOGLE',
+              'SCAN MANAGER BADGE (GOOGLE)',
               style: CBTypography.bodyBold.copyWith(
-                letterSpacing: 2.0,
-                fontSize: 13,
+                letterSpacing: 1.5,
+                fontSize: 14,
                 color: scheme.onSurface,
               ),
             ),
@@ -349,12 +370,18 @@ class _LinkSentMessage extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: scheme.tertiary.withValues(alpha: 0.1),
                 border: Border.all(
                     color: scheme.tertiary.withValues(alpha: 0.5), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: scheme.tertiary.withValues(alpha: 0.2),
+                    blurRadius: 30,
+                  ),
+                ],
               ),
               child: Icon(Icons.mark_email_read_rounded,
                   color: scheme.tertiary, size: 64),
@@ -373,7 +400,7 @@ class _LinkSentMessage extends ConsumerWidget {
               'Check your encrypted inbox. Opening the link will grant you full terminal access.',
               textAlign: TextAlign.center,
               style: textTheme.bodyLarge?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.7),
+                color: scheme.onSurface.withValues(alpha: 0.8),
                 height: 1.5,
               ),
             ),
@@ -406,12 +433,12 @@ class _ProfileSetupForm extends ConsumerWidget {
           children: [
             Hero(
               tag: 'auth_icon',
-              child:
-                  Icon(Icons.badge_rounded, color: scheme.secondary, size: 80),
+              child: Icon(Icons.badge_rounded,
+                  color: scheme.secondary, size: 100),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 48),
             Text(
-              'IDENTITY REGISTRATION',
+              'ISSUE MANAGER LICENSE',
               textAlign: TextAlign.center,
               style: textTheme.headlineMedium?.copyWith(
                 color: scheme.secondary,
@@ -422,15 +449,15 @@ class _ProfileSetupForm extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Establish your moniker for the House files.',
-              style: textTheme.labelSmall?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.6),
-                letterSpacing: 1.5,
+              'Name on the office door. Make it official.',
+              textAlign: TextAlign.center,
+              style: textTheme.bodyLarge?.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 64),
             CBGlassTile(
-              title: 'REGISTER MONIKER',
+              title: 'MANAGEMENT REGISTRATION',
               accentColor: scheme.secondary,
               isPrismatic: true,
               content: Column(
@@ -438,8 +465,10 @@ class _ProfileSetupForm extends ConsumerWidget {
                 children: [
                   CBTextField(
                     controller: notifier.usernameController,
-                    hintText: 'HOST NICKNAME',
+                    hintText: 'MANAGER NAME',
                     autofocus: true,
+                    textStyle: textTheme.headlineSmall!
+                        .copyWith(color: scheme.onSurface),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.person_pin_rounded,
                           color: scheme.secondary),
@@ -447,7 +476,7 @@ class _ProfileSetupForm extends ConsumerWidget {
                   ),
                   const SizedBox(height: 32),
                   CBPrimaryButton(
-                    label: 'SAVE & ENTER COMMAND',
+                    label: 'UNLOCK OFFICE',
                     backgroundColor: scheme.secondary,
                     onPressed: () {
                       HapticService.heavy();

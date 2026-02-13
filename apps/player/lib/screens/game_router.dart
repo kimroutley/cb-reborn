@@ -17,6 +17,30 @@ class GameRouter extends ConsumerStatefulWidget {
 }
 
 class _GameRouterState extends ConsumerState<GameRouter> {
+
+  @override
+  void initState() {
+    super.initState();
+    // Check initial state after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkInitialState();
+    });
+  }
+
+  void _checkInitialState() {
+    final cloudState = ref.read(cloudPlayerBridgeProvider);
+    if (cloudState.joinAccepted) {
+      _handleNavigation(context, cloudState, true, ref);
+      return;
+    }
+
+    final localState = ref.read(playerBridgeProvider);
+    if (localState.joinAccepted) {
+      _handleNavigation(context, localState, false, ref);
+      return;
+    }
+  }
+
   void _handleNavigation(
       BuildContext context, PlayerGameState gameState, bool isCloud, WidgetRef ref) {
     final PlayerBridgeActions bridge = isCloud

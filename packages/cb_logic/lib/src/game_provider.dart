@@ -7,13 +7,6 @@ import 'session_provider.dart';
 import 'games_night_provider.dart';
 import 'gemini_narration_service.dart';
 import 'scripting/script_builder.dart';
-// Note: In a real app, you'd import the host settings provider here.
-// Since it's in a different app module usually, we might need a way to pass it in
-// or have a shared settings provider. For now, I'll assume it's accessible or
-// I'll add a way to pass personality.
-// Actually, I'll check where hostSettingsProvider is defined. It's in apps/host.
-// Packages shouldn't depend on Apps.
-// I should probably move the settings logic or just allow passing the personality.
 
 part 'game_provider.g.dart';
 
@@ -156,6 +149,7 @@ class Game extends _$Game {
             name: name,
             role: role,
             alliance: role.alliance,
+            isBot: true, // Sandbox players are bots
           ),
         );
       }
@@ -188,7 +182,77 @@ class Game extends _$Game {
     }
   }
 
-  /// Simulate one batch of player inputs for the current step.
+  /// Add a bot player to the game.
+  void addBot() {
+    final botNames = [
+      'Auto-Pilot',
+      'Cyber-Punk',
+      'Synth-Wave',
+      'Neon-Glitch',
+      'Data-Stream',
+      'Bit-Crusher',
+      'Logic-Gate',
+      'Null-Pointer'
+    ];
+
+    // Find a unique name
+    String name = 'Bot';
+    for (final n in botNames) {
+      if (!state.players.any((p) => p.name == n)) {
+        name = n;
+        break;
+      }
+    }
+    if (state.players.any((p) => p.name == name)) {
+      name = _buildUniqueName('Bot');
+    }
+
+    final id =
+        _buildUniquePlayerId('bot_${name.toLowerCase().replaceAll(' ', '_')}');
+
+    final newPlayer = Player(
+      id: id,
+      name: name,
+      isBot: true,
+      role: roleCatalogMap['unassigned'] ?? roleCatalog.first,
+      alliance: Team.unknown,
+    );
+    state = state.copyWith(players: [...state.players, newPlayer]);
+  }
+
+  /// Simulate inputs for bots in the current step.
+  int simulateBotTurns() {
+    final step = state.currentStep;
+    if (step == null) return 0;
+
+    if (step.id == 'day_vote') {
+      return _simulateDayVotesForBots(stepId: step.id);
+    }
+
+    // 1. Check if the current step belongs to a specific player
+    final actorId = _extractActorId(step.id);
+    if (actorId != null) {
+      final actor = state.players.firstWhere(
+        (p) => p.id == actorId,
+        orElse: () => state.players.first,
+      );
+      if (actor.isBot && !state.actionLog.containsKey(step.id)) {
+        return _performRandomStepAction(step);
+      }
+    }
+    // 2. Fallback: Group action (no actor ID in step, check role)
+    else if (step.roleId != null && step.roleId != 'unassigned') {
+       final botsWithRole = state.players.where((p) => p.isBot && p.role.id == step.roleId).toList();
+       if (botsWithRole.isNotEmpty && !state.actionLog.containsKey(step.id)) {
+          // If any bot has this role, we assume the bot(s) can act for the group
+          return _performRandomStepAction(step);
+       }
+    }
+
+    return 0;
+  }
+
+  /// Simulate one batch of player inputs for the current step (Legacy method, kept for manual full simulation).
   int simulatePlayersForCurrentStep() {
     final step = state.currentStep;
     if (step == null) return 0;
@@ -197,6 +261,10 @@ class Game extends _$Game {
       return _simulateDayVotes(stepId: step.id);
     }
 
+    return _performRandomStepAction(step);
+  }
+
+  int _performRandomStepAction(ScriptStep step) {
     final rng = Random();
     var actionCount = 0;
 
@@ -206,10 +274,7 @@ class Game extends _$Game {
         handleInteraction(stepId: step.id, targetId: choice);
         actionCount = 1;
       }
-    } else if (step.actionType == ScriptActionType.selectPlayer ||
-        step.actionType == ScriptActionType.selectTwoPlayers ||
-        step.actionType == ScriptActionType.optional ||
-        step.actionType == ScriptActionType.multiSelect) {
+    } else if (_isInteractiveAction(step.actionType)) {
       final targetPool = _eligibleTargetsForStep(step);
       if (targetPool.isNotEmpty) {
         final target = targetPool[rng.nextInt(targetPool.length)];
@@ -302,6 +367,37 @@ class Game extends _$Game {
     final voters = alive
         .where((p) => p.silencedDay != state.dayCount && !p.isSinBinned)
         .toList();
+    if (voters.isEmpty) return 0;
+
+    var cast = 0;
+    for (final voter in voters) {
+      if (state.dayVotesByVoter.containsKey(voter.id)) continue;
+
+      final targets = alive.where((p) => p.id != voter.id).toList();
+      final targetId = targets.isEmpty || rng.nextDouble() < 0.15
+          ? 'abstain'
+          : targets[rng.nextInt(targets.length)].id;
+      handleInteraction(stepId: stepId, targetId: targetId, voterId: voter.id);
+      cast++;
+    }
+
+    _persist();
+    return cast;
+  }
+
+  int _simulateDayVotesForBots({required String stepId}) {
+    final rng = Random();
+    final alive = state.players.where((p) => p.isAlive).toList();
+    if (alive.length < 2) return 0;
+
+    final voters = state.players.where((p) =>
+      p.isBot &&
+      p.isAlive &&
+      p.silencedDay != state.dayCount &&
+      !p.isSinBinned &&
+      !state.dayVotesByVoter.containsKey(p.id)
+    ).toList();
+
     if (voters.isEmpty) return 0;
 
     var cast = 0;

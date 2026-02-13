@@ -14,7 +14,7 @@ class PlayerAuthScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return CBPrismScaffold(
-      title: 'CLUB BLACKOUT',
+      title: '', // No AppBar title for immersive feel
       showAppBar: false,
       showBackgroundRadiance: true,
       body: AnimatedSwitcher(
@@ -37,10 +37,10 @@ class PlayerAuthScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CBBreathingSpinner(),
-              const SizedBox(height: 24),
+              const CBBreathingSpinner(size: 64),
+              const SizedBox(height: 32),
               Text(
-                'SYNCING BIOMETRICS...',
+                'CHECKING GUEST LIST...',
                 style: CBTypography.labelSmall.copyWith(
                   color: scheme.primary,
                   letterSpacing: 3.0,
@@ -75,160 +75,176 @@ class _AuthSplash extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final notifier = ref.read(authProvider.notifier);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 64),
-      child: Column(
-        children: [
-          // ── CINEMATIC LOGO ──
-          CBFadeSlide(
-            key: const ValueKey('auth_logo'),
-            beginOffset: const Offset(0, -0.1),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                    color: scheme.primary.withValues(alpha: 0.4), width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: scheme.primary.withValues(alpha: 0.15),
-                    blurRadius: 30,
-                    spreadRadius: 10,
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // ── CINEMATIC LOGO ──
+            CBFadeSlide(
+              key: const ValueKey('auth_logo'),
+              beginOffset: const Offset(0, -0.1),
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      scheme.primary.withValues(alpha: 0.2),
+                      scheme.primary.withValues(alpha: 0.0),
+                    ],
                   ),
-                ],
-              ),
-              child: Hero(
-                tag: 'auth_icon',
-                child: CBRoleAvatar(
-                  color: scheme.primary,
-                  size: 80,
-                  pulsing: true,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 48),
-
-          // ── HYPE / BLURB SECTION ──
-          CBFadeSlide(
-            delay: const Duration(milliseconds: 200),
-            child: Column(
-              children: [
-                Text(
-                  'CLUB BLACKOUT',
-                  style: textTheme.displaySmall?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 8,
-                    shadows: CBColors.textGlow(scheme.primary),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: scheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'PATRON ACCESS GRANTED',
-                    style: textTheme.labelSmall?.copyWith(
-                      color: scheme.secondary,
-                      letterSpacing: 2,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'A neon-drenched social deduction experience. Step into the VIP lounge where shadows move, alliances shift, and survival is the only currency that matters.',
-                    textAlign: TextAlign.center,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurface.withValues(alpha: 0.7),
-                      height: 1.6,
-                      fontStyle: FontStyle.italic,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 64),
-
-          // ── LOGIN SECTION ──
-          CBFadeSlide(
-            delay: const Duration(milliseconds: 400),
-            child: CBGlassTile(
-              title: 'ENTRY PROTOCOL',
-              accentColor: scheme.primary,
-              isPrismatic: true,
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Scan your biometric ID to enter the club.',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurface.withValues(alpha: 0.5),
-                      letterSpacing: 1.0,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Enhanced Google Button
-                  _buildGoogleButton(context, notifier, scheme),
-
-                  if (errorMessage != null) ...[
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: scheme.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border:
-                            Border.all(color: scheme.error.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.gpp_bad_rounded,
-                              color: scheme.error, size: 20),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'IDENTIFICATION FAILED: ${errorMessage!.toUpperCase()}',
-                              style: textTheme.labelSmall?.copyWith(
-                                color: scheme.error,
-                                fontWeight: FontWeight.bold,
-                                height: 1.2,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                  border: Border.all(
+                      color: scheme.primary.withValues(alpha: 0.5), width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: scheme.primary.withValues(alpha: 0.2),
+                      blurRadius: 40,
+                      spreadRadius: 10,
                     ),
                   ],
+                ),
+                child: Hero(
+                  tag: 'auth_icon',
+                  child: CBRoleAvatar(
+                    color: scheme.primary,
+                    size: 80,
+                    pulsing: true,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 48),
+
+            // ── HYPE / BLURB SECTION ──
+            CBFadeSlide(
+              delay: const Duration(milliseconds: 200),
+              child: Column(
+                children: [
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [scheme.primary, scheme.secondary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds),
+                    child: Text(
+                      'CLUB BLACKOUT',
+                      textAlign: TextAlign.center,
+                      style: textTheme.displayMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 6,
+                        height: 0.9,
+                        color: Colors.white, // Masked
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: scheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(
+                          color: scheme.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      'MEMBERS ONLY',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: scheme.primary,
+                        letterSpacing: 3,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      "Tonight is the night. The music is loud, the lights are low, and everyone has a secret.\n\nCan you survive until the lights come on?",
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.8),
+                        height: 1.6,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
 
-          const SizedBox(height: 64),
-          Text(
-            'PATRON-NET v4.0.8 - SECURED BY BLACKOUT',
-            style: textTheme.bodySmall?.copyWith(
-              color: scheme.onSurface.withValues(alpha: 0.15),
-              fontSize: 9,
-              letterSpacing: 3,
-              fontWeight: FontWeight.bold,
+            const SizedBox(height: 64),
+
+            // ── LOGIN SECTION ──
+            CBFadeSlide(
+              delay: const Duration(milliseconds: 400),
+              child: CBGlassTile(
+                title: 'GUEST LIST CHECK',
+                accentColor: scheme.secondary, // Contrast color
+                isPrismatic: true,
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Show your invite to the Bouncer.',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Enhanced Google Button
+                    _buildGoogleButton(context, notifier, scheme),
+
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: scheme.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: scheme.error.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.gpp_bad_rounded,
+                                color: scheme.error, size: 24),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                'ACCESS DENIED: ${errorMessage!.toUpperCase()}',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: scheme.error,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 48),
+            Text(
+              'SECURED BY BLACKOUT-NET',
+              style: textTheme.labelSmall?.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.2),
+                fontSize: 10,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -240,17 +256,18 @@ class _AuthSplash extends ConsumerWidget {
         HapticService.heavy();
         notifier.signInWithGoogle();
       },
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest.withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: scheme.primary.withValues(alpha: 0.4)),
+          color: scheme.surface.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: scheme.primary.withValues(alpha: 0.6)),
           boxShadow: [
             BoxShadow(
-              color: scheme.primary.withValues(alpha: 0.1),
+              color: scheme.primary.withValues(alpha: 0.15),
               blurRadius: 12,
+              spreadRadius: 2,
             ),
           ],
         ),
@@ -259,18 +276,16 @@ class _AuthSplash extends ConsumerWidget {
           children: [
             Image.network(
               'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
-              height: 22,
-              errorBuilder: (context, error, stackTrace) => Icon(
-                  Icons.account_circle_outlined,
-                  color: scheme.primary,
-                  size: 22),
+              height: 24,
+              errorBuilder: (context, error, stackTrace) =>
+                  Icon(Icons.login, color: scheme.primary, size: 24),
             ),
             const SizedBox(width: 16),
             Text(
-              'SYNC VIA GOOGLE',
+              'SHOW VIP PASS (GOOGLE)',
               style: CBTypography.bodyBold.copyWith(
-                letterSpacing: 2.0,
-                fontSize: 13,
+                letterSpacing: 1.5,
+                fontSize: 14,
                 color: scheme.onSurface,
               ),
             ),
@@ -303,7 +318,7 @@ class _ProfileSetupForm extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              'IDENTITY REGISTRATION',
+              'PRINT YOUR ID CARD',
               textAlign: TextAlign.center,
               style: textTheme.headlineMedium?.copyWith(
                 color: scheme.secondary,
@@ -314,16 +329,15 @@ class _ProfileSetupForm extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Choose your moniker. This name will be visible to everyone in the club.',
+              'What do they call you on the dance floor?',
               textAlign: TextAlign.center,
-              style: textTheme.labelSmall?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.6),
-                letterSpacing: 1.5,
+              style: textTheme.bodyLarge?.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 64),
             CBGlassTile(
-              title: 'REGISTER MONIKER',
+              title: 'NEW PATRON REGISTRATION',
               accentColor: scheme.secondary,
               isPrismatic: true,
               content: Column(
@@ -331,8 +345,10 @@ class _ProfileSetupForm extends ConsumerWidget {
                 children: [
                   CBTextField(
                     controller: notifier.usernameController,
-                    hintText: 'YOUR NICKNAME',
+                    hintText: 'YOUR MONIKER',
                     autofocus: true,
+                    textStyle:
+                        textTheme.headlineSmall!.copyWith(color: scheme.onSurface),
                     decoration: InputDecoration(
                       prefixIcon:
                           Icon(Icons.person_outline, color: scheme.secondary),
@@ -340,7 +356,7 @@ class _ProfileSetupForm extends ConsumerWidget {
                   ),
                   const SizedBox(height: 32),
                   CBPrimaryButton(
-                    label: 'ENTER THE CLUB',
+                    label: 'PAY COVER CHARGE & ENTER',
                     backgroundColor: scheme.secondary,
                     onPressed: () {
                       HapticService.heavy();
@@ -349,7 +365,7 @@ class _ProfileSetupForm extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   CBGhostButton(
-                    label: 'CANCEL ENTRY',
+                    label: 'WALK AWAY',
                     onPressed: () => notifier.signOut(),
                     color: scheme.error,
                   ),
