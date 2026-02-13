@@ -62,3 +62,4 @@ coverage/
 migrate_opacity.py
 *.pyc
 __pycache__/
+analyze_host_output.txt
