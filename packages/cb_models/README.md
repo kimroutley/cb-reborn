@@ -11,8 +11,7 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/to/develop-packages).
 -->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+This package provides the shared data models and business entities for the game applications. It includes core definitions for Players, Roles, GameState, and other essential structures used by both the host and player clients.
 
 ## Features
 
