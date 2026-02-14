@@ -75,7 +75,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
 
   String _normalizeJoinCode(String value) {
     final compact = value.toUpperCase().replaceAll('-', '').trim();
-    if (compact.length != 8) {
+    if (compact.length != 10) {
       return value.toUpperCase();
     }
     return '${compact.substring(0, 4)}-${compact.substring(4)}';
@@ -131,7 +131,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
     final isCloud = _mode == PlayerSyncMode.cloud;
     final code = _normalizeJoinCode(joinCodeController.text);
 
-    if (code.length != 9) {
+    if (code.length != 11) {
       setState(() => localError = 'INVALID CODE FORMAT');
       return;
     }
@@ -258,7 +258,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
         const SizedBox(height: CBSpace.x2),
         CBTextField(
           controller: joinUrlController,
-          hintText: 'https://.../join?mode=cloud&code=NEON-ABCD',
+          hintText: 'https://.../join?mode=cloud&code=NEON-ABCDEF',
           textStyle: textTheme.bodySmall,
         ),
         const SizedBox(height: CBSpace.x2),
@@ -299,7 +299,7 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
         const SizedBox(height: CBSpace.x2),
         CBTextField(
           controller: joinCodeController,
-          hintText: 'NEON-ABCD',
+          hintText: 'NEON-ABCDEF',
           textStyle: CBTypography.code,
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[A-Z0-9]')),
@@ -411,7 +411,7 @@ class _JoinCodeFormatter extends TextInputFormatter {
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text.toUpperCase().replaceAll('-', '');
-    if (text.length > 8) text = text.substring(0, 8);
+    if (text.length > 10) text = text.substring(0, 10);
 
     var newText = '';
     for (var i = 0; i < text.length; i++) {

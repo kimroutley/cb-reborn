@@ -475,10 +475,10 @@ void main() {
   });
 
   group('Session', () {
-    test('joinCode is generated as NEON-XXXX', () {
+    test('joinCode is generated as NEON-XXXXXX', () {
       final session = container.read(sessionProvider);
       expect(session.joinCode, startsWith('NEON-'));
-      expect(session.joinCode.length, 9); // NEON- + 4 chars
+      expect(session.joinCode.length, 11); // NEON- + 6 chars
     });
 
     test('claimPlayer adds to claimed list', () {

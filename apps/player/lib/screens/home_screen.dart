@@ -79,7 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   String _normalizeJoinCode(String value) {
     final compact = value.toUpperCase().replaceAll('-', '').trim();
-    if (compact.length != 8) return value.toUpperCase();
+    if (compact.length != 10) return value.toUpperCase();
     return '${compact.substring(0, 4)}-${compact.substring(4)}';
   }
 
@@ -93,9 +93,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     FocusScope.of(context).unfocus();
 
     final code = _normalizeJoinCode(_joinCodeController.text);
-    if (code.length != 9) {
+    if (code.length != 11) {
       setState(() {
-        _connectionError = 'INVALID CODE FORMAT (XXXX-XXXX)';
+        _connectionError = 'INVALID CODE FORMAT (XXXX-XXXXXX)';
         _isConnecting = false;
       });
       return;
@@ -247,10 +247,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // Join Code
                   CBTextField(
                     controller: _joinCodeController,
-                    hintText: 'XXXX-XXXX',
+                    hintText: 'XXXX-XXXXXX',
                     textStyle: CBTypography.code.copyWith(fontSize: 20, letterSpacing: 4),
-                    textStyle: CBTypography.code
-                        .copyWith(fontSize: 20, letterSpacing: 4),
                     textAlign: TextAlign.center,
                     decoration: const InputDecoration(
                       labelText: 'ACCESS CODE',
@@ -370,7 +368,7 @@ class _JoinCodeFormatter extends TextInputFormatter {
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text.toUpperCase().replaceAll('-', '');
-    if (text.length > 8) text = text.substring(0, 8);
+    if (text.length > 10) text = text.substring(0, 10);
     var newText = '';
     for (var i = 0; i < text.length; i++) {
       if (i == 4) newText += '-';
