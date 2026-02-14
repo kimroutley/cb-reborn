@@ -105,12 +105,6 @@ class PlayerGameState {
     bool? isConnected,
     dynamic joinError = _undefined,
     bool? joinAccepted,
-    String? claimError,
-    String? kickedMessage,
-    String? myPlayerId,
-    PlayerSnapshot? myPlayerSnapshot,
-    String? activeEffect,
-    Map<String, dynamic>? activeEffectPayload,
     String? hostName,
     dynamic claimError = _undefined,
     dynamic kickedMessage = _undefined,
@@ -142,14 +136,6 @@ class PlayerGameState {
       isConnected: isConnected ?? this.isConnected,
       joinError: joinError == _undefined ? this.joinError : joinError as String?,
       joinAccepted: joinAccepted ?? this.joinAccepted,
-      claimError: claimError ?? this.claimError,
-      kickedMessage: kickedMessage ?? this.kickedMessage,
-      myPlayerId: myPlayerId ?? this.myPlayerId,
-      myPlayerSnapshot: myPlayerSnapshot ?? this.myPlayerSnapshot,
-      activeEffect:
-          activeEffect, // Note: Always replace with new effect, not merge
-      activeEffectPayload: activeEffectPayload,
-      hostName: hostName ?? this.hostName,
       claimError:
           claimError == _undefined ? this.claimError : claimError as String?,
       kickedMessage: kickedMessage == _undefined
@@ -166,6 +152,7 @@ class PlayerGameState {
       activeEffectPayload: activeEffectPayload == _undefined
           ? this.activeEffectPayload
           : activeEffectPayload as Map<String, dynamic>?,
+      hostName: hostName ?? this.hostName,
     );
   }
 }

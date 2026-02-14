@@ -152,7 +152,7 @@ void main() {
       addTearDown(container.dispose);
       final session = container.read(sessionProvider);
 
-      expect(session.joinCode, matches(RegExp(r'^NEON-[A-Z0-9]{4}$')));
+      expect(session.joinCode, matches(RegExp(r'^NEON-[A-Z0-9]{6}$')));
     });
   });
 
