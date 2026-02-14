@@ -22,11 +22,11 @@ class EffectsOverlay extends ConsumerWidget {
     return Stack(
       children: [
         child,
-        if (effectState.activeEffect == EFFECT_FLICKER)
+        if (effectState.activeEffect == GodModeEffect.flicker)
           _buildFlickerEffect(context),
-        if (effectState.activeEffect == EFFECT_GLITCH)
+        if (effectState.activeEffect == GodModeEffect.glitch)
           _buildGlitchEffect(context),
-        if (effectState.activeEffect == EFFECT_TOAST)
+        if (effectState.activeEffect == GodModeEffect.toast)
           _buildToastEffect(context, effectState.activeEffectPayload),
       ],
     );

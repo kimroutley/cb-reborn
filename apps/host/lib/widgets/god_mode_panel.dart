@@ -48,11 +48,11 @@ class GodModePanel extends ConsumerWidget {
         runSpacing: CBSpace.x3,
         children: [
           _buildCmdButton(context, "NEON FLICKER", Icons.lightbulb_outline, () {
-            hostBridge.broadcast(GameMessage.effect(EFFECT_FLICKER));
+            hostBridge.broadcast(GameMessage.effect(GodModeEffect.flicker));
           }),
           _buildCmdButton(context, "SYSTEM GLITCH", Icons.settings_ethernet,
               () {
-            hostBridge.broadcast(GameMessage.effect(EFFECT_GLITCH));
+            hostBridge.broadcast(GameMessage.effect(GodModeEffect.glitch));
           }),
           _buildCmdButton(context, "RANDOM RUMOUR", Icons.record_voice_over,
               () {
@@ -320,7 +320,7 @@ class GodModePanel extends ConsumerWidget {
                 label: 'SEND',
                 onPressed: () {
                   if (message.isNotEmpty) {
-                    hostBridge.broadcast(GameMessage.effect(EFFECT_TOAST,
+                    hostBridge.broadcast(GameMessage.effect(GodModeEffect.toast,
                         payload: {'message': message}));
                   }
                   Navigator.pop(context);
