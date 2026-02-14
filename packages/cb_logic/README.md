@@ -11,8 +11,7 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/to/develop-packages).
 -->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+Core business logic and state management for the Club Blackout game. This package encapsulates game rules, resolution mechanics, analytics integration, and AI-driven narration services, separating them from the UI layers.
 
 ## Features
 
