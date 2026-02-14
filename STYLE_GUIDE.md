@@ -1,7 +1,4 @@
-import 'dart:io';
-
-void main() {
-  final content = r'''# Club Blackout Reborn: UI Style Guide
+# Club Blackout Reborn: UI Style Guide
 
 > **Last Updated:** February 12, 2026
 > **Source of Truth:** This guide reflects the actual `cb_theme` package implementation.
@@ -199,7 +196,3 @@ DynamicColorBuilder(
 ```
 
 This allows the neon palette to subtly adapt to the device's Material You colors while maintaining the core identity.
-''';
-
-  File(r'c:\Club Blackout Reborn\STYLE_GUIDE.md').writeAsStringSync(content);
-}
