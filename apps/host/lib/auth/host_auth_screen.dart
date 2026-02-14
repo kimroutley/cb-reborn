@@ -330,8 +330,8 @@ class _AuthSplash extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.network(
-              'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
+            Image.asset(
+              'assets/images/google_logo.png',
               height: 24,
               errorBuilder: (context, error, stackTrace) => Icon(
                   Icons.account_circle_outlined,
