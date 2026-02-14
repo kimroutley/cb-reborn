@@ -63,3 +63,7 @@ migrate_opacity.py
 *.pyc
 __pycache__/
 analyze_host_output.txt
+
+# Logs
+full_build_log.txt
+build_log_*.txt
