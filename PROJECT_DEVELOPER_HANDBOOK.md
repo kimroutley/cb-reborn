@@ -63,6 +63,8 @@ Club Blackout is a **social deduction party game** set in a neon-drenched nightc
 ### Visual "Source of Truth"
 The **CB Visuals** folder defines character colors. UI must derive colors from `role.colorHex`.
 
+See [`STYLE_GUIDE.md`](./STYLE_GUIDE.md) for detailed component usage and styling rules.
+
 ### UI Philosophy: "Neon Glass"
 - **High Friction, High Reward**: Use animations (`CBFadeSlide`) and haptics to make every button press feel like interacting with a physical nightclub terminal.
 - **Tertiary Accents**: Use the `tertiary` color scheme for AI and narrative-driven components to separate them from game logic (primary) and system settings (secondary).
