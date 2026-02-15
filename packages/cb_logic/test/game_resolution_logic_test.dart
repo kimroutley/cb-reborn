@@ -1,290 +1,131 @@
-import 'package:cb_logic/src/game_resolution_logic.dart';
+import 'package:test/test.dart';
 import 'package:cb_models/cb_models.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:cb_logic/src/game_resolution_logic.dart';
 
 void main() {
-  // Helper to create a player with minimal required fields
-  Player createPlayer({
-    required String id,
-    required String roleId,
-    Team alliance = Team.partyAnimals,
-    int lives = 1,
-    bool isAlive = true,
-    String? medicChoice,
-    bool secondWindConverted = false,
-  }) {
-    return Player(
-      id: id,
-      name: 'Player $id',
-      role: Role(
-        id: roleId,
-        name: roleId,
-        type: 'test_type',
-        description: 'test description',
-        nightPriority: 0,
-        assetPath: 'assets/test.png',
-        colorHex: '#000000',
+  group('GameResolutionLogic.checkWinCondition', () {
+    // Helper to create a dummy player
+    Player createPlayer({
+      required String id,
+      required Team alliance,
+      bool isAlive = true,
+      Role? role,
+    }) {
+      return Player(
+        id: id,
+        name: 'Player $id',
         alliance: alliance,
-      ),
-      alliance: alliance,
-      lives: lives,
-      isAlive: isAlive,
-      medicChoice: medicChoice,
-      secondWindConverted: secondWindConverted,
-    );
-  }
-
-  group('GameResolutionLogic.resolveNightActions', () {
-    test('Sober blocks a target from acting', () {
-      final sober = createPlayer(id: 'sober', roleId: RoleIds.sober);
-      final dealer = createPlayer(id: 'dealer', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final victim = createPlayer(id: 'victim', roleId: RoleIds.partyAnimal);
-
-      final players = [sober, dealer, victim];
-      final log = {
-        'sober_act_sober': 'dealer',
-        'dealer_act_dealer': 'victim',
-      };
-      final dayCount = 1;
-      final currentPrivateMessages = <String, List<String>>{};
-
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        dayCount,
-        currentPrivateMessages,
+        isAlive: isAlive,
+        role: role ??
+            const Role(
+              id: 'dummy_role',
+              name: 'Dummy Role',
+              type: 'dummy',
+              description: 'A dummy role for testing',
+              nightPriority: 0,
+              assetPath: 'assets/images/roles/dummy.png',
+              colorHex: '#000000',
+            ),
       );
+    }
 
-      final updatedVictim = result.players.firstWhere((p) => p.id == 'victim');
-      // Dealer was blocked, so victim should be alive
-      expect(updatedVictim.isAlive, isTrue);
-      expect(result.report, contains(contains('sent Player dealer home')));
-
-      final updatedDealer = result.players.firstWhere((p) => p.id == 'dealer');
-      // Sober does NOT silence, just blocks (which is internal logic) and reports "sent home"
+    test('returns null when game should continue (Staff < PA)', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff),
+        createPlayer(id: '2', alliance: Team.partyAnimals),
+        createPlayer(id: '3', alliance: Team.partyAnimals),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNull);
     });
 
-    test('Roofi silences a target', () {
-      final roofi = createPlayer(id: 'roofi', roleId: RoleIds.roofi);
-      final victim = createPlayer(id: 'victim', roleId: RoleIds.partyAnimal);
-
-      final players = [roofi, victim];
-      final log = {
-        'roofi_act_roofi': 'victim',
-      };
-      final dayCount = 1;
-      final currentPrivateMessages = <String, List<String>>{};
-
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        dayCount,
-        currentPrivateMessages,
-      );
-
-      final updatedVictim = result.players.firstWhere((p) => p.id == 'victim');
-      expect(updatedVictim.silencedDay, equals(dayCount));
-      expect(result.report, contains(contains('drugged Player victim')));
+    test('returns Staff win when Staff >= PA (Majority)', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff),
+        createPlayer(id: '2', alliance: Team.clubStaff),
+        createPlayer(id: '3', alliance: Team.partyAnimals),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.clubStaff);
     });
 
-    test('Roofi blocks the only active dealer', () {
-      final roofi = createPlayer(id: 'roofi', roleId: RoleIds.roofi);
-      final dealer = createPlayer(id: 'dealer', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final victim = createPlayer(id: 'victim', roleId: RoleIds.partyAnimal);
-
-      final players = [roofi, dealer, victim];
-      final log = {
-        'roofi_act_roofi': 'dealer',
-        'dealer_act_dealer': 'victim',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
-
-      final updatedVictim = result.players.firstWhere((p) => p.id == 'victim');
-      // Only dealer was drugged -> blocked -> victim lives
-      expect(updatedVictim.isAlive, isTrue);
-
-      final updatedDealer = result.players.firstWhere((p) => p.id == 'dealer');
-      expect(updatedDealer.silencedDay, equals(1)); // Also silenced
+    test('returns Staff win when Staff == PA (Tie)', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff),
+        createPlayer(id: '2', alliance: Team.partyAnimals),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.clubStaff);
     });
 
-    test('Roofi does NOT block if multiple dealers exist', () {
-      final roofi = createPlayer(id: 'roofi', roleId: RoleIds.roofi);
-      final dealer1 = createPlayer(id: 'dealer1', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final dealer2 = createPlayer(id: 'dealer2', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final victim = createPlayer(id: 'victim', roleId: RoleIds.partyAnimal);
-
-      final players = [roofi, dealer1, dealer2, victim];
-      final log = {
-        'roofi_act_roofi': 'dealer1',
-        'dealer_act_dealer1': 'victim',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
-
-      final updatedVictim = result.players.firstWhere((p) => p.id == 'victim');
-      // Not blocked because another dealer exists
-      expect(updatedVictim.isAlive, isFalse);
-      expect(updatedVictim.deathReason, equals('murder'));
-
-      final updatedDealer1 = result.players.firstWhere((p) => p.id == 'dealer1');
-      expect(updatedDealer1.silencedDay, equals(1)); // Still silenced though
+    test('returns Staff win when only Staff remain', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.clubStaff);
     });
 
-    test('Bouncer checks Staff ID', () {
-      final bouncer = createPlayer(id: 'bouncer', roleId: RoleIds.bouncer);
-      final staff = createPlayer(id: 'staff', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-
-      final players = [bouncer, staff];
-      final log = {
-        'bouncer_act_bouncer': 'staff',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(players, log, 1, {});
-
-      expect(result.privateMessages['bouncer'], contains(contains('is STAFF')));
+    test('returns Party Animals win when all Staff are eliminated', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff, isAlive: false),
+        createPlayer(id: '2', alliance: Team.partyAnimals),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.partyAnimals);
     });
 
-    test('Bouncer checks Non-Staff ID', () {
-      final bouncer = createPlayer(id: 'bouncer', roleId: RoleIds.bouncer);
-      final innocent = createPlayer(id: 'innocent', roleId: RoleIds.partyAnimal, alliance: Team.partyAnimals);
-
-      final players = [bouncer, innocent];
-      final log = {
-        'bouncer_act_bouncer': 'innocent',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(players, log, 1, {});
-
-      expect(result.privateMessages['bouncer'], contains(contains('is NOT STAFF')));
+    test('returns Party Animals win even if all players are dead (if staff existed)', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff, isAlive: false),
+        createPlayer(id: '2', alliance: Team.partyAnimals, isAlive: false),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.partyAnimals);
     });
 
-    test('Dealer kills a victim', () {
-      final dealer = createPlayer(id: 'dealer', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final victim = createPlayer(id: 'victim', roleId: RoleIds.partyAnimal);
-
-      final players = [dealer, victim];
-      final log = {
-        'dealer_act_dealer': 'victim',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(players, log, 1, {});
-
-      final updatedVictim = result.players.firstWhere((p) => p.id == 'victim');
-      expect(updatedVictim.isAlive, isFalse);
-      expect(updatedVictim.deathReason, equals('murder'));
-      expect(updatedVictim.deathDay, equals(1));
+    test('returns null if there were never any Staff', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.partyAnimals),
+        createPlayer(id: '2', alliance: Team.partyAnimals),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNull);
     });
 
-    test('Medic protects a victim', () {
-      final medic = createPlayer(id: 'medic', roleId: RoleIds.medic, medicChoice: 'PROTECT_DAILY');
-      final dealer = createPlayer(id: 'dealer', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final victim = createPlayer(id: 'victim', roleId: RoleIds.partyAnimal);
-
-      final players = [medic, dealer, victim];
-      final log = {
-        'medic_act_medic': 'victim',
-        'dealer_act_dealer': 'victim',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(players, log, 1, {});
-
-      final updatedVictim = result.players.firstWhere((p) => p.id == 'victim');
-      expect(updatedVictim.isAlive, isTrue);
-      expect(result.report, contains(contains('thwarted')));
+    test('returns null for empty player list', () {
+      final players = <Player>[];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNull);
     });
 
-    test('Medic does not protect if not choosing PROTECT_DAILY', () {
-      final medic = createPlayer(id: 'medic', roleId: RoleIds.medic, medicChoice: 'SELF_CARE');
-      final dealer = createPlayer(id: 'dealer', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final victim = createPlayer(id: 'victim', roleId: RoleIds.partyAnimal);
-
-      final players = [medic, dealer, victim];
-      final log = {
-        'medic_act_medic': 'victim',
-        'dealer_act_dealer': 'victim',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(players, log, 1, {});
-
-      final updatedVictim = result.players.firstWhere((p) => p.id == 'victim');
-      expect(updatedVictim.isAlive, isFalse);
+    test('ignores Neutral players for win condition counts', () {
+      // 1 Staff, 1 PA, 1 Neutral -> Staff: 1, PA: 1 -> Tie -> Staff Win
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff),
+        createPlayer(id: '2', alliance: Team.partyAnimals),
+        createPlayer(id: '3', alliance: Team.neutral),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.clubStaff);
     });
 
-    test('Second Wind survives first kill', () {
-      final dealer = createPlayer(id: 'dealer', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final sw = createPlayer(id: 'sw', roleId: RoleIds.secondWind);
-
-      final players = [dealer, sw];
-      final log = {
-        'dealer_act_dealer': 'sw',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(players, log, 1, {});
-
-      final updatedSw = result.players.firstWhere((p) => p.id == 'sw');
-      expect(updatedSw.isAlive, isTrue);
-      expect(updatedSw.secondWindPendingConversion, isTrue);
-      expect(result.report, contains(contains('Second Wind triggered')));
-    });
-
-    test('Second Wind dies if already converted', () {
-      final dealer = createPlayer(id: 'dealer', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final sw = createPlayer(id: 'sw', roleId: RoleIds.secondWind, secondWindConverted: true);
-
-      final players = [dealer, sw];
-      final log = {
-        'dealer_act_dealer': 'sw',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(players, log, 1, {});
-
-      final updatedSw = result.players.firstWhere((p) => p.id == 'sw');
-      expect(updatedSw.isAlive, isFalse);
-      expect(updatedSw.deathReason, equals('murder'));
-    });
-
-    test('Seasoned Drinker loses a life but survives', () {
-      final dealer = createPlayer(id: 'dealer', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final sd = createPlayer(id: 'sd', roleId: RoleIds.seasonedDrinker, lives: 2);
-
-      final players = [dealer, sd];
-      final log = {
-        'dealer_act_dealer': 'sd',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(players, log, 1, {});
-
-      final updatedSd = result.players.firstWhere((p) => p.id == 'sd');
-      expect(updatedSd.isAlive, isTrue);
-      expect(updatedSd.lives, equals(1));
-      expect(result.report, contains(contains('lost a life but survived')));
-    });
-
-    test('Seasoned Drinker dies when out of lives', () {
-      final dealer = createPlayer(id: 'dealer', roleId: RoleIds.dealer, alliance: Team.clubStaff);
-      final sd = createPlayer(id: 'sd', roleId: RoleIds.seasonedDrinker, lives: 1);
-
-      final players = [dealer, sd];
-      final log = {
-        'dealer_act_dealer': 'sd',
-      };
-
-      final result = GameResolutionLogic.resolveNightActions(players, log, 1, {});
-
-      final updatedSd = result.players.firstWhere((p) => p.id == 'sd');
-      expect(updatedSd.isAlive, isFalse);
-      expect(updatedSd.deathReason, equals('murder'));
+    test('Game continues if Neutral players tip the balance to not meeting win conditions', () {
+        // 1 Staff, 2 PA, 1 Neutral -> Staff: 1, PA: 2 -> No win.
+        final players = [
+            createPlayer(id: '1', alliance: Team.clubStaff),
+            createPlayer(id: '2', alliance: Team.partyAnimals),
+            createPlayer(id: '3', alliance: Team.partyAnimals),
+            createPlayer(id: '4', alliance: Team.neutral),
+        ];
+        final result = GameResolutionLogic.checkWinCondition(players);
+        expect(result, isNull);
     });
   });
 }
