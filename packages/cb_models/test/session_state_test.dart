@@ -8,14 +8,14 @@ void main() {
       expect(code.startsWith('NEON-'), isTrue);
     });
 
-    test('returns a string with length 9', () {
+    test('returns a string with length 11', () {
       final code = generateJoinCode();
-      expect(code.length, equals(9));
+      expect(code.length, equals(11));
     });
 
     test('returns a string with valid characters', () {
       final code = generateJoinCode();
-      final validChars = RegExp(r'^NEON-[A-HJ-NP-Z2-9]{4}$');
+      final validChars = RegExp(r'^NEON-[A-HJ-NP-Z2-9]{6}$');
       expect(validChars.hasMatch(code), isTrue);
     });
   });
