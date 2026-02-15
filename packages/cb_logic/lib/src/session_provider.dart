@@ -4,16 +4,11 @@ import 'package:cb_models/cb_models.dart';
 part 'session_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-String hostName(Ref ref) => 'Club Host';
-
-@Riverpod(keepAlive: true)
 class Session extends _$Session {
   @override
   SessionState build() {
-    final name = ref.watch(hostNameProvider);
     return SessionState(
       joinCode: generateJoinCode(),
-      hostName: name,
     );
   }
 

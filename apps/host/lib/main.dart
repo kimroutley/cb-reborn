@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_theme/cb_theme.dart';
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
@@ -24,18 +21,8 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  String hostName = 'Club Host';
-  if (!kIsWeb) {
-    try {
-      hostName = Platform.localHostname;
-    } catch (_) {}
-  }
-
-  runApp(ProviderScope(
-    overrides: [
-      hostNameProvider.overrideWithValue(hostName),
-    ],
-    child: const HostApp(),
+  runApp(const ProviderScope(
+    child: HostApp(),
   ));
 }
 

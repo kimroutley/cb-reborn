@@ -116,18 +116,7 @@ class GameResolutionLogic {
     // 5. Apply Deaths
     DeathResolutionStrategy().execute(context);
 
-    // Apply silencing (logic applied here instead of in action to modify final player state if needed)
-    // Actually, context.players is already modified if the action does it directly.
-    // Let's check if SoberAction modifies player state.
-    // If actions just add to blockedIds/silencedIds, we need to apply effects here?
-    // SoberAction/RoofiAction modify context.blockedIds/silencedIds.
-    // But they don't modify the Player objects to set 'silencedDay'.
-    // The original code had:
-    // currentPlayers = currentPlayers.map((p) => silencedIds.contains(p.id) ? p.copyWith(silencedDay: dayCount) : p).toList();
-
-    // So I need to keep that part!
-    // I should iterate context.silencedIds and update players.
-
+    // Apply silencing
     for (final id in context.silencedIds) {
       final p = context.getPlayer(id);
       context.updatePlayer(p.copyWith(silencedDay: dayCount));

@@ -27,8 +27,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // Connection State
   PlayerSyncMode _mode = PlayerSyncMode.cloud;
   final TextEditingController _joinCodeController = TextEditingController();
-  final TextEditingController _hostIpController =
-      TextEditingController(text: 'ws://192.168.1.');
+  final TextEditingController _hostIpController = TextEditingController(text: 'ws://192.168.1.');
   String? _connectionError;
   bool _isConnecting = false;
 
@@ -110,7 +109,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final bridge = ref.read(playerBridgeProvider.notifier);
         final url = _hostIpController.text.trim();
         if (!url.startsWith('ws')) {
-          setState(() {
+           setState(() {
             _connectionError = 'INVALID HOST URL';
             _isConnecting = false;
           });
@@ -132,11 +131,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // If we are still here after a few seconds without navigation, it might have failed silently or is waiting.
     // We rely on bridge state updates for success.
     if (mounted) {
-      Future.delayed(const Duration(seconds: 5), () {
-        if (mounted && _isConnecting) {
-          setState(() => _isConnecting = false);
-        }
-      });
+       Future.delayed(const Duration(seconds: 5), () {
+         if (mounted && _isConnecting) {
+           setState(() => _isConnecting = false);
+         }
+       });
     }
   }
 
@@ -158,9 +157,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Bridge error states
     final cloudState = ref.watch(cloudPlayerBridgeProvider);
     final localState = ref.watch(playerBridgeProvider);
-    final bridgeError = _mode == PlayerSyncMode.cloud
-        ? cloudState.joinError
-        : localState.joinError;
+    final bridgeError = _mode == PlayerSyncMode.cloud ? cloudState.joinError : localState.joinError;
     final displayError = _connectionError ?? bridgeError;
 
     // Stats for header
@@ -170,8 +167,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       title: 'CLUB LOBBY',
       drawer: const CustomDrawer(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-            horizontal: CBSpace.x6, vertical: CBSpace.x6),
+        padding: const EdgeInsets.symmetric(horizontal: CBSpace.x6, vertical: CBSpace.x6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -189,14 +185,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // ── JOIN CARD ──
             CBGlassTile(
               title: "JOIN SESSION",
-              subtitle: _mode == PlayerSyncMode.cloud
-                  ? "CLOUD SYNC"
-                  : "LOCAL NETWORK",
+              subtitle: _mode == PlayerSyncMode.cloud ? "CLOUD SYNC" : "LOCAL NETWORK",
               accentColor: scheme.primary,
               isPrismatic: true,
-              icon: Icon(
-                  _mode == PlayerSyncMode.cloud ? Icons.cloud : Icons.wifi,
-                  color: scheme.primary),
+              icon: Icon(_mode == PlayerSyncMode.cloud ? Icons.cloud : Icons.wifi, color: scheme.primary),
               content: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -204,8 +196,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color:
-                          scheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -214,16 +205,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: _ModeTab(
                             label: 'CLOUD',
                             selected: _mode == PlayerSyncMode.cloud,
-                            onTap: () =>
-                                setState(() => _mode = PlayerSyncMode.cloud),
+                            onTap: () => setState(() => _mode = PlayerSyncMode.cloud),
                           ),
                         ),
                         Expanded(
                           child: _ModeTab(
                             label: 'LOCAL',
                             selected: _mode == PlayerSyncMode.local,
-                            onTap: () =>
-                                setState(() => _mode = PlayerSyncMode.local),
+                            onTap: () => setState(() => _mode = PlayerSyncMode.local),
                           ),
                         ),
                       ],
@@ -294,8 +283,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => const GamesNightScreen()),
+                  MaterialPageRoute(builder: (context) => const GamesNightScreen()),
                 );
               },
             ),
@@ -326,8 +314,7 @@ class _ModeTab extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _ModeTab(
-      {required this.label, required this.selected, required this.onTap});
+  const _ModeTab({required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -338,23 +325,17 @@ class _ModeTab extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: selected
-              ? scheme.primary.withValues(alpha: 0.2)
-              : Colors.transparent,
+          color: selected ? scheme.primary.withValues(alpha: 0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected
-                ? scheme.primary.withValues(alpha: 0.5)
-                : Colors.transparent,
+            color: selected ? scheme.primary.withValues(alpha: 0.5) : Colors.transparent,
           ),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: CBTypography.labelSmall.copyWith(
-            color: selected
-                ? scheme.primary
-                : scheme.onSurface.withValues(alpha: 0.5),
+            color: selected ? scheme.primary : scheme.onSurface.withValues(alpha: 0.5),
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -365,8 +346,7 @@ class _ModeTab extends StatelessWidget {
 
 class _JoinCodeFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text.toUpperCase().replaceAll('-', '');
     if (text.length > 10) text = text.substring(0, 10);
     var newText = '';
