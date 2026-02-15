@@ -68,6 +68,7 @@ class Game extends _$Game {
                 roleId: p.role.id,
                 alliance: p.alliance,
                 alive: p.isAlive,
+                isBot: p.isBot,
               ),
             )
             .toList(),
@@ -217,6 +218,7 @@ class Game extends _$Game {
       name: name,
       role: roleCatalogMap['unassigned'] ?? roleCatalog.first,
       alliance: Team.unknown,
+      isBot: true,
     );
     state = state.copyWith(players: [...state.players, newPlayer]);
   }
@@ -237,7 +239,7 @@ class Game extends _$Game {
         (p) => p.id == actorId,
         orElse: () => state.players.first,
       );
-      if (!state.actionLog.containsKey(step.id)) {
+      if (actor.isBot && !state.actionLog.containsKey(step.id)) {
         return _performRandomStepAction(step);
       }
     }
@@ -395,6 +397,7 @@ class Game extends _$Game {
     final voters = state.players
         .where((p) =>
             p.isAlive &&
+            p.isBot &&
             p.silencedDay != state.dayCount &&
             !p.isSinBinned &&
             !state.dayVotesByVoter.containsKey(p.id))

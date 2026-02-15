@@ -24,6 +24,7 @@ abstract class Role with _$Role {
     required String colorHex,
     @Default(false) bool canRepeat,
     @Default(false) bool isRequired,
+    @Default(true) bool isBotFriendly,
   }) = _Role;
 
   factory Role.fromJson(Map<String, dynamic> json) => _$RoleFromJson(json);

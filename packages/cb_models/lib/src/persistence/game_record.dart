@@ -43,6 +43,7 @@ abstract class PlayerSnapshot with _$PlayerSnapshot {
     required String roleId,
     required Team alliance,
     @Default(true) bool alive,
+    @Default(false) bool isBot,
   }) = _PlayerSnapshot;
 
   factory PlayerSnapshot.fromJson(Map<String, dynamic> json) =>

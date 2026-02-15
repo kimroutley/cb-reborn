@@ -80,6 +80,8 @@ class AuthNotifier extends Notifier<AuthState> {
         return;
       }
 
+      state = AuthState(AuthStatus.loading, user: user);
+
       try {
         final hasProfile = await _userRepository.hasProfile(user.uid);
         if (hasProfile) {
@@ -164,18 +166,6 @@ class AuthNotifier extends Notifier<AuthState> {
         return;
       }
 
-      _googleSignIn ??= GoogleSignIn.instance;
-      await _googleSignIn!.initialize();
-      final GoogleSignInAccount googleUser =
-          await _googleSignIn!.authenticate();
-
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-      );
-
-      await _auth.signInWithCredential(credential);
-    } on FirebaseAuthException catch (e) {
       state = AuthState(
         AuthStatus.error,
         error: e.message ?? 'Google sign-in failed. Please try again.',

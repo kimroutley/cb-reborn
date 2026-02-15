@@ -43,6 +43,7 @@ const List<Role> roleCatalog = [
     ability: 'Vote Deflection',
     assetPath: 'assets/roles/whore.png',
     colorHex: '#008080', // Teal - from CB Visuals
+    isBotFriendly: false,
   ),
 
   Role(
@@ -216,6 +217,7 @@ const List<Role> roleCatalog = [
     ability: 'Memory Loss (Taboo)',
     assetPath: 'assets/roles/lightweight.png',
     colorHex: '#FFA500', // Orange - from CB Visuals
+    isBotFriendly: false,
   ),
 
   Role(
@@ -295,6 +297,7 @@ const List<Role> roleCatalog = [
     ability: 'The Rumour Mill',
     assetPath: 'assets/roles/messy_bitch.png',
     colorHex: '#E6E6FA', // Lavender - from CB Visuals
+    isBotFriendly: false,
   ),
 
   Role(
@@ -325,6 +328,7 @@ const List<Role> roleCatalog = [
     ability: 'Obsession + Attack Dog',
     assetPath: 'assets/roles/clinger.png',
     colorHex: '#FFFF00', // Yellow - from CB Visuals
+    isBotFriendly: false,
   ),
 
   Role(
