@@ -4,12 +4,14 @@ A comprehensive theme and widget library for the CyberBlood game, featuring a ne
 
 ## Features
 
-### Core Design System
-The visual language of CyberBlood is built on a "Neon Synthwave" foundation, defined by:
-- **Color Palette (`CBColors`)**: A rich collection of high-contrast colors including `electricCyan`, `magentaShift`, `voidBlack`, and semantic role colors.
-- **Typography (`CBTypography`)**: Custom text styles optimized for legibility and atmosphere, including specialized styles for headers, timers, and code.
-- **Layout & Spacing (`CBLayout`)**: Standardized spacing (`CBSpace`) and corner radii (`CBRadius`) ensuring consistency across all screens.
-- **Theme Data**: Pre-configured `ThemeData` for dark and light modes, ready for application-wide use.
+This package provides the core design system and theming for the Club Blackout application. It encapsulates the "neo-noir" aesthetic and includes:
+
+*   **Design Tokens**: Custom color palettes, typography, and layout definitions.
+*   **UI Components**: Reusable widgets, screens, and overlays tailored to the game's look and feel.
+*   **Theming**: Flutter `ThemeData` configuration for consistent styling across the app.
+*   **Multimedia Services**: Utilities for managing sound effects, background music, and haptic feedback.
+
+This package ensures a cohesive and immersive user experience for both player and host interfaces.
 
 ### Reusable Widgets
 A library of over 20 polished, high-fidelity widgets:
