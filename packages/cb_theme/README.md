@@ -11,8 +11,14 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/to/develop-packages).
 -->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+This package provides the core design system and theming for the Club Blackout application. It encapsulates the "neo-noir" aesthetic and includes:
+
+*   **Design Tokens**: Custom color palettes, typography, and layout definitions.
+*   **UI Components**: Reusable widgets, screens, and overlays tailored to the game's look and feel.
+*   **Theming**: Flutter `ThemeData` configuration for consistent styling across the app.
+*   **Multimedia Services**: Utilities for managing sound effects, background music, and haptic feedback.
+
+This package ensures a cohesive and immersive user experience for both player and host interfaces.
 
 ## Features
 
