@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../host_bridge.dart';
+import '../providers/lobby_profiles_provider.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/lobby/lobby_access_code_tile.dart';
 import '../widgets/lobby/lobby_config_tile.dart';
@@ -25,6 +26,7 @@ class LobbyScreen extends ConsumerWidget {
     final isCloud = gameState.syncMode == SyncMode.cloud;
     final bridge = ref.read(hostBridgeProvider);
     final canStart = gameState.players.length >= 5;
+    final profilesAsync = ref.watch(lobbyProfilesProvider);
 
     return CBPrismScaffold(
       title: 'LOBBY',
