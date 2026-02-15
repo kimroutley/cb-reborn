@@ -123,6 +123,24 @@ void main() {
         expect(duplicates.length, 1);
         expect(duplicates['Alice'], unorderedEquals(['Alice', 'Alike', 'Alic']));
       });
+
+      test('detects transitive duplicates', () {
+        // A matches B, B matches C, C matches D.
+        // A does not match D directly (dist >= 3).
+        final names = ['aaaa', 'aaab', 'aabb', 'abbb'];
+
+        // Verify pairwise expectations for clarity
+        expect(PlayerMatcher.isLikelyMatch('aaaa', 'aaab'), isTrue); // dist 1
+        expect(PlayerMatcher.isLikelyMatch('aaab', 'aabb'), isTrue); // dist 1
+        expect(PlayerMatcher.isLikelyMatch('aabb', 'abbb'), isTrue); // dist 1
+        expect(PlayerMatcher.isLikelyMatch('aaaa', 'abbb'), isFalse); // dist 3
+
+        final duplicates = PlayerMatcher.findDuplicates(names);
+
+        expect(duplicates.length, 1);
+        // Should form a single cluster due to transitive matching
+        expect(duplicates['aaaa'], unorderedEquals(['aaaa', 'aaab', 'aabb', 'abbb']));
+      });
     });
 
     // ═══════════════════════════════════════════════

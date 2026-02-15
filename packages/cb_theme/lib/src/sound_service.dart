@@ -22,9 +22,9 @@ class SoundService {
   static const String _bgMusicAsset =
       'packages/cb_theme/assets/audio/bg_music.mp3';
   static const Map<String, String> _soundAssetMap = {
-    SOUND_BASS_DROP: 'packages/cb_theme/assets/audio/bass_drop.mp3',
-    SOUND_GLITCH_NOISE: 'packages/cb_theme/assets/audio/glitch_noise.mp3',
-    SOUND_CLICK: 'packages/cb_theme/assets/audio/click.mp3',
+    GodModeSound.bassDrop: 'packages/cb_theme/assets/audio/bass_drop.mp3',
+    GodModeSound.glitchNoise: 'packages/cb_theme/assets/audio/glitch_noise.mp3',
+    GodModeSound.click: 'packages/cb_theme/assets/audio/click.mp3',
   };
 
   static void setEnabled(bool enabled) {
@@ -135,8 +135,8 @@ class SoundService {
     await _musicPlayer.stop();
   }
 
-  static Future<void> playHeavyBass() => playSfx(SOUND_BASS_DROP, volume: 1.0);
-  static Future<void> playClick() => playSfx(SOUND_CLICK, volume: 0.7);
+  static Future<void> playHeavyBass() => playSfx(GodModeSound.bassDrop, volume: 1.0);
+  static Future<void> playClick() => playSfx(GodModeSound.click, volume: 0.7);
 
   /// Disposes the audio player when no longer needed.
   static void dispose() {

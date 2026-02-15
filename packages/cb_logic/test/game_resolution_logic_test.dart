@@ -1,124 +1,131 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 import 'package:cb_models/cb_models.dart';
 import 'package:cb_logic/src/game_resolution_logic.dart';
 
 void main() {
-  // Helper to create a dummy role
-  Role createRole({
-    String id = 'test_role',
-    String name = 'Test Role',
-    Team alliance = Team.partyAnimals,
-    String type = 'Test Type',
-    String description = 'Test Description',
-    int nightPriority = 0,
-    String assetPath = 'assets/roles/test.png',
-    String colorHex = '#FFFFFF',
-  }) {
-    return Role(
-      id: id,
-      name: name,
-      alliance: alliance,
-      type: type,
-      description: description,
-      nightPriority: nightPriority,
-      assetPath: assetPath,
-      colorHex: colorHex,
-    );
-  }
+  group('GameResolutionLogic.checkWinCondition', () {
+    // Helper to create a dummy player
+    Player createPlayer({
+      required String id,
+      required Team alliance,
+      bool isAlive = true,
+      Role? role,
+    }) {
+      return Player(
+        id: id,
+        name: 'Player $id',
+        alliance: alliance,
+        isAlive: isAlive,
+        role: role ??
+            const Role(
+              id: 'dummy_role',
+              name: 'Dummy Role',
+              type: 'dummy',
+              description: 'A dummy role for testing',
+              nightPriority: 0,
+              assetPath: 'assets/images/roles/dummy.png',
+              colorHex: '#000000',
+            ),
+      );
+    }
 
-  // Helper to create a dummy player
-  Player createPlayer({
-    required String id,
-    String name = 'Test Player',
-    bool isAlive = true,
-    int lives = 1,
-  }) {
-    return Player(
-      id: id,
-      name: name,
-      role: createRole(),
-      alliance: Team.partyAnimals,
-      isAlive: isAlive,
-      lives: lives,
-    );
-  }
-
-  group('GameResolutionLogic.resolveDayVote', () {
-    test('returns original players and "No votes were cast" report if tally is empty', () {
+    test('returns null when game should continue (Staff < PA)', () {
       final players = [
-        createPlayer(id: 'p1'),
-        createPlayer(id: 'p2'),
+        createPlayer(id: '1', alliance: Team.clubStaff),
+        createPlayer(id: '2', alliance: Team.partyAnimals),
+        createPlayer(id: '3', alliance: Team.partyAnimals),
       ];
-      final tally = <String, int>{};
-      const dayCount = 1;
-
-      final resolution = GameResolutionLogic.resolveDayVote(players, tally, dayCount);
-
-      expect(resolution.players, equals(players));
-      expect(resolution.report, contains('No votes were cast.'));
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNull);
     });
 
-    test('returns original players and "abstain" report if abstain wins', () {
+    test('returns Staff win when Staff >= PA (Majority)', () {
       final players = [
-        createPlayer(id: 'p1'),
-        createPlayer(id: 'p2'),
+        createPlayer(id: '1', alliance: Team.clubStaff),
+        createPlayer(id: '2', alliance: Team.clubStaff),
+        createPlayer(id: '3', alliance: Team.partyAnimals),
       ];
-      final tally = {'abstain': 5, 'p1': 2, 'p2': 1};
-      const dayCount = 1;
-
-      final resolution = GameResolutionLogic.resolveDayVote(players, tally, dayCount);
-
-      expect(resolution.players, equals(players));
-      expect(resolution.report, contains('The club decided to abstain from exiling anyone.'));
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.clubStaff);
     });
 
-    test('returns original players and "tie" report if there is a tie for first place', () {
+    test('returns Staff win when Staff == PA (Tie)', () {
       final players = [
-        createPlayer(id: 'p1'),
-        createPlayer(id: 'p2'),
+        createPlayer(id: '1', alliance: Team.clubStaff),
+        createPlayer(id: '2', alliance: Team.partyAnimals),
       ];
-      final tally = {'p1': 3, 'p2': 3};
-      const dayCount = 1;
-
-      final resolution = GameResolutionLogic.resolveDayVote(players, tally, dayCount);
-
-      expect(resolution.players, equals(players));
-      expect(resolution.report, contains('The vote ended in a tie. No one was exiled.'));
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.clubStaff);
     });
 
-    test('returns updated players and "exile" report if there is a clear winner', () {
-      final p1 = createPlayer(id: 'p1', name: 'Alice');
-      final p2 = createPlayer(id: 'p2', name: 'Bob');
-      final players = [p1, p2];
-      final tally = {'p1': 5, 'p2': 2};
-      const dayCount = 1;
-
-      final resolution = GameResolutionLogic.resolveDayVote(players, tally, dayCount);
-
-      final exiledPlayer = resolution.players.firstWhere((p) => p.id == 'p1');
-      expect(exiledPlayer.isAlive, isFalse);
-      expect(exiledPlayer.deathDay, equals(dayCount));
-      expect(exiledPlayer.deathReason, equals('exile'));
-
-      expect(resolution.report.first, contains('Alice was exiled from the club by popular vote.'));
+    test('returns Staff win when only Staff remain', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.clubStaff);
     });
 
-    test('returns updated players if there is a clear winner but a tie for lower places', () {
-      final p1 = createPlayer(id: 'p1', name: 'Alice');
-      final p2 = createPlayer(id: 'p2', name: 'Bob');
-      final p3 = createPlayer(id: 'p3', name: 'Charlie');
-      final players = [p1, p2, p3];
-      final tally = {'p1': 5, 'p2': 2, 'p3': 2};
-      const dayCount = 1;
+    test('returns Party Animals win when all Staff are eliminated', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff, isAlive: false),
+        createPlayer(id: '2', alliance: Team.partyAnimals),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.partyAnimals);
+    });
 
-      final resolution = GameResolutionLogic.resolveDayVote(players, tally, dayCount);
+    test('returns Party Animals win even if all players are dead (if staff existed)', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff, isAlive: false),
+        createPlayer(id: '2', alliance: Team.partyAnimals, isAlive: false),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.partyAnimals);
+    });
 
-      final exiledPlayer = resolution.players.firstWhere((p) => p.id == 'p1');
-      expect(exiledPlayer.isAlive, isFalse);
-      expect(exiledPlayer.deathDay, equals(dayCount));
-      expect(exiledPlayer.deathReason, equals('exile'));
+    test('returns null if there were never any Staff', () {
+      final players = [
+        createPlayer(id: '1', alliance: Team.partyAnimals),
+        createPlayer(id: '2', alliance: Team.partyAnimals),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNull);
+    });
 
-      expect(resolution.report.first, contains('Alice was exiled from the club by popular vote.'));
+    test('returns null for empty player list', () {
+      final players = <Player>[];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNull);
+    });
+
+    test('ignores Neutral players for win condition counts', () {
+      // 1 Staff, 1 PA, 1 Neutral -> Staff: 1, PA: 1 -> Tie -> Staff Win
+      final players = [
+        createPlayer(id: '1', alliance: Team.clubStaff),
+        createPlayer(id: '2', alliance: Team.partyAnimals),
+        createPlayer(id: '3', alliance: Team.neutral),
+      ];
+      final result = GameResolutionLogic.checkWinCondition(players);
+      expect(result, isNotNull);
+      expect(result!.winner, Team.clubStaff);
+    });
+
+    test('Game continues if Neutral players tip the balance to not meeting win conditions', () {
+        // 1 Staff, 2 PA, 1 Neutral -> Staff: 1, PA: 2 -> No win.
+        final players = [
+            createPlayer(id: '1', alliance: Team.clubStaff),
+            createPlayer(id: '2', alliance: Team.partyAnimals),
+            createPlayer(id: '3', alliance: Team.partyAnimals),
+            createPlayer(id: '4', alliance: Team.neutral),
+        ];
+        final result = GameResolutionLogic.checkWinCondition(players);
+        expect(result, isNull);
     });
   });
 }
