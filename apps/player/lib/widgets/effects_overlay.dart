@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
+import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_models/cb_models.dart';
 import 'package:cb_theme/cb_theme.dart';
-import '../room_effects_provider.dart';
 
 class EffectsOverlay extends ConsumerWidget {
   final Widget child;
@@ -21,11 +21,11 @@ class EffectsOverlay extends ConsumerWidget {
     return Stack(
       children: [
         child,
-        if (effectState.activeEffect == EFFECT_FLICKER)
+        if (effectState.activeEffect == GodModeEffect.flicker)
           _buildFlickerEffect(context, effectState.activeEffectPayload),
-        if (effectState.activeEffect == EFFECT_GLITCH)
+        if (effectState.activeEffect == GodModeEffect.glitch)
           _buildGlitchEffect(context, effectState.activeEffectPayload),
-        if (effectState.activeEffect == EFFECT_TOAST)
+        if (effectState.activeEffect == GodModeEffect.toast)
           _buildToastEffect(context, effectState.activeEffectPayload),
       ],
     );

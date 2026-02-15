@@ -1,11 +1,11 @@
 import 'package:cb_comms/cb_comms.dart';
+import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_models/cb_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cb_theme/cb_theme.dart';
 
 import 'player_bridge_actions.dart';
-import 'room_effects_provider.dart';
 import 'player_stats.dart';
 
 /// Constant for the 'day_vote' step ID.
@@ -136,7 +136,6 @@ class PlayerGameState {
       isConnected: isConnected ?? this.isConnected,
       joinError: joinError == _undefined ? this.joinError : joinError as String?,
       joinAccepted: joinAccepted ?? this.joinAccepted,
-      hostName: hostName ?? this.hostName,
       claimError:
           claimError == _undefined ? this.claimError : claimError as String?,
       kickedMessage: kickedMessage == _undefined
@@ -153,6 +152,7 @@ class PlayerGameState {
       activeEffectPayload: activeEffectPayload == _undefined
           ? this.activeEffectPayload
           : activeEffectPayload as Map<String, dynamic>?,
+      hostName: hostName ?? this.hostName,
     );
   }
 }

@@ -57,11 +57,12 @@ class FirebaseBridge {
     required Map<String, Map<String, dynamic>> playerPrivateData,
   }) async {
     try {
+      final batch = _firestore.batch();
+
       // Write public game state
-      await gameDoc.set(publicState, SetOptions(merge: true));
+      batch.set(gameDoc, publicState, SetOptions(merge: true));
 
       // Write each player's private state
-      final batch = _firestore.batch();
       for (final entry in playerPrivateData.entries) {
         final playerId = entry.key;
         final privateData = entry.value;

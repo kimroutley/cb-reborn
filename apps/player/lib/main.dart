@@ -86,7 +86,7 @@ class PlayerApp extends ConsumerWidget {
   const PlayerApp({super.key});
 
   static final Future<Color> _seedFuture =
-      CBTheme.sampleSeedFromGlobalBackground();
+      ImageProcessingService.sampleSeedFromGlobalBackground();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

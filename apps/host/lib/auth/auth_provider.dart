@@ -3,10 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:app_links/app_links.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+final firebaseAuthProvider =
+    Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
+final firestoreProvider =
+    Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
+final appLinksProvider = Provider<AppLinks>((ref) => AppLinks());
+final secureStorageProvider =
+    Provider<FlutterSecureStorage>((ref) => const FlutterSecureStorage());
 
 @immutable
 class AuthState {
@@ -35,11 +41,17 @@ enum AuthStatus {
   error,
 }
 
+final appLinksProvider = Provider<AppLinks>((ref) {
+  return AppLinks();
+});
+
 class AuthNotifier extends Notifier<AuthState> {
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  late final FirebaseAuth _auth;
+  late final FirebaseFirestore _firestore;
   GoogleSignIn? _googleSignIn;
-  final _appLinks = AppLinks();
+  late final AppLinks _appLinks;
+  late final FlutterSecureStorage _storage;
+
   StreamSubscription? _userSub;
   StreamSubscription? _linkSub;
 
@@ -50,18 +62,23 @@ class AuthNotifier extends Notifier<AuthState> {
 
   @override
   AuthState build() {
+    _auth = ref.watch(firebaseAuthProvider);
+    _firestore = ref.watch(firestoreProvider);
+    _appLinks = ref.watch(appLinksProvider);
+    _storage = ref.watch(secureStorageProvider);
+
     _userSub?.cancel();
     _linkSub?.cancel();
 
-    _userSub = _auth.authStateChanges().listen((user) async {
+    _userSub = _authService.authStateChanges.listen((user) async {
       if (user == null) {
         state = const AuthState(AuthStatus.unauthenticated);
         return;
       }
 
       try {
-        final profile = await _loadProfile(user);
-        if (profile.exists) {
+        final hasProfile = await _userRepository.hasProfile(user.uid);
+        if (hasProfile) {
           state = AuthState(AuthStatus.authenticated, user: user);
         } else {
           state = AuthState(AuthStatus.needsProfile, user: user);
@@ -118,10 +135,9 @@ class AuthNotifier extends Notifier<AuthState> {
         androidMinimumVersion: '1',
         iOSBundleId: 'com.clubblackout.cbHost',
       );
-      await _auth.sendSignInLinkToEmail(
+      await _authService.sendSignInLinkToEmail(
           email: email, actionCodeSettings: actionCodeSettings);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_pendingEmailKey, email);
+      await _storage.write(key: _pendingEmailKey, value: email);
       state = const AuthState(AuthStatus.linkSent);
     } on FirebaseAuthException catch (e) {
       state = AuthState(AuthStatus.error, error: e.message);
@@ -136,14 +152,18 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> signInWithGoogle() async {
     state = state.copyWith(status: AuthStatus.loading);
     try {
-      if (kIsWeb) {
-        await _auth.signInWithPopup(GoogleAuthProvider());
+      await _authService.signInWithGoogle();
+      // Auth state listener will handle success
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'ERROR_ABORTED_BY_USER') {
+        state = state.copyWith(status: AuthStatus.unauthenticated);
         return;
       }
 
       _googleSignIn ??= GoogleSignIn.instance;
       await _googleSignIn!.initialize();
-      final GoogleSignInAccount googleUser = await _googleSignIn!.authenticate();
+      final GoogleSignInAccount googleUser =
+          await _googleSignIn!.authenticate();
 
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
@@ -166,7 +186,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> completeSignInFromCurrentLink() async {
     final link = Uri.base.toString();
-    if (!_auth.isSignInWithEmailLink(link)) {
+    if (!_authService.isSignInWithEmailLink(link)) {
       state = AuthState(
         AuthStatus.error,
         error: 'No valid sign-in link found in this session.',
@@ -180,11 +200,10 @@ class AuthNotifier extends Notifier<AuthState> {
     String link, {
     bool preferTypedEmail = false,
   }) async {
-    if (!_auth.isSignInWithEmailLink(link)) return;
+    if (!_authService.isSignInWithEmailLink(link)) return;
 
     state = state.copyWith(status: AuthStatus.loading);
-    final prefs = await SharedPreferences.getInstance();
-    final persistedEmail = prefs.getString(_pendingEmailKey);
+    final persistedEmail = await _storage.read(key: _pendingEmailKey);
     final typedEmail = emailController.text.trim();
     final email = preferTypedEmail
         ? (typedEmail.isNotEmpty ? typedEmail : persistedEmail)
@@ -202,10 +221,11 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final userCredential =
           await _auth.signInWithEmailLink(email: email, emailLink: link);
-      await prefs.remove(_pendingEmailKey);
+      await _storage.delete(key: _pendingEmailKey);
       if (userCredential.user != null) {
-        final profile = await _loadProfile(userCredential.user!);
-        if (profile.exists) {
+        final hasProfile =
+            await _userRepository.hasProfile(userCredential.user!.uid);
+        if (hasProfile) {
           state =
               AuthState(AuthStatus.authenticated, user: userCredential.user);
         } else {
@@ -215,7 +235,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } on FirebaseAuthException catch (e) {
       state = AuthState(AuthStatus.error, error: e.message);
     } catch (_) {
-      final currentUser = _auth.currentUser;
+      final currentUser = _authService.currentUser;
       if (currentUser != null) {
         state = AuthState(AuthStatus.needsProfile, user: currentUser);
       } else {
@@ -228,7 +248,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> saveUsername() async {
-    final user = _auth.currentUser;
+    final user = _authService.currentUser;
     final username = usernameController.text.trim();
     if (user == null) return;
     if (username.length < 3) {
@@ -241,13 +261,11 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
 
     try {
-      final profileRef = _firestore.collection('user_profiles').doc(user.uid);
-      await profileRef.set({
-        'username': username,
-        'email': user.email,
-        'createdAt': FieldValue.serverTimestamp(),
-        'isHost': true,
-      }, SetOptions(merge: true));
+      await _userRepository.createProfile(
+        uid: user.uid,
+        username: username,
+        email: user.email,
+      );
       state = AuthState(AuthStatus.authenticated, user: user);
     } on FirebaseException catch (e) {
       state = AuthState(
@@ -265,20 +283,12 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<DocumentSnapshot<Map<String, dynamic>>> _loadProfile(User user) {
-    return _firestore.collection('user_profiles').doc(user.uid).get();
-  }
-
   void reset() {
     state = const AuthState(AuthStatus.unauthenticated);
   }
 
   Future<void> signOut() async {
-    if (!kIsWeb) {
-      _googleSignIn ??= GoogleSignIn.instance;
-      await _googleSignIn?.signOut();
-    }
-    await _auth.signOut();
+    await _authService.signOut();
     state = const AuthState(AuthStatus.unauthenticated);
   }
 }
