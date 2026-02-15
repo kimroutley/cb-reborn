@@ -1,102 +1,16 @@
 import 'dart:async';
-
-import 'package:app_links/app_links.dart';
-import 'package:cb_host/auth/auth_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:app_links/app_links.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:cb_host/auth/auth_provider.dart';
 
-// Mocks
-class MockFirebaseAuth extends Fake implements FirebaseAuth {
-  final StreamController<User?> _authStateController = StreamController<User?>.broadcast();
+// ignore_for_file: subtype_of_sealed_class
 
-  @override
-  Stream<User?> authStateChanges() => _authStateController.stream;
-
-  @override
-  Future<void> sendSignInLinkToEmail({
-    required String email,
-    required ActionCodeSettings actionCodeSettings,
-  }) async {
-    // No-op
-  }
-
-  @override
-  bool isSignInWithEmailLink(String emailLink) {
-    return emailLink.contains('signIn');
-  }
-
-  @override
-  Future<UserCredential> signInWithEmailLink({
-    required String email,
-    required String emailLink,
-  }) async {
-    return MockUserCredential(MockUser(email: email));
-  }
-}
-
-class MockUser extends Fake implements User {
-  @override
-  final String email;
-  @override
-  final String uid = 'test_uid';
-
-  MockUser({required this.email});
-}
-
-class MockUserCredential extends Fake implements UserCredential {
-  @override
-  final User? user;
-  MockUserCredential(this.user);
-}
-
-class MockFirebaseFirestore extends Fake implements FirebaseFirestore {
-  @override
-  CollectionReference<Map<String, dynamic>> collection(String collectionPath) {
-    return MockCollectionReference();
-  }
-}
-
-class MockCollectionReference extends Fake implements CollectionReference<Map<String, dynamic>> {
-  @override
-  DocumentReference<Map<String, dynamic>> doc([String? path]) {
-    return MockDocumentReference();
-  }
-}
-
-class MockDocumentReference extends Fake implements DocumentReference<Map<String, dynamic>> {
-  @override
-  Future<DocumentSnapshot<Map<String, dynamic>>> get([GetOptions? options]) async {
-    return MockDocumentSnapshot();
-  }
-
-  @override
-  Future<void> set(Map<String, dynamic> data, [SetOptions? options]) async {}
-}
-
-class MockDocumentSnapshot extends Fake implements DocumentSnapshot<Map<String, dynamic>> {
-  @override
-  bool get exists => false; // Assume profile doesn't exist initially
-
-  @override
-  Map<String, dynamic>? data() => null;
-}
-
-class MockAppLinks extends Fake implements AppLinks {
-  final _controller = StreamController<Uri>.broadcast();
-
-  @override
-  Future<Uri?> getInitialLink() async => null;
-
-  @override
-  Stream<Uri> get uriLinkStream => _controller.stream;
-
-  void simulateLink(Uri uri) => _controller.add(uri);
-}
-
-class MockFlutterSecureStorage extends Fake implements FlutterSecureStorage {
+// Fakes
+class FakeFlutterSecureStorage extends Fake implements FlutterSecureStorage {
   final Map<String, String> _storage = {};
 
   @override
@@ -144,66 +58,157 @@ class MockFlutterSecureStorage extends Fake implements FlutterSecureStorage {
   }
 }
 
+class FakeFirebaseAuth extends Fake implements FirebaseAuth {
+  final StreamController<User?> _authStateController =
+      StreamController<User?>.broadcast();
+
+  @override
+  Stream<User?> authStateChanges() => _authStateController.stream;
+
+  @override
+  Future<void> sendSignInLinkToEmail({
+    required String email,
+    required ActionCodeSettings actionCodeSettings,
+  }) async {
+    // No-op
+  }
+
+  @override
+  bool isSignInWithEmailLink(String emailLink) {
+    return emailLink.contains('signIn');
+  }
+
+  @override
+  Future<UserCredential> signInWithEmailLink({
+    required String email,
+    required String emailLink,
+  }) async {
+    return FakeUserCredential();
+  }
+
+  @override
+  User? get currentUser => null;
+}
+
+class FakeUserCredential extends Fake implements UserCredential {
+  @override
+  User? get user => FakeUser();
+}
+
+class FakeUser extends Fake implements User {
+  @override
+  String get uid => 'test_uid';
+
+  @override
+  String? get email => 'test@example.com';
+}
+
+class FakeFirebaseFirestore extends Fake implements FirebaseFirestore {
+  @override
+  CollectionReference<Map<String, dynamic>> collection(String collectionPath) {
+    return FakeCollectionReference();
+  }
+}
+
+class FakeCollectionReference extends Fake
+    implements CollectionReference<Map<String, dynamic>> {
+  @override
+  DocumentReference<Map<String, dynamic>> doc([String? path]) {
+    return FakeDocumentReference();
+  }
+}
+
+class FakeDocumentReference extends Fake
+    implements DocumentReference<Map<String, dynamic>> {
+  @override
+  Future<DocumentSnapshot<Map<String, dynamic>>> get(
+      [GetOptions? options]) async {
+    return FakeDocumentSnapshot();
+  }
+}
+
+class FakeDocumentSnapshot extends Fake
+    implements DocumentSnapshot<Map<String, dynamic>> {
+  @override
+  bool get exists => false;
+
+  @override
+  Map<String, dynamic>? data() => null;
+}
+
+class FakeAppLinks extends Fake implements AppLinks {
+  final _controller = StreamController<Uri>.broadcast();
+
+  @override
+  Future<Uri?> getInitialLink() async => null;
+
+  @override
+  Stream<Uri> get uriLinkStream => _controller.stream;
+
+  void simulateLink(Uri uri) {
+    _controller.add(uri);
+  }
+}
+
 void main() {
-  late MockFirebaseAuth mockAuth;
-  late MockFirebaseFirestore mockFirestore;
-  late MockAppLinks mockAppLinks;
-  late MockFlutterSecureStorage mockStorage;
+  late FakeFlutterSecureStorage mockStorage;
+  late FakeFirebaseAuth mockAuth;
+  late FakeFirebaseFirestore mockFirestore;
+  late FakeAppLinks mockAppLinks;
 
   setUp(() {
-    mockAuth = MockFirebaseAuth();
-    mockFirestore = MockFirebaseFirestore();
-    mockAppLinks = MockAppLinks();
-    mockStorage = MockFlutterSecureStorage();
+    mockStorage = FakeFlutterSecureStorage();
+    mockAuth = FakeFirebaseAuth();
+    mockFirestore = FakeFirebaseFirestore();
+    mockAppLinks = FakeAppLinks();
   });
 
-  test('sendSignInLink stores email in secure storage', () async {
+  test('sendSignInLink writes email to secure storage', () async {
     final container = ProviderContainer(
       overrides: [
+        secureStorageProvider.overrideWithValue(mockStorage),
         firebaseAuthProvider.overrideWithValue(mockAuth),
         firestoreProvider.overrideWithValue(mockFirestore),
         appLinksProvider.overrideWithValue(mockAppLinks),
-        secureStorageProvider.overrideWithValue(mockStorage),
       ],
     );
+    addTearDown(container.dispose);
 
     final notifier = container.read(authProvider.notifier);
-
-    // Set email text
     notifier.emailController.text = 'test@example.com';
 
-    // Call method
     await notifier.sendSignInLink();
 
-    // Verify storage
     final storedEmail = await mockStorage.read(key: 'host_email_link_pending');
     expect(storedEmail, 'test@example.com');
   });
 
-  test('Processing link retrieves and clears email from secure storage', () async {
-    // Pre-populate storage
-    await mockStorage.write(key: 'host_email_link_pending', value: 'saved@example.com');
+  test('Completing sign in via deep link reads and deletes email from storage',
+      () async {
+    await mockStorage.write(
+        key: 'host_email_link_pending', value: 'saved@example.com');
 
     final container = ProviderContainer(
       overrides: [
+        secureStorageProvider.overrideWithValue(mockStorage),
         firebaseAuthProvider.overrideWithValue(mockAuth),
         firestoreProvider.overrideWithValue(mockFirestore),
         appLinksProvider.overrideWithValue(mockAppLinks),
-        secureStorageProvider.overrideWithValue(mockStorage),
       ],
     );
+    addTearDown(container.dispose);
 
-    // Initialize notifier (starts listening to links)
-    container.read(authProvider);
+    // Watch the provider to initialize the notifier and start listening to links
+    final _ = container.read(authProvider);
 
-    // Simulate link
-    final link = Uri.parse('https://example.com/signIn?code=123');
-    mockAppLinks.simulateLink(link);
+    // Simulate incoming link
+    mockAppLinks.simulateLink(Uri.parse('https://example.com/signIn?code=123'));
 
-    // Wait for async processing
-    await Future.delayed(const Duration(milliseconds: 100));
+    // Wait for async operations to complete
+    await Future.delayed(Duration.zero);
+    await Future.delayed(Duration.zero);
 
-    // Check if storage was cleared (meaning sign in succeeded and cleared the key)
+    // Verify storage is cleared
     final storedEmail = await mockStorage.read(key: 'host_email_link_pending');
     expect(storedEmail, isNull);
   });

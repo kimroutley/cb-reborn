@@ -30,6 +30,7 @@ dependencies:
   dynamic_color: ^1.1.2
   package_info_plus: ^9.0.0
   shared_preferences: ^2.2.3
+  flutter_secure_storage: ^9.0.0
   collection: ^1.19.1
   flutter_secure_storage: ^9.0.0
 dev_dependencies:

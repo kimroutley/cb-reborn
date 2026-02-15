@@ -8,11 +8,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-// Providers for dependencies to allow mocking in tests
-final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
-final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
+final firebaseAuthProvider =
+    Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
+final firestoreProvider =
+    Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 final appLinksProvider = Provider<AppLinks>((ref) => AppLinks());
-final secureStorageProvider = Provider<FlutterSecureStorage>((ref) => const FlutterSecureStorage());
+final secureStorageProvider =
+    Provider<FlutterSecureStorage>((ref) => const FlutterSecureStorage());
 
 @immutable
 class AuthState {
@@ -47,6 +49,7 @@ class AuthNotifier extends Notifier<AuthState> {
   GoogleSignIn? _googleSignIn;
   late final AppLinks _appLinks;
   late final FlutterSecureStorage _storage;
+
   StreamSubscription? _userSub;
   StreamSubscription? _linkSub;
 
@@ -132,7 +135,6 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       await _auth.sendSignInLinkToEmail(
           email: email, actionCodeSettings: actionCodeSettings);
-
       await _storage.write(key: _pendingEmailKey, value: email);
       state = const AuthState(AuthStatus.linkSent);
     } on FirebaseAuthException catch (e) {
@@ -155,7 +157,8 @@ class AuthNotifier extends Notifier<AuthState> {
 
       _googleSignIn ??= GoogleSignIn.instance;
       await _googleSignIn!.initialize();
-      final GoogleSignInAccount googleUser = await _googleSignIn!.authenticate();
+      final GoogleSignInAccount googleUser =
+          await _googleSignIn!.authenticate();
 
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
@@ -195,7 +198,6 @@ class AuthNotifier extends Notifier<AuthState> {
     if (!_auth.isSignInWithEmailLink(link)) return;
 
     state = state.copyWith(status: AuthStatus.loading);
-
     final persistedEmail = await _storage.read(key: _pendingEmailKey);
     final typedEmail = emailController.text.trim();
     final email = preferTypedEmail
@@ -214,7 +216,6 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final userCredential =
           await _auth.signInWithEmailLink(email: email, emailLink: link);
-
       await _storage.delete(key: _pendingEmailKey);
       if (userCredential.user != null) {
         final profile = await _loadProfile(userCredential.user!);
