@@ -4,9 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:app_links/app_links.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'auth_service.dart';
-import 'user_repository.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+final firebaseAuthProvider =
+    Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
+final firestoreProvider =
+    Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
+final appLinksProvider = Provider<AppLinks>((ref) => AppLinks());
+final secureStorageProvider =
+    Provider<FlutterSecureStorage>((ref) => const FlutterSecureStorage());
 
 @immutable
 class AuthState {
@@ -40,9 +46,12 @@ final appLinksProvider = Provider<AppLinks>((ref) {
 });
 
 class AuthNotifier extends Notifier<AuthState> {
-  late final AuthService _authService;
-  late final UserRepository _userRepository;
+  late final FirebaseAuth _auth;
+  late final FirebaseFirestore _firestore;
+  GoogleSignIn? _googleSignIn;
   late final AppLinks _appLinks;
+  late final FlutterSecureStorage _storage;
+
   StreamSubscription? _userSub;
   StreamSubscription? _linkSub;
 
@@ -53,9 +62,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
   @override
   AuthState build() {
-    _authService = ref.read(authServiceProvider);
-    _userRepository = ref.read(userRepositoryProvider);
-    _appLinks = ref.read(appLinksProvider);
+    _auth = ref.watch(firebaseAuthProvider);
+    _firestore = ref.watch(firestoreProvider);
+    _appLinks = ref.watch(appLinksProvider);
+    _storage = ref.watch(secureStorageProvider);
 
     _userSub?.cancel();
     _linkSub?.cancel();
@@ -127,8 +137,7 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       await _authService.sendSignInLinkToEmail(
           email: email, actionCodeSettings: actionCodeSettings);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_pendingEmailKey, email);
+      await _storage.write(key: _pendingEmailKey, value: email);
       state = const AuthState(AuthStatus.linkSent);
     } on FirebaseAuthException catch (e) {
       state = AuthState(AuthStatus.error, error: e.message);
@@ -150,6 +159,19 @@ class AuthNotifier extends Notifier<AuthState> {
         state = state.copyWith(status: AuthStatus.unauthenticated);
         return;
       }
+
+      _googleSignIn ??= GoogleSignIn.instance;
+      await _googleSignIn!.initialize();
+      final GoogleSignInAccount googleUser =
+          await _googleSignIn!.authenticate();
+
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
+
+      await _auth.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
       state = AuthState(
         AuthStatus.error,
         error: e.message ?? 'Google sign-in failed. Please try again.',
@@ -181,8 +203,7 @@ class AuthNotifier extends Notifier<AuthState> {
     if (!_authService.isSignInWithEmailLink(link)) return;
 
     state = state.copyWith(status: AuthStatus.loading);
-    final prefs = await SharedPreferences.getInstance();
-    final persistedEmail = prefs.getString(_pendingEmailKey);
+    final persistedEmail = await _storage.read(key: _pendingEmailKey);
     final typedEmail = emailController.text.trim();
     final email = preferTypedEmail
         ? (typedEmail.isNotEmpty ? typedEmail : persistedEmail)
@@ -199,8 +220,8 @@ class AuthNotifier extends Notifier<AuthState> {
 
     try {
       final userCredential =
-          await _authService.signInWithEmailLink(email: email, emailLink: link);
-      await prefs.remove(_pendingEmailKey);
+          await _auth.signInWithEmailLink(email: email, emailLink: link);
+      await _storage.delete(key: _pendingEmailKey);
       if (userCredential.user != null) {
         final hasProfile =
             await _userRepository.hasProfile(userCredential.user!.uid);
