@@ -14,6 +14,7 @@ abstract class Player with _$Player {
     required String name,
     String? authUid,
     required Role role,
+    @Default(false) bool isBot,
     @Default(true) bool isAlive,
     @Default(true) bool isEnabled,
     @Default([]) List<String> statusEffects,

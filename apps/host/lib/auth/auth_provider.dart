@@ -5,6 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:app_links/app_links.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'auth_service.dart';
+import 'user_repository.dart';
 
 final firebaseAuthProvider =
     Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
@@ -41,16 +45,14 @@ enum AuthStatus {
   error,
 }
 
-final appLinksProvider = Provider<AppLinks>((ref) {
-  return AppLinks();
-});
-
 class AuthNotifier extends Notifier<AuthState> {
   late final FirebaseAuth _auth;
   late final FirebaseFirestore _firestore;
   GoogleSignIn? _googleSignIn;
   late final AppLinks _appLinks;
   late final FlutterSecureStorage _storage;
+  late final AuthService _authService;
+  late final UserRepository _userRepository;
 
   StreamSubscription? _userSub;
   StreamSubscription? _linkSub;
@@ -66,6 +68,8 @@ class AuthNotifier extends Notifier<AuthState> {
     _firestore = ref.watch(firestoreProvider);
     _appLinks = ref.watch(appLinksProvider);
     _storage = ref.watch(secureStorageProvider);
+    _authService = ref.watch(authServiceProvider);
+    _userRepository = ref.watch(userRepositoryProvider);
 
     _userSub?.cancel();
     _linkSub?.cancel();
