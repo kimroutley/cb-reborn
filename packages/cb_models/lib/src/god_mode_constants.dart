@@ -1,8 +1,12 @@
-const EFFECT_FLICKER = 'flicker';
-const EFFECT_GLITCH = 'glitch';
-const EFFECT_SHAKE = 'shake';
-const EFFECT_TOAST = 'toast';
+class GodModeEffect {
+  static const flicker = 'flicker';
+  static const glitch = 'glitch';
+  static const shake = 'shake';
+  static const toast = 'toast';
+}
 
-const SOUND_BASS_DROP = 'bass_drop';
-const SOUND_GLITCH_NOISE = 'glitch_noise';
-const SOUND_CLICK = 'click';
+class GodModeSound {
+  static const bassDrop = 'bass_drop';
+  static const glitchNoise = 'glitch_noise';
+  static const click = 'click';
+}
