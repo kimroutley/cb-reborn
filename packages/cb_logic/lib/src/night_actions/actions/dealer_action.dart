@@ -14,6 +14,7 @@ class DealerAction extends NightAction {
       final targetId = getTargetId(context, p.id, 'dealer');
       if (targetId != null) {
         context.murderTargets.add(targetId);
+        context.dealerAttacks[p.id] = targetId;
       }
     }
   }

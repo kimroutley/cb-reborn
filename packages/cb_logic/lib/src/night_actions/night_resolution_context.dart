@@ -10,12 +10,14 @@ class NightResolutionContext {
   // Mutable State
   final List<String> report = [];
   final List<String> teasers = [];
+  final List<GameEvent> events = [];
 
   // Accumulated data from actions
   final Set<String> blockedIds = {};
   final Set<String> protectedIds = {};
   final Set<String> silencedIds = {};
   final List<String> murderTargets = [];
+  final Map<String, String> dealerAttacks = {}; // killerId -> targetId
 
   NightResolutionContext({
     required List<Player> players,
@@ -49,6 +51,7 @@ class NightResolutionContext {
       report: report,
       teasers: teasers,
       privateMessages: _privateMessages,
+      events: events,
     );
   }
 }
