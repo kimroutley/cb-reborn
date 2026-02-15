@@ -1,14 +1,3 @@
-import 'package:cb_theme/src/typography.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:async';
-import 'colors.dart';
-import 'layout.dart';
-import 'haptic_service.dart';
-import 'theme_data.dart';
-import 'dart:math' as math;
-import 'dart:ui'; // For ImageFilter
-
 // Export modular widgets
 export 'widgets/chat_bubble.dart';
 export 'widgets/glass_tile.dart';
@@ -17,6 +6,27 @@ export 'widgets/ghost_lounge_view.dart';
 export 'widgets/cb_breathing_loader.dart';
 export 'widgets/cb_role_id_card.dart';
 
+// Newly extracted widgets
+export 'widgets/cb_neon_background.dart';
+export 'widgets/cb_panel.dart';
+export 'widgets/cb_section_header.dart';
+export 'widgets/cb_badge.dart';
+export 'widgets/cb_bottom_sheet_handle.dart';
+export 'widgets/cb_buttons.dart';
+export 'widgets/cb_text_field.dart';
+export 'widgets/cb_switch.dart';
+export 'widgets/cb_slider.dart';
+export 'widgets/cb_fade_slide.dart';
+export 'widgets/cb_status_overlay.dart';
+export 'widgets/cb_connection_dot.dart';
+export 'widgets/cb_countdown_timer.dart';
+export 'widgets/cb_report_card.dart';
+export 'widgets/cb_role_avatar.dart';
+export 'widgets/cb_compact_player_chip.dart';
+export 'widgets/cb_filter_chip.dart';
+export 'widgets/cb_player_status_tile.dart';
+export 'widgets/cb_status_rail.dart';
+export 'widgets/cb_prism_scaffold.dart';
 // ═══════════════════════════════════════════════
 //  REUSABLE NEON SYNTHWAVE WIDGET KIT
 // ═══════════════════════════════════════════════
