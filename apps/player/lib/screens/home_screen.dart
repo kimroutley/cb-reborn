@@ -27,8 +27,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // Connection State
   PlayerSyncMode _mode = PlayerSyncMode.cloud;
   final TextEditingController _joinCodeController = TextEditingController();
-  final TextEditingController _hostIpController =
-      TextEditingController(text: 'ws://192.168.1.');
+  final TextEditingController _hostIpController = TextEditingController(
+    text: 'ws://192.168.1.',
+  );
   String? _connectionError;
   bool _isConnecting = false;
 
@@ -146,6 +147,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
+    ref.listen(playerBridgeProvider, (prev, next) {
+      if (next.joinError != null || next.joinAccepted) {
+        if (_isConnecting) setState(() => _isConnecting = false);
+      }
+    });
+
+    ref.listen(cloudPlayerBridgeProvider, (prev, next) {
+      if (next.joinError != null || next.joinAccepted) {
+        if (_isConnecting) setState(() => _isConnecting = false);
+      }
+    });
+
     // Handle deep links
     final pendingJoinUrl = ref.watch(pendingJoinUrlProvider);
     if (pendingJoinUrl != null && pendingJoinUrl.isNotEmpty) {
@@ -171,7 +184,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       drawer: const CustomDrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(
-            horizontal: CBSpace.x6, vertical: CBSpace.x6),
+          horizontal: CBSpace.x6,
+          vertical: CBSpace.x6,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -195,8 +210,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               accentColor: scheme.primary,
               isPrismatic: true,
               icon: Icon(
-                  _mode == PlayerSyncMode.cloud ? Icons.cloud : Icons.wifi,
-                  color: scheme.primary),
+                _mode == PlayerSyncMode.cloud ? Icons.cloud : Icons.wifi,
+                color: scheme.primary,
+              ),
               content: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -204,8 +220,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color:
-                          scheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      color: scheme.surfaceContainerHighest.withValues(
+                        alpha: 0.3,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -248,7 +265,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   CBTextField(
                     controller: _joinCodeController,
                     hintText: 'XXXX-XXXXXX',
-                    textStyle: CBTypography.code.copyWith(fontSize: 20, letterSpacing: 4),
+                    textStyle: CBTypography.code.copyWith(
+                      fontSize: 20,
+                      letterSpacing: 4,
+                    ),
                     textAlign: TextAlign.center,
                     decoration: const InputDecoration(
                       labelText: 'ACCESS CODE',
@@ -278,10 +298,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   if (_isConnecting)
                     const Center(child: CBBreathingSpinner(size: 32))
                   else
-                    CBPrimaryButton(
-                      label: "CONNECT",
-                      onPressed: _connect,
-                    ),
+                    CBPrimaryButton(label: "CONNECT", onPressed: _connect),
                 ],
               ),
             ),
@@ -295,7 +312,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const GamesNightScreen()),
+                    builder: (context) => const GamesNightScreen(),
+                  ),
                 );
               },
             ),
@@ -308,14 +326,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildMiniStat(String label, String value, Color color) {
     return Column(
       children: [
-        Text(
-          value,
-          style: CBTypography.h2.copyWith(color: color),
-        ),
-        Text(
-          label,
-          style: CBTypography.micro.copyWith(letterSpacing: 1.5),
-        ),
+        Text(value, style: CBTypography.h2.copyWith(color: color)),
+        Text(label, style: CBTypography.micro.copyWith(letterSpacing: 1.5)),
       ],
     );
   }
@@ -326,8 +338,11 @@ class _ModeTab extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _ModeTab(
-      {required this.label, required this.selected, required this.onTap});
+  const _ModeTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -366,7 +381,9 @@ class _ModeTab extends StatelessWidget {
 class _JoinCodeFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     var text = newValue.text.toUpperCase().replaceAll('-', '');
     if (text.length > 10) text = text.substring(0, 10);
     var newText = '';

@@ -16,73 +16,6 @@ class GamesNightRecapScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final totalGames = games.length;
-    final wins = games.where((g) => g.winner == Team.partyAnimals).length;
-
-    return CBPrismScaffold(
-      title: 'SESSION RECAP',
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        children: [
-          // Header Stats
-          CBGlassTile(
-            title: session.sessionName,
-            subtitle: DateFormat('MMM dd, yyyy').format(session.startedAt),
-            accentColor: scheme.primary,
-            isPrismatic: true,
-            icon: Icon(Icons.calendar_today, color: scheme.primary),
-            content: Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _statItem(context, 'GAMES', '$totalGames', scheme.primary),
-                  _statItem(context, 'WINS', '$wins', scheme.tertiary),
-                  _statItem(
-                      context, 'LOSSES', '${totalGames - wins}', scheme.error),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Games List
-          CBSectionHeader(title: 'GAMES PLAYED', color: scheme.tertiary),
-          const SizedBox(height: 16),
-
-          if (games.isEmpty)
-            CBPanel(
-                child: Text("No games recorded for this session.",
-                    style: Theme.of(context).textTheme.bodyMedium)),
-
-          ...games.asMap().entries.map((entry) {
-            final index = entry.key;
-            final game = entry.value;
-            return _buildGameTile(context, index + 1, game, scheme);
-          }),
-          const SizedBox(height: 80),
-        ],
-      ),
-    );
-  }
-
-  Widget _statItem(
-      BuildContext context, String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(value, style: CBTypography.h2.copyWith(color: color)),
-        Text(label, style: CBTypography.micro.copyWith(letterSpacing: 1.2)),
-      ],
-    );
-  }
-
-  Widget _buildGameTile(
-      BuildContext context, int number, GameRecord game, ColorScheme scheme) {
-    final isPaWin = game.winner == Team.partyAnimals;
-    final color = isPaWin ? scheme.tertiary : scheme.error;
-    final icon = isPaWin ? Icons.emoji_events : Icons.warning_amber_rounded;
-    final duration = game.endedAt.difference(game.startedAt);
-    final durationStr = '${duration.inMinutes}m';
     final sortedGames = List<GameRecord>.from(games)
       ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
 
@@ -92,24 +25,26 @@ class GamesNightRecapScreen extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(CBSpace.x6),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Session Header
             Text(
               session.sessionName.toUpperCase(),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.bold,
-                    shadows: CBColors.textGlow(scheme.primary),
-                  ),
+                color: scheme.primary,
+                fontWeight: FontWeight.bold,
+                shadows: CBColors.textGlow(scheme.primary),
+              ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               _formatDateRange(session.startedAt, session.endedAt),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: scheme.onSurface.withValues(alpha: 0.7),
-                    letterSpacing: 1.2,
-                  ),
+                color: scheme.onSurface.withValues(alpha: 0.7),
+                letterSpacing: 1.2,
+              ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
 
@@ -131,12 +66,19 @@ class GamesNightRecapScreen extends StatelessWidget {
                 child: Text(
                   "No games recorded for this session.",
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurface.withValues(alpha: 0.7)),
+                    color: scheme.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
               )
             else
-              ...sortedGames
-                  .map((game) => _buildGameTile(context, game, scheme)),
+              ...sortedGames.asMap().entries.map(
+                (entry) => _buildGameTile(
+                  context,
+                  sortedGames.length - entry.key,
+                  entry.value,
+                  scheme,
+                ),
+              ),
 
             const SizedBox(height: 48),
           ],
@@ -168,7 +110,7 @@ class GamesNightRecapScreen extends StatelessWidget {
             context,
             "PARTY ANIMALS",
             partyWins,
-            scheme.primary, // Turquoise/Blue for Party Animals
+            scheme.primary, // Turquoise/Blue
             scheme,
           ),
         ),
@@ -178,7 +120,7 @@ class GamesNightRecapScreen extends StatelessWidget {
             context,
             "CLUB STAFF",
             staffWins,
-            scheme.secondary, // Pink/Magenta for Club Staff
+            scheme.secondary, // Pink/Magenta
             scheme,
           ),
         ),
@@ -186,8 +128,13 @@ class GamesNightRecapScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String label, int value,
-      Color color, ColorScheme scheme) {
+  Widget _buildStatCard(
+    BuildContext context,
+    String label,
+    int value,
+    Color color,
+    ColorScheme scheme,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -198,15 +145,13 @@ class GamesNightRecapScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
-            value.toString(),
-            style: CBTypography.h2.copyWith(color: color),
-          ),
+          Text(value.toString(), style: CBTypography.h2.copyWith(color: color)),
           const SizedBox(height: 4),
           Text(
             label,
-            style: CBTypography.micro
-                .copyWith(color: scheme.onSurface.withValues(alpha: 0.7)),
+            style: CBTypography.micro.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.7),
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -215,7 +160,11 @@ class GamesNightRecapScreen extends StatelessWidget {
   }
 
   Widget _buildGameTile(
-      BuildContext context, GameRecord game, ColorScheme scheme) {
+    BuildContext context,
+    int number,
+    GameRecord game,
+    ColorScheme scheme,
+  ) {
     final isPartyWin = game.winner == Team.partyAnimals;
     final winColor = isPartyWin ? scheme.primary : scheme.secondary;
     final winnerName = isPartyWin ? "PARTY ANIMALS" : "CLUB STAFF";
@@ -223,48 +172,47 @@ class GamesNightRecapScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: CBGlassTile(
-        title: 'GAME $number',
-        subtitle:
-            '${isPaWin ? "PARTY ANIMALS" : "CLUB STAFF"} WON • $durationStr',
-        accentColor: color,
-        icon: Icon(icon, color: color),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-            Text("ROSTER (${game.playerCount})",
-                style: CBTypography.labelSmall
-                    .copyWith(color: scheme.onSurface.withValues(alpha: 0.6))),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: game.roster
-                  .map((p) => CBBadge(
-                      text: p.name,
-                      color: p.alive
-                          ? scheme.primary
-                          : scheme.error.withValues(alpha: 0.7)))
-                  .toList(),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-        title: "GAME • ${game.dayCount} ROUNDS",
+        title: "GAME $number • ${game.dayCount} ROUNDS",
         subtitle: "WINNER: $winnerName • ${game.playerCount} PLAYERS",
         accentColor: winColor,
-        icon: Icon(isPartyWin ? Icons.celebration : Icons.security,
-            color: winColor),
+        icon: Icon(
+          isPartyWin ? Icons.celebration : Icons.security,
+          color: winColor,
+        ),
         isPrismatic: true,
         content: Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDetailRow(context, "DURATION",
-                  _formatDuration(game.startedAt, game.endedAt), scheme),
+              _buildDetailRow(
+                context,
+                "DURATION",
+                _formatDuration(game.startedAt, game.endedAt),
+                scheme,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "ROSTER",
+                style: CBTypography.labelSmall.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: game.roster
+                    .map(
+                      (p) => CBBadge(
+                        text: p.name,
+                        color: p.alive
+                            ? scheme.primary
+                            : scheme.error.withValues(alpha: 0.7),
+                      ),
+                    )
+                    .toList(),
+              ),
             ],
           ),
         ),
@@ -273,13 +221,18 @@ class GamesNightRecapScreen extends StatelessWidget {
   }
 
   Widget _buildDetailRow(
-      BuildContext context, String label, String value, ColorScheme scheme) {
+    BuildContext context,
+    String label,
+    String value,
+    ColorScheme scheme,
+  ) {
     return Row(
       children: [
         Text(
           "$label: ",
-          style: CBTypography.micro
-              .copyWith(color: scheme.onSurface.withValues(alpha: 0.5)),
+          style: CBTypography.micro.copyWith(
+            color: scheme.onSurface.withValues(alpha: 0.5),
+          ),
         ),
         Text(
           value,

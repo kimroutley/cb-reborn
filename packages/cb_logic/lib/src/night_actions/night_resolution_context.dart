@@ -10,6 +10,7 @@ class NightResolutionContext {
   // Mutable State
   final List<String> report = [];
   final List<String> teasers = [];
+  final List<GameEvent> events = [];
 
   // Accumulated data from actions
   final Set<String> blockedIds = {};
@@ -49,6 +50,7 @@ class NightResolutionContext {
       report: report,
       teasers: teasers,
       privateMessages: _privateMessages,
+      events: events,
     );
   }
 }
