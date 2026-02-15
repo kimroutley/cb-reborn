@@ -9,3 +9,4 @@ export 'src/sound_service.dart';
 export 'src/music_service.dart'; // Export the new MusicService
 export 'src/overlays.dart';
 export 'src/screens/guide_screen.dart';
+export 'src/image_processing_service.dart';
