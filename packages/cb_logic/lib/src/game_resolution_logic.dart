@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cb_models/cb_models.dart';
+import 'night_actions/night_actions.dart';
 
 class NightResolution {
   final List<Player> players;
@@ -105,51 +106,11 @@ class GameResolutionLogic {
     final events = <GameEvent>[];
 
     // 1. Process Pre-emptive actions (Sober, Roofi)
-    for (final p in currentPlayers.where((p) => p.isAlive)) {
-      final targetId = log['sober_act_${p.id}'];
-      if (targetId != null) {
-        blockedIds.add(targetId);
-        protectedIds.add(targetId);
-        spicyReport.add(
-            '${p.name} sent ${players.firstWhere((pl) => pl.id == targetId).name} home.');
-        teaserReport.add(
-            '${players.firstWhere((pl) => pl.id == targetId).name} was seen leaving the club early.');
-      }
+    SoberAction().execute(context);
+    RoofiAction().execute(context);
 
-      final roofiTarget = log['roofi_act_${p.id}'];
-      if (roofiTarget != null) {
-        silencedIds.add(roofiTarget);
-        // Roofi also blocks if they hit the ONLY active dealer
-        final activeDealers = currentPlayers.where((pl) =>
-            pl.isAlive &&
-            pl.role.id == RoleIds.dealer &&
-            !blockedIds.contains(pl.id));
-        if (activeDealers.length == 1 &&
-            activeDealers.first.id == roofiTarget) {
-          blockedIds.add(roofiTarget);
-        }
-        spicyReport.add(
-            '${p.name} drugged ${players.firstWhere((pl) => pl.id == roofiTarget).name}.');
-        teaserReport.add(
-            '${players.firstWhere((pl) => pl.id == roofiTarget).name} looks a bit dazed.');
-      }
-    }
-
-    // 2. Process Investigative (Bouncer, Bartender)
-    for (final p in currentPlayers
-        .where((p) => p.isAlive && !blockedIds.contains(p.id))) {
-      final bouncerTarget = log['bouncer_act_${p.id}'];
-      if (bouncerTarget != null) {
-        final target =
-            currentPlayers.firstWhere((pl) => pl.id == bouncerTarget);
-        final isStaff = target.alliance == Team.clubStaff;
-        privates.putIfAbsent(p.id, () => []).add(
-            'ID CHECK: ${target.name} is ${isStaff ? "STAFF" : "NOT STAFF"}.');
-        spicyReport.add('${p.name} checked ${target.name}\'s ID.');
-        teaserReport
-            .add('Someone\'s ID was carefully scrutinized by the Bouncer.');
-      }
-    }
+    // 2. Process Investigative (Bouncer)
+    BouncerAction().execute(context);
 
     // 3. Process Murder (Dealer)
     for (final p in currentPlayers.where((p) =>
@@ -162,25 +123,10 @@ class GameResolutionLogic {
     }
 
     // 4. Process Protection (Medic)
-    for (final p in currentPlayers.where((p) =>
-        p.isAlive && p.role.id == RoleIds.medic && !blockedIds.contains(p.id))) {
-      final targetId = log['medic_act_${p.id}'];
-      if (targetId != null && p.medicChoice == 'PROTECT_DAILY') {
-        protectedIds.add(targetId);
-      }
-    }
+    MedicAction().execute(context);
 
     // 5. Apply Deaths
-    for (final targetId in murderTargets) {
-      if (protectedIds.contains(targetId)) {
-        spicyReport.add(
-            'A murder attempt on ${players.firstWhere((pl) => pl.id == targetId).name} was thwarted.');
-        teaserReport
-            .add('A patron barely escaped a close encounter with "the staff".');
-        continue;
-      }
-
-      final victim = currentPlayers.firstWhere((p) => p.id == targetId);
+    DeathResolutionStrategy().execute(context);
 
       if (!victim.isAlive) continue;
 
