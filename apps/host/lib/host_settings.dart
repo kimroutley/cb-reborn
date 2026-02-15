@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cb_theme/cb_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @immutable
 class HostSettings {
@@ -48,14 +48,11 @@ class HostSettings {
 }
 
 class HostSettingsNotifier extends Notifier<HostSettings> {
-  static const _boxKey = 'cb_host_settings_v1';
   static const _keySfxVolume = 'sfxVolume';
   static const _keyMusicVolume = 'musicVolume';
   static const _keyHighContrast = 'highContrast';
   static const _keyGeminiNarrationEnabled = 'geminiNarrationEnabled';
   static const _keyHostPersonalityId = 'hostPersonalityId';
-
-  Box<dynamic>? _box;
 
   @override
   HostSettings build() {
@@ -63,25 +60,15 @@ class HostSettingsNotifier extends Notifier<HostSettings> {
     return HostSettings.defaults;
   }
 
-  Future<Box<dynamic>> _ensureBox() async {
-    final existing = _box;
-    if (existing != null && existing.isOpen) {
-      return existing;
-    }
-    final box = await Hive.openBox<dynamic>(_boxKey);
-    _box = box;
-    return box;
-  }
-
   Future<void> _hydrate() async {
     try {
-      final box = await _ensureBox();
-      final sfxVolume = (box.get(_keySfxVolume) as num?)?.toDouble();
-      final musicVolume = (box.get(_keyMusicVolume) as num?)?.toDouble();
-      final highContrast = box.get(_keyHighContrast) as bool?;
-      final geminiNarrationEnabled =
-          box.get(_keyGeminiNarrationEnabled) as bool?;
-      final hostPersonalityId = box.get(_keyHostPersonalityId) as String?;
+      final prefs = await SharedPreferences.getInstance();
+
+      final sfxVolume = prefs.getDouble(_keySfxVolume);
+      final musicVolume = prefs.getDouble(_keyMusicVolume);
+      final highContrast = prefs.getBool(_keyHighContrast);
+      final geminiNarrationEnabled = prefs.getBool(_keyGeminiNarrationEnabled);
+      final hostPersonalityId = prefs.getString(_keyHostPersonalityId);
 
       state = state.copyWith(
         sfxVolume: (sfxVolume ?? state.sfxVolume).clamp(0.0, 1.0),
@@ -100,12 +87,12 @@ class HostSettingsNotifier extends Notifier<HostSettings> {
 
   Future<void> _persist(HostSettings next) async {
     try {
-      final box = await _ensureBox();
-      await box.put(_keySfxVolume, next.sfxVolume);
-      await box.put(_keyMusicVolume, next.musicVolume);
-      await box.put(_keyHighContrast, next.highContrast);
-      await box.put(_keyGeminiNarrationEnabled, next.geminiNarrationEnabled);
-      await box.put(_keyHostPersonalityId, next.hostPersonalityId);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(_keySfxVolume, next.sfxVolume);
+      await prefs.setDouble(_keyMusicVolume, next.musicVolume);
+      await prefs.setBool(_keyHighContrast, next.highContrast);
+      await prefs.setBool(_keyGeminiNarrationEnabled, next.geminiNarrationEnabled);
+      await prefs.setString(_keyHostPersonalityId, next.hostPersonalityId);
     } catch (e) {
       // Best-effort
     }

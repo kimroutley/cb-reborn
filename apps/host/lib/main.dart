@@ -43,7 +43,7 @@ class HostApp extends ConsumerWidget {
   const HostApp({super.key});
 
   static final Future<Color> _seedFuture =
-      CBTheme.sampleSeedFromGlobalBackground();
+      ImageProcessingService.sampleSeedFromGlobalBackground();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
