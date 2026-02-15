@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:cb_comms/cb_comms.dart';
 import 'package:cb_host/host_bridge.dart';
 import 'package:cb_logic/cb_logic.dart';
-import 'package:cb_models/cb_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

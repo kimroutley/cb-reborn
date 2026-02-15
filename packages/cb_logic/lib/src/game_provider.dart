@@ -151,7 +151,6 @@ class Game extends _$Game {
             name: name,
             role: role,
             alliance: role.alliance,
-            isBot: true, // Sandbox players are bots
           ),
         );
       }
@@ -215,7 +214,6 @@ class Game extends _$Game {
     final newPlayer = Player(
       id: id,
       name: name,
-      isBot: true,
       role: roleCatalogMap['unassigned'] ?? roleCatalog.first,
       alliance: Team.unknown,
     );
@@ -238,17 +236,18 @@ class Game extends _$Game {
         (p) => p.id == actorId,
         orElse: () => state.players.first,
       );
-      if (actor.isBot && !state.actionLog.containsKey(step.id)) {
+      if (!state.actionLog.containsKey(step.id)) {
         return _performRandomStepAction(step);
       }
     }
     // 2. Fallback: Group action (no actor ID in step, check role)
     else if (step.roleId != null && step.roleId != 'unassigned') {
-       final botsWithRole = state.players.where((p) => p.isBot && p.role.id == step.roleId).toList();
-       if (botsWithRole.isNotEmpty && !state.actionLog.containsKey(step.id)) {
-          // If any bot has this role, we assume the bot(s) can act for the group
-          return _performRandomStepAction(step);
-       }
+      final botsWithRole =
+          state.players.where((p) => p.role.id == step.roleId).toList();
+      if (botsWithRole.isNotEmpty && !state.actionLog.containsKey(step.id)) {
+        // If any bot has this role, we assume the bot(s) can act for the group
+        return _performRandomStepAction(step);
+      }
     }
 
     return 0;
@@ -393,7 +392,6 @@ class Game extends _$Game {
     if (alive.length < 2) return 0;
 
     final voters = state.players.where((p) =>
-      p.isBot &&
       p.isAlive &&
       p.silencedDay != state.dayCount &&
       !p.isSinBinned &&

@@ -39,7 +39,7 @@ class MockFirebaseBridge extends FirebaseBridge {
 }
 
 class TestCloudHostBridge extends CloudHostBridge {
-  TestCloudHostBridge(Ref ref) : super(ref);
+  TestCloudHostBridge(super.ref);
 
   @override
   Future<String?> resolveHostUid() async {

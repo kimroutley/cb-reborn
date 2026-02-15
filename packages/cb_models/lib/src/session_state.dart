@@ -20,7 +20,6 @@ abstract class SessionState with _$SessionState {
   const factory SessionState({
     @Default('') String joinCode,
     @Default([]) List<String> claimedPlayerIds,
-    @Default('Club Host') String hostName,
   }) = _SessionState;
 
   factory SessionState.fromJson(Map<String, dynamic> json) => _$SessionStateFromJson(json);
