@@ -1,3 +1,4 @@
 ## 0.0.1
 
-* TODO: Describe initial release.
+* Initial release of the Club Blackout game logic engine.
+* Includes core game resolution logic, state management, session handling, and AI narration services.
