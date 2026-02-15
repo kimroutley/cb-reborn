@@ -1058,8 +1058,10 @@ class Game extends _$Game {
 
   // --- LOBBY ACTIONS ---
 
+  static final _whitespaceRegex = RegExp(r'\s+');
+
   String _normalizeName(String value) {
-    return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+    return value.trim().toLowerCase().replaceAll(_whitespaceRegex, ' ');
   }
 
   String _buildUniqueName(String desired, {String? excludePlayerId}) {
