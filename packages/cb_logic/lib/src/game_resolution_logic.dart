@@ -116,19 +116,13 @@ class GameResolutionLogic {
     // 5. Apply Deaths
     DeathResolutionStrategy().execute(context);
 
-    // 6. Apply state effects from context
+    // Apply silencing
     for (final id in context.silencedIds) {
       final p = context.getPlayer(id);
       context.updatePlayer(p.copyWith(silencedDay: dayCount));
     }
 
-    return NightResolution(
-      players: context.players,
-      report: context.report,
-      teasers: context.teasers,
-      privateMessages: context.privateMessages,
-      events: context.events,
-    );
+    return context.toNightResolution();
   }
 
   static DayResolution resolveDayVote(

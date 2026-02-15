@@ -23,34 +23,22 @@ class GamesNightRecapScreen extends StatelessWidget {
       title: 'SESSION RECAP',
       showAppBar: true,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(CBSpace.x6),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Session Header
-            Text(
-              session.sessionName.toUpperCase(),
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: scheme.primary,
-                fontWeight: FontWeight.bold,
-                shadows: CBColors.textGlow(scheme.primary),
+            CBGlassTile(
+              title: session.sessionName,
+              subtitle: DateFormat('MMM dd, yyyy').format(session.startedAt),
+              accentColor: scheme.primary,
+              isPrismatic: true,
+              icon: Icon(Icons.calendar_today, color: scheme.primary),
+              content: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: _buildStatsSummary(context, scheme),
               ),
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
-            Text(
-              _formatDateRange(session.startedAt, session.endedAt),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.7),
-                letterSpacing: 1.2,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-
-            // Stats Summary
-            _buildStatsSummary(context, scheme),
-
             const SizedBox(height: 32),
 
             // Games List
@@ -71,32 +59,23 @@ class GamesNightRecapScreen extends StatelessWidget {
                 ),
               )
             else
-              ...sortedGames.asMap().entries.map(
-                (entry) => _buildGameTile(
-                  context,
-                  sortedGames.length - entry.key,
-                  entry.value,
-                  scheme,
-                ),
-              ),
+              ...sortedGames.asMap().entries.map((entry) {
+                // Since we sorted descending, the game number should probably be calculated based on original index or total - index?
+                // Or just use the original list index.
+                // If we want "Game 1" to be the first game, we should use the index from the sorted list if we want it reversed?
+                // Let's just say "Game X" where X corresponds to the order played.
+                // sortedGames is latest first. So index 0 is Game N.
+                final index = entry.key;
+                final game = entry.value;
+                final gameNumber = games.length - index;
+                return _buildGameTile(context, gameNumber, game, scheme);
+              }),
 
             const SizedBox(height: 48),
           ],
         ),
       ),
     );
-  }
-
-  String _formatDateRange(DateTime start, DateTime? end) {
-    final startStr = DateFormat('MMMM d, yyyy').format(start).toUpperCase();
-    if (end == null) return '$startStr (ACTIVE)';
-
-    if (start.day == end.day &&
-        start.month == end.month &&
-        start.year == end.year) {
-      return startStr;
-    }
-    return '$startStr - ${DateFormat('MMMM d').format(end).toUpperCase()}';
   }
 
   Widget _buildStatsSummary(BuildContext context, ColorScheme scheme) {
@@ -136,7 +115,7 @@ class GamesNightRecapScreen extends StatelessWidget {
     ColorScheme scheme,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: scheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
@@ -160,92 +139,45 @@ class GamesNightRecapScreen extends StatelessWidget {
   }
 
   Widget _buildGameTile(
-    BuildContext context,
-    int number,
-    GameRecord game,
-    ColorScheme scheme,
-  ) {
+      BuildContext context, int number, GameRecord game, ColorScheme scheme) {
     final isPartyWin = game.winner == Team.partyAnimals;
     final winColor = isPartyWin ? scheme.primary : scheme.secondary;
     final winnerName = isPartyWin ? "PARTY ANIMALS" : "CLUB STAFF";
+    final duration = game.endedAt.difference(game.startedAt);
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    final durationStr = "${minutes}m ${seconds}s";
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: CBGlassTile(
-        title: "GAME $number • ${game.dayCount} ROUNDS",
-        subtitle: "WINNER: $winnerName • ${game.playerCount} PLAYERS",
+        title: 'GAME $number • ${game.dayCount} ROUNDS',
+        subtitle: 'WINNER: $winnerName • $durationStr',
         accentColor: winColor,
-        icon: Icon(
-          isPartyWin ? Icons.celebration : Icons.security,
-          color: winColor,
-        ),
-        isPrismatic: true,
-        content: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDetailRow(
-                context,
-                "DURATION",
-                _formatDuration(game.startedAt, game.endedAt),
-                scheme,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                "ROSTER",
-                style: CBTypography.labelSmall.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: game.roster
-                    .map(
-                      (p) => CBBadge(
-                        text: p.name,
-                        color: p.alive
-                            ? scheme.primary
-                            : scheme.error.withValues(alpha: 0.7),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-          ),
+        icon: Icon(isPartyWin ? Icons.celebration : Icons.security,
+            color: winColor),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+            Text("ROSTER (${game.playerCount})",
+                style: CBTypography.labelSmall
+                    .copyWith(color: scheme.onSurface.withValues(alpha: 0.6))),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: game.roster
+                  .map((p) => CBBadge(
+                      text: p.name,
+                      color: p.alive
+                          ? scheme.primary
+                          : scheme.error.withValues(alpha: 0.7)))
+                  .toList(),
+            )
+          ],
         ),
       ),
     );
-  }
-
-  Widget _buildDetailRow(
-    BuildContext context,
-    String label,
-    String value,
-    ColorScheme scheme,
-  ) {
-    return Row(
-      children: [
-        Text(
-          "$label: ",
-          style: CBTypography.micro.copyWith(
-            color: scheme.onSurface.withValues(alpha: 0.5),
-          ),
-        ),
-        Text(
-          value,
-          style: CBTypography.micro.copyWith(color: scheme.onSurface),
-        ),
-      ],
-    );
-  }
-
-  String _formatDuration(DateTime start, DateTime end) {
-    final d = end.difference(start);
-    final minutes = d.inMinutes;
-    final seconds = d.inSeconds % 60;
-    return "${minutes}m ${seconds}s";
   }
 }
