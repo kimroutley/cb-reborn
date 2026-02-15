@@ -6,7 +6,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:app_links/app_links.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+// Providers for dependencies to allow mocking in tests
+final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
+final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
+final appLinksProvider = Provider<AppLinks>((ref) => AppLinks());
+final secureStorageProvider = Provider<FlutterSecureStorage>((ref) => const FlutterSecureStorage());
 
 @immutable
 class AuthState {
@@ -36,10 +42,11 @@ enum AuthStatus {
 }
 
 class AuthNotifier extends Notifier<AuthState> {
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  late final FirebaseAuth _auth;
+  late final FirebaseFirestore _firestore;
   GoogleSignIn? _googleSignIn;
-  final _appLinks = AppLinks();
+  late final AppLinks _appLinks;
+  late final FlutterSecureStorage _storage;
   StreamSubscription? _userSub;
   StreamSubscription? _linkSub;
 
@@ -50,6 +57,11 @@ class AuthNotifier extends Notifier<AuthState> {
 
   @override
   AuthState build() {
+    _auth = ref.watch(firebaseAuthProvider);
+    _firestore = ref.watch(firestoreProvider);
+    _appLinks = ref.watch(appLinksProvider);
+    _storage = ref.watch(secureStorageProvider);
+
     _userSub?.cancel();
     _linkSub?.cancel();
 
@@ -120,8 +132,8 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       await _auth.sendSignInLinkToEmail(
           email: email, actionCodeSettings: actionCodeSettings);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_pendingEmailKey, email);
+
+      await _storage.write(key: _pendingEmailKey, value: email);
       state = const AuthState(AuthStatus.linkSent);
     } on FirebaseAuthException catch (e) {
       state = AuthState(AuthStatus.error, error: e.message);
@@ -183,8 +195,8 @@ class AuthNotifier extends Notifier<AuthState> {
     if (!_auth.isSignInWithEmailLink(link)) return;
 
     state = state.copyWith(status: AuthStatus.loading);
-    final prefs = await SharedPreferences.getInstance();
-    final persistedEmail = prefs.getString(_pendingEmailKey);
+
+    final persistedEmail = await _storage.read(key: _pendingEmailKey);
     final typedEmail = emailController.text.trim();
     final email = preferTypedEmail
         ? (typedEmail.isNotEmpty ? typedEmail : persistedEmail)
@@ -202,7 +214,8 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final userCredential =
           await _auth.signInWithEmailLink(email: email, emailLink: link);
-      await prefs.remove(_pendingEmailKey);
+
+      await _storage.delete(key: _pendingEmailKey);
       if (userCredential.user != null) {
         final profile = await _loadProfile(userCredential.user!);
         if (profile.exists) {
