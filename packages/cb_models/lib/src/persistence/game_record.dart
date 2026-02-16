@@ -21,7 +21,7 @@ abstract class GameRecord with _$GameRecord {
     @Default([]) List<String> rolesInPlay,
 
     /// Snapshot of player names + role IDs at game end
-    @Default([]) List<PlayerSnapshot> roster,
+    @Default([]) List<GameRecordPlayerSnapshot> roster,
 
     /// Full game timeline
     @Default([]) List<String> history,
@@ -36,16 +36,16 @@ abstract class GameRecord with _$GameRecord {
 
 /// Lightweight player info for the game record roster.
 @freezed
-abstract class PlayerSnapshot with _$PlayerSnapshot {
-  const factory PlayerSnapshot({
+abstract class GameRecordPlayerSnapshot with _$GameRecordPlayerSnapshot {
+  const factory GameRecordPlayerSnapshot({
     required String id,
     required String name,
     required String roleId,
     required Team alliance,
     @Default(true) bool alive,
     @Default(false) bool isBot,
-  }) = _PlayerSnapshot;
+  }) = _GameRecordPlayerSnapshot;
 
-  factory PlayerSnapshot.fromJson(Map<String, dynamic> json) =>
-      _$PlayerSnapshotFromJson(json);
+  factory GameRecordPlayerSnapshot.fromJson(Map<String, dynamic> json) =>
+      _$GameRecordPlayerSnapshotFromJson(json);
 }
