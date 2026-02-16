@@ -93,7 +93,7 @@ void main() {
 
       final updatedVictim = result.players.firstWhere((p) => p.id == victim.id);
       expect(updatedVictim.isAlive, true); // Dealer blocked
-      expect(result.report.any((s) => s.contains('sent Dealer home')), true);
+      expect(result.report.any((s) => s.contains('Sober blocked Dealer')), true);
     });
 
     test('Roofi blocks single dealer', () {
@@ -165,7 +165,67 @@ void main() {
       );
 
       expect(result.privateMessages[bouncer.id]!.first, contains('STAFF'));
-      expect(result.report.any((s) => s.contains('checked Dealer\'s ID')), true);
+      expect(result.report.any((s) => s.contains('Bouncer checked Dealer')), true);
+    });
+
+    test('Club Manager reveals role and marks target as sighted', () {
+      final manager = _player('Manager', _role(RoleIds.clubManager));
+      final target = _player('Target', _role(RoleIds.partyAnimal));
+      final players = [manager, target];
+
+      final log = {
+        'club_manager_act_${manager.id}_1': target.id,
+      };
+
+      final result = GameResolutionLogic.resolveNightActions(
+        players,
+        log,
+        1,
+        {},
+      );
+
+      final updatedTarget = result.players.firstWhere((p) => p.id == target.id);
+      expect(updatedTarget.sightedByClubManager, true);
+      expect(result.privateMessages[manager.id]!.first, contains(target.role.name));
+      expect(result.report.any((s) => s.contains('Manager file-checked Target')), true);
+    });
+
+    test('Lightweight applies taboo name to all alive players', () {
+      final lightweight = _player('Lightweight', _role(RoleIds.lightweight));
+      final target = _player('Target', _role(RoleIds.partyAnimal));
+      final bystander = _player('Bystander', _role(RoleIds.partyAnimal));
+      final deadPlayer =
+          _player('Dead', _role(RoleIds.partyAnimal)).copyWith(isAlive: false);
+      final players = [lightweight, target, bystander, deadPlayer];
+
+      final log = {
+        'lightweight_act_${lightweight.id}_1': target.id,
+      };
+
+      final result = GameResolutionLogic.resolveNightActions(
+        players,
+        log,
+        1,
+        {},
+      );
+
+      final updatedLightweight =
+          result.players.firstWhere((p) => p.id == lightweight.id);
+      final updatedTarget = result.players.firstWhere((p) => p.id == target.id);
+      final updatedBystander =
+          result.players.firstWhere((p) => p.id == bystander.id);
+      final updatedDead = result.players.firstWhere((p) => p.id == deadPlayer.id);
+
+      expect(updatedLightweight.tabooNames, contains(target.name));
+      expect(updatedTarget.tabooNames, contains(target.name));
+      expect(updatedBystander.tabooNames, contains(target.name));
+      expect(updatedDead.tabooNames, isNot(contains(target.name)));
+
+      expect(result.privateMessages[lightweight.id]!.first,
+          contains('banned ${target.name}\'s name'));
+      expect(result.report.any((s) => s.contains('LW banned ${target.name}\'s name')),
+          true);
+      expect(result.teasers, contains('A name is now FORBIDDEN.'));
     });
 
     test('Second Wind survives once', () {
