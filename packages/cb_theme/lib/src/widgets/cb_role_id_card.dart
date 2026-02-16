@@ -1,7 +1,11 @@
 import 'package:cb_models/cb_models.dart';
-import 'package:cb_theme/cb_theme.dart';
 import 'package:flutter/material.dart';
+import '../colors.dart';
+import 'cb_panel.dart';
+import 'cb_role_avatar.dart';
+import 'cb_badge.dart';
 
+/// A high-fidelity, interactive role ID card.
 class CBRoleIDCard extends StatelessWidget {
   final Role role;
   final VoidCallback? onTap;
@@ -17,50 +21,44 @@ class CBRoleIDCard extends StatelessWidget {
     final theme = Theme.of(context);
     final color = CBColors.fromHex(role.colorHex);
 
-    return CBGlassTile(
-      title: role.name,
-      subtitle: _allianceName(role.alliance),
-      accentColor: color,
-      isPrismatic: true,
-      onTap: onTap,
-      icon: CBRoleAvatar(
-        assetPath: role.assetPath,
-        color: color,
-        size: 56,
-        breathing: true,
-      ),
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CBBadge(text: 'CLASS: ${role.type}', color: color),
-              const SizedBox(width: 8),
-              CBBadge(
-                text: 'PRIORITY: ${role.nightPriority}',
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            role.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-              height: 1.4,
+    return CBPanel(
+      borderColor: color,
+      child: InkWell(
+        onTap: onTap,
+        child: Row(
+          children: [
+            CBRoleAvatar(
+              assetPath: role.assetPath,
+              color: color,
+              size: 48,
             ),
-          ),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    role.name.toUpperCase(),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  CBBadge(
+                    text: "CLASS: ${role.type}",
+                    color: color,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: color.withValues(alpha: 0.7),
+            ),
+          ],
+        ),
       ),
     );
   }
-
-  String _allianceName(Team t) => switch (t) {
-        Team.clubStaff => "THE DEALERS (KILLERS)",
-        Team.partyAnimals => "THE PARTY ANIMALS (INNOCENTS)",
-        Team.neutral => "WILDCARDS (VARIABLES)",
-        _ => "UNKNOWN",
-      };
 }

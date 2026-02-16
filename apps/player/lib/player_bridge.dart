@@ -1,7 +1,6 @@
 import 'package:cb_comms/cb_comms.dart';
 import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_models/cb_models.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cb_theme/cb_theme.dart';
@@ -300,22 +299,11 @@ class PlayerBridge extends Notifier<PlayerGameState>
 
   // ─── OUTBOUND ─────────────────────────────────
 
-  void joinWithCode(String code, {String? playerName, String? authUid}) =>
-      _client?.joinWithCode(
-        code,
-        playerName: playerName,
-        uid: authUid,
-      );
+  void joinWithCode(String code) => _client?.joinWithCode(code);
 
   @override
   Future<void> joinGame(String joinCode, String playerName) async {
-    String? uid;
-    try {
-      uid = FirebaseAuth.instance.currentUser?.uid;
-    } catch (_) {
-      uid = null;
-    }
-    joinWithCode(joinCode, playerName: playerName, authUid: uid);
+    joinWithCode(joinCode);
   }
 
   @override
@@ -473,6 +461,7 @@ class PlayerBridge extends Notifier<PlayerGameState>
   }
 
   void _applyStateSync(Map<String, dynamic> payload) {
+    final prevPhase = state.phase;
     final players = (payload['players'] as List<dynamic>?)
             ?.map((e) => PlayerSnapshot.fromMap(e as Map<String, dynamic>))
             .toList() ??
@@ -556,12 +545,12 @@ class PlayerBridge extends Notifier<PlayerGameState>
 
     state = nextState;
 
-    // Check for game completion to record stats
-    // We do this after setting state so the notifier receives the *new* state if it reads it.
-    if (nextState.winner != null) {
-      ref
-          .read(playerStatsProvider.notifier)
-          .recordCompletedGameIfNeeded(nextState);
+    // Refresh active player stats view once when the game ends.
+    if (prevPhase != 'endGame' && nextState.isEndGame) {
+      final meId = nextState.myPlayerId;
+      if (meId != null) {
+        ref.read(playerStatsProvider.notifier).refresh();
+      }
     }
   }
 

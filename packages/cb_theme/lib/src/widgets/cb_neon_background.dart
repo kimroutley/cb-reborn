@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 import 'dart:ui';
-
-import 'package:cb_theme/src/colors.dart';
 import 'package:flutter/material.dart';
+import '../colors.dart';
+import '../theme_data.dart';
+
 
 /// Atmospheric background with blurring and solid overlay.
 class CBNeonBackground extends StatefulWidget {
@@ -48,6 +49,8 @@ class _CBNeonBackgroundState extends State<CBNeonBackground>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final effectiveBackgroundAsset =
+      widget.backgroundAsset ?? CBTheme.globalBackgroundAsset;
     final reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
@@ -68,8 +71,8 @@ class _CBNeonBackgroundState extends State<CBNeonBackground>
 
           final primary = scheme.primary;
           final secondary = scheme.secondary;
-          final shimmerCyan = CBColors.cyanRefract;
-          final shimmerMagenta = CBColors.magentaShift;
+          final shimmerCyan = scheme.tertiary;
+          final shimmerMagenta = scheme.tertiaryContainer;
 
           return Stack(
             children: [
@@ -86,7 +89,7 @@ class _CBNeonBackgroundState extends State<CBNeonBackground>
                       colors: [
                         primary.withValues(alpha: 0.18),
                         secondary.withValues(alpha: 0.10),
-                        CBColors.voidBlack.withValues(alpha: 0.0),
+                        Colors.black.withValues(alpha: 0.0),
                       ],
                       stops: const [0.0, 0.55, 1.0],
                     ),
@@ -146,14 +149,12 @@ class _CBNeonBackgroundState extends State<CBNeonBackground>
       children: [
         // Base Layer
         Positioned.fill(
-          child: widget.backgroundAsset != null
-              ? Image.asset(
-                  widget.backgroundAsset!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Container(color: theme.scaffoldBackgroundColor),
-                )
-              : Container(color: theme.scaffoldBackgroundColor),
+          child: Image.asset(
+            effectiveBackgroundAsset,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) =>
+                Container(color: theme.scaffoldBackgroundColor),
+          ),
         ),
 
         // Radiance (neon spill)
@@ -209,3 +210,4 @@ class _StaticRadiance extends StatelessWidget {
     );
   }
 }
+

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cb_models/cb_models.dart';
-import 'package:cb_logic/cb_logic.dart';
-import '../../cb_theme.dart';
-import '../widgets/cb_alliance_graph.dart';
-import '../widgets/cb_phase_timeline.dart';
+import '../colors.dart';
+import '../widgets.dart';
 
 class CBGuideScreen extends StatefulWidget {
   final GameState? gameState;
@@ -44,40 +42,72 @@ class _CBGuideScreenState extends State<CBGuideScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return CBPrismScaffold(
-      title: "CLUB BIBLE",
-      drawer: widget.drawer,
-      body: Column(
-        children: [
-          TabBar(
-            controller: _tabController,
-            labelColor: theme.colorScheme.primary,
-            unselectedLabelColor: scheme.onSurface.withValues(alpha: 0.35),
-            indicatorColor: theme.colorScheme.primary,
-            indicatorWeight: 3,
-            dividerColor: scheme.outlineVariant.withValues(alpha: 0.35),
-            labelStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                  fontSize: 10,
-                ),
-            tabs: const [
-              Tab(text: "HANDBOOK"),
-              Tab(text: "OPERATIVES"),
-              Tab(text: "STRATEGY"),
-            ],
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildHandbookTab(),
-                _buildOperativesTab(),
-                _buildStrategyTab(),
+    final topInset =
+        MediaQuery.paddingOf(context).top + kToolbarHeight + kTextTabBarHeight;
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        flexibleSpace: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                scheme.surface.withValues(alpha: 0.90),
+                scheme.surface.withValues(alpha: 0.60),
+                Colors.transparent,
               ],
+              stops: const [0.0, 0.78, 1.0],
             ),
           ),
-        ],
+        ),
+        title: const Text("CLUB BIBLE"),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: theme.colorScheme.primary,
+          unselectedLabelColor: scheme.onSurface.withValues(alpha: 0.6),
+          indicatorColor: theme.colorScheme.primary,
+          indicatorWeight: 3,
+          dividerColor: scheme.outlineVariant.withValues(alpha: 0.35),
+          labelStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+                fontSize: 10,
+              ),
+          tabs: const [
+            Tab(text: "HANDBOOK"),
+            Tab(text: "OPERATIVES"),
+            Tab(text: "STRATEGY"),
+          ],
+        ),
+      ),
+      drawer: widget.drawer,
+      body: CBNeonBackground(
+        showRadiance: true,
+        blurSigma: 11,
+        child: SafeArea(
+          top: false,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: scheme.surface.withValues(alpha: 0.26),
+            ),
+            child: Padding(
+              padding: EdgeInsets.only(top: topInset),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildHandbookTab(),
+                  _buildOperativesTab(),
+                  _buildStrategyTab(),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -91,7 +121,16 @@ class _CBGuideScreenState extends State<CBGuideScreen>
       padding: const EdgeInsets.symmetric(vertical: 24),
       children: [
         // ── ALLIANCE POWER STRUGGLE (Visual Graph) ──
-        const CBAllianceGraph(),
+        if (widget.gameState != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: CBSectionHeader(
+              title: "ALLIANCE POWER",
+              color: scheme.primary,
+            ),
+          ),
+        if (widget.gameState != null)
+          CBAllianceGraph(players: widget.gameState!.players),
 
         const SizedBox(height: 48),
 
@@ -100,33 +139,46 @@ class _CBGuideScreenState extends State<CBGuideScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "NIGHTCLUB PROTOCOLS",
-                style: theme.textTheme.labelSmall!.copyWith(
-                  color: scheme.primary,
-                  letterSpacing: 3.0,
-                  fontWeight: FontWeight.w900,
-                ),
+              CBSectionHeader(
+                title: "NIGHTCLUB PROTOCOLS",
+                color: scheme.primary,
               ),
               const SizedBox(height: 24),
               // ── PHASE TIMELINE ──
-              const CBPhaseTimeline(),
+              if (widget.gameState != null)
+                CBPhaseTimeline(currentPhase: widget.gameState!.phase),
 
               const SizedBox(height: 40),
 
               // ── THE BAR TAB (Highlight) ──
-              CBGlassTile(
-                title: "THE BAR TAB",
-                subtitle: "SOCIAL CONSEQUENCES",
-                accentColor: scheme.error,
-                isPrismatic: true,
-                icon: Icon(Icons.wine_bar_rounded, color: scheme.error),
-                content: Text(
-                  "Every mistake adds a drink to your tab. Eliminated players serve as ghosts in the lounge, but their debt remains.",
-                  style: theme.textTheme.bodyMedium!.copyWith(
-                    color: scheme.onSurface.withValues(alpha: 0.8),
-                    height: 1.5,
-                  ),
+              CBPanel(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.wine_bar_rounded, color: scheme.error),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            "THE BAR TAB",
+                            style: theme.textTheme.headlineSmall!.copyWith(
+                                  color: scheme.error,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Every mistake adds a drink to your tab. Eliminated players serve as ghosts in the lounge, but their debt remains.",
+                      style: theme.textTheme.bodyMedium!.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.8),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -180,84 +232,91 @@ class _CBGuideScreenState extends State<CBGuideScreen>
 
   void _showOperativeFile(Role role) {
     final color = CBColors.fromHex(role.colorHex);
-    showThemedFullScreenDialog<void>(
+    showDialog(
       context: context,
-      accentColor: color,
-      child: Builder(
-        builder: (context) {
-          final scheme = Theme.of(context).colorScheme;
-          final textTheme = Theme.of(context).textTheme;
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        final textTheme = Theme.of(context).textTheme;
 
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 12),
-                      CBRoleAvatar(
-                        assetPath: role.assetPath,
-                        color: color,
-                        size: 140,
-                        breathing: true,
-                      ),
-                      const SizedBox(height: 28),
-                      Text(
-                        role.name.toUpperCase(),
-                        textAlign: TextAlign.center,
-                        style: textTheme.displayMedium!.copyWith(
-                          color: scheme.onSurface,
-                          letterSpacing: 3.5,
-                          shadows: CBColors.textGlow(color, intensity: 0.9),
+        return AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          content: Container(
+            width: double.maxFinite,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 12),
+                        CBRoleAvatar(
+                          assetPath: role.assetPath,
+                          color: color,
+                          size: 140,
+                          breathing: true,
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      CBBadge(text: "CLASS: ${role.type}", color: color),
-                      const SizedBox(height: 36),
-                      CBPanel(
-                        borderColor: color.withValues(alpha: 0.3),
-                        child: Text(
-                          role.description,
+                        const SizedBox(height: 28),
+                        Text(
+                          role.name.toUpperCase(),
                           textAlign: TextAlign.center,
-                          style: textTheme.bodyLarge!.copyWith(
-                            height: 1.7,
-                            color: scheme.onSurface.withValues(alpha: 0.9),
+                          style: textTheme.displayMedium!.copyWith(
+                            color: scheme.onSurface,
+                            letterSpacing: 3.5,
+                            shadows: [
+                              Shadow(
+                                color: color.withValues(alpha: 0.9),
+                                blurRadius: 10,
+                              )
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 40),
-                      _buildDetailStat("WAKE PRIORITY",
-                          "LEVEL ${role.nightPriority}", color),
-                      _buildDetailStat(
-                          "ALLIANCE", _allianceName(role.alliance), color),
-                      _buildDetailStat(
-                          "MISSION GOAL", _winConditionFor(role), color),
-                      const SizedBox(height: 64),
-                      CBPrimaryButton(
-                        label: "CLOSE DOSSIER",
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        CBBadge(text: "CLASS: ${role.type}", color: color),
+                        const SizedBox(height: 36),
+                        CBPanel(
+                          child: Text(
+                            role.description,
+                            textAlign: TextAlign.center,
+                            style: textTheme.bodyLarge!.copyWith(
+                              height: 1.7,
+                              color: scheme.onSurface.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        _buildDetailStat(
+                            "WAKE PRIORITY", "LEVEL ${role.nightPriority}", color),
+                        _buildDetailStat(
+                            "ALLIANCE", _allianceName(role.alliance), color),
+                        _buildDetailStat(
+                            "MISSION GOAL", _winConditionFor(role), color),
+                        const SizedBox(height: 64),
+                        CBPrimaryButton(
+                          label: "CLOSE DOSSIER",
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: Icon(
-                    Icons.close_rounded,
-                    color: scheme.onSurface.withValues(alpha: 0.75),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: scheme.onSurface.withValues(alpha: 0.75),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
-      ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -286,7 +345,7 @@ class _CBGuideScreenState extends State<CBGuideScreen>
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.35),
+                  color: scheme.onSurface.withValues(alpha: 0.6),
                   fontSize: 10,
                   letterSpacing: 2,
                 ),
@@ -309,7 +368,7 @@ class _CBGuideScreenState extends State<CBGuideScreen>
 
   // ── Tab 3: Strategy (Context-Aware Analytics) ──
   Widget _buildStrategyTab() {
-    final tips = StrategyGenerator.generateTips(
+    final tips = _GuideStrategyGenerator.generateTips(
       role: _selectedRoleForTips!,
       state: widget.gameState,
       player: widget.localPlayer,
@@ -364,26 +423,47 @@ class _CBGuideScreenState extends State<CBGuideScreen>
 
   Widget _buildRoleSelector() {
     final color = CBColors.fromHex(_selectedRoleForTips!.colorHex);
-    return CBGlassTile(
-      title: _selectedRoleForTips!.name,
-      subtitle: "TAP TO CHANGE DATA FEED",
-      accentColor: color,
-      icon: CBRoleAvatar(
-        assetPath: _selectedRoleForTips!.assetPath,
-        color: color,
-        size: 32,
+    return CBPanel(
+      child: InkWell(
+        onTap: () => _showRolePickerModal(),
+        child: Row(
+          children: [
+            CBRoleAvatar(
+              assetPath: _selectedRoleForTips!.assetPath,
+              color: color,
+              size: 32,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _selectedRoleForTips!.name,
+                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "TAP TO CHANGE DATA FEED",
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color: color.withValues(alpha: 0.7),
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      onTap: () => _showRolePickerModal(),
-      content: const SizedBox.shrink(),
     );
   }
 
   void _showRolePickerModal() {
-    showThemedBottomSheetBuilder<void>(
+    showModalBottomSheet(
       context: context,
-      accentColor: Theme.of(context).colorScheme.primary,
-      padding: EdgeInsets.zero,
-      wrapInScrollView: false,
       builder: (context) {
         final scheme = Theme.of(context).colorScheme;
         final maxHeight = MediaQuery.sizeOf(context).height * 0.82;
@@ -499,3 +579,69 @@ class _CBGuideScreenState extends State<CBGuideScreen>
     return Icons.lightbulb_outline_rounded;
   }
 }
+
+class _GuideStrategyGenerator {
+  _GuideStrategyGenerator._();
+
+  static List<String> generateTips({
+    required Role role,
+    GameState? state,
+    Player? player,
+  }) {
+    final tips = <String>[
+      _baseTip(role.id),
+    ];
+
+    if (state != null) {
+      final alive = state.players.where((p) => p.isAlive).toList();
+      if (state.dayVoteTally.isNotEmpty) {
+        final maxVotes =
+            state.dayVoteTally.values.reduce((a, b) => a > b ? a : b);
+        if (maxVotes >= 2) {
+          tips.add(
+            '📊 PATTERN: Vote pressure is building. Expect a last-minute pivot before exile.',
+          );
+        }
+      }
+
+      if (role.alliance == Team.clubStaff &&
+          !alive.any((p) => p.role.id == RoleIds.medic)) {
+        tips.add(
+          '🔥 OPPORTUNITY: The Medic is out. Night eliminations are harder to reverse.',
+        );
+      }
+
+      if (role.id == RoleIds.minor &&
+          !alive.any((p) => p.role.id == RoleIds.bouncer)) {
+        tips.add(
+          '🛡️ WHAT IF: Without the Bouncer alive, your protection window is stronger than usual.',
+        );
+      }
+    }
+
+    if (player != null) {
+      if (player.lives > 1) {
+        tips.add('💎 STATUS: You still have ${player.lives} lives in reserve.');
+      }
+      if (state != null && player.silencedDay == state.dayCount) {
+        tips.add('🔇 STATUS: You are silenced this day phase.');
+      }
+    }
+
+    return tips;
+  }
+
+  static String _baseTip(String roleId) {
+    switch (roleId) {
+      case RoleIds.dealer:
+        return 'Coordinate quietly and avoid over-leading daytime votes too early.';
+      case RoleIds.medic:
+        return 'Preserve high-impact roles and avoid predictable protection patterns.';
+      case RoleIds.bouncer:
+        return 'Prioritize players driving narratives; their alignment reveals momentum.';
+      default:
+        return 'Survive the night and treat every daytime vote as information.';
+    }
+  }
+}
+
