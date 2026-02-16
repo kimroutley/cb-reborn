@@ -100,8 +100,8 @@ void main() {
       final state = container.read(gameProvider);
       final dealerCount =
           state.players.where((p) => p.role.id == 'dealer').length;
-      // For 12 players: ceil(12/4) = 3 dealers
-      expect(dealerCount, 3);
+      // For 12 players: floor(12/5) = 2 dealers (minimum 1)
+      expect(dealerCount, 2);
     });
 
     test('Seasoned Drinker gets lives equal to dealer count', () {
@@ -430,7 +430,7 @@ void main() {
     test('setup includes wallflower notice when wallflower present', () {
       final wf = _player('WF', _role('wallflower'));
       final steps = ScriptBuilder.buildSetupScript([wf]);
-      expect(steps.any((s) => s.id == 'wallflower_info'), true);
+      expect(steps.any((s) => s.id.startsWith('wallflower_info_')), true);
     });
 
     test('night script includes dealer step', () {
@@ -450,7 +450,8 @@ void main() {
       final wf = _player('WF', _role('wallflower', priority: 100));
       final steps = ScriptBuilder.buildNightScript([dealer, wf], 1);
       final dealerIdx = steps.indexWhere((s) => s.id.startsWith('dealer_act_'));
-      final wfIdx = steps.indexWhere((s) => s.id == 'wallflower_witness');
+      final wfIdx =
+          steps.indexWhere((s) => s.id.startsWith('wallflower_witness_'));
       expect(dealerIdx, greaterThanOrEqualTo(0));
       expect(wfIdx, dealerIdx + 1);
     });
@@ -461,7 +462,7 @@ void main() {
         steps.any((s) => s.actionType == ScriptActionType.showTimer),
         true,
       );
-      expect(steps.any((s) => s.id == 'day_vote'), true);
+      expect(steps.any((s) => s.id.startsWith('day_vote_')), true);
     });
 
     test('day script includes second wind conversion when pending', () {

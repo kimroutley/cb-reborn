@@ -281,14 +281,14 @@ void main() {
       expect(steps.any((s) => s.id.startsWith('medic_choice_')), true);
       expect(steps.any((s) => s.id.startsWith('creep_setup_')), true);
       expect(steps.any((s) => s.id.startsWith('clinger_setup_')), true);
-      expect(steps.any((s) => s.id == 'wallflower_info'), true);
+      expect(steps.any((s) => s.id.startsWith('wallflower_info_')), true);
     });
 
     test('day script has discussion before vote', () {
       final steps = ScriptBuilder.buildDayScript(1);
       final timerIdx =
           steps.indexWhere((s) => s.actionType == ScriptActionType.showTimer);
-      final voteIdx = steps.indexWhere((s) => s.id == 'day_vote');
+        final voteIdx = steps.indexWhere((s) => s.id.startsWith('day_vote_'));
       expect(timerIdx, lessThan(voteIdx));
     });
   });

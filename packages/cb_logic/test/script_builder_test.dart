@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   // Helpers
-  Role _makeRole(String id, {int nightPriority = 0}) {
+  Role makeRole(String id, {int nightPriority = 0}) {
     return Role(
       id: id,
       name: id.toUpperCase(),
@@ -16,7 +16,7 @@ void main() {
     );
   }
 
-  Player _makePlayer(
+  Player makePlayer(
     String id,
     String roleId, {
     bool isAlive = true,
@@ -32,7 +32,7 @@ void main() {
     return Player(
       id: id,
       name: 'Player $id',
-      role: _makeRole(roleId, nightPriority: nightPriority),
+      role: makeRole(roleId, nightPriority: nightPriority),
       alliance: Team.unknown,
       isAlive: isAlive,
       isEnabled: isEnabled,
@@ -60,8 +60,8 @@ void main() {
 
     test('generates basic night script for active roles', () {
       final players = [
-        _makePlayer('1', RoleIds.dealer, nightPriority: 10),
-        _makePlayer('2', RoleIds.medic, nightPriority: 20, medicChoice: 'PROTECT_DAILY'),
+        makePlayer('1', RoleIds.dealer, nightPriority: 10),
+        makePlayer('2', RoleIds.medic, nightPriority: 20, medicChoice: 'PROTECT_DAILY'),
       ];
 
       final script = ScriptBuilder.buildNightScript(players, 1);
@@ -72,8 +72,8 @@ void main() {
 
     test('sorts steps by nightPriority', () {
       final players = [
-        _makePlayer('1', RoleIds.medic, nightPriority: 20, medicChoice: 'PROTECT_DAILY'),
-        _makePlayer('2', RoleIds.dealer, nightPriority: 10),
+        makePlayer('1', RoleIds.medic, nightPriority: 20, medicChoice: 'PROTECT_DAILY'),
+        makePlayer('2', RoleIds.dealer, nightPriority: 10),
       ];
 
       final script = ScriptBuilder.buildNightScript(players, 1);
@@ -86,7 +86,7 @@ void main() {
 
     test('dead players do not generate steps', () {
       final players = [
-        _makePlayer('1', RoleIds.dealer, isAlive: false),
+        makePlayer('1', RoleIds.dealer, isAlive: false),
       ];
 
       final script = ScriptBuilder.buildNightScript(players, 1);
@@ -96,7 +96,7 @@ void main() {
 
     test('inactive players (joinsNextNight) do not generate steps', () {
       final players = [
-        _makePlayer('1', RoleIds.dealer, joinsNextNight: true),
+        makePlayer('1', RoleIds.dealer, joinsNextNight: true),
       ];
 
       final script = ScriptBuilder.buildNightScript(players, 1);
@@ -107,7 +107,7 @@ void main() {
     group('Special Roles', () {
       test('Attack Dog generates step when active and freed', () {
         final players = [
-          _makePlayer('1', RoleIds.clinger,
+          makePlayer('1', RoleIds.clinger,
               clingerFreedAsAttackDog: true, clingerAttackDogUsed: false),
         ];
 
@@ -118,7 +118,7 @@ void main() {
 
       test('Attack Dog does not generate step if already used', () {
         final players = [
-          _makePlayer('1', RoleIds.clinger,
+          makePlayer('1', RoleIds.clinger,
               clingerFreedAsAttackDog: true, clingerAttackDogUsed: true),
         ];
 
@@ -129,7 +129,7 @@ void main() {
 
       test('Messy Bitch Kill generates step when active and unused', () {
         final players = [
-          _makePlayer('1', RoleIds.messyBitch, messyBitchKillUsed: false),
+          makePlayer('1', RoleIds.messyBitch, messyBitchKillUsed: false),
         ];
 
         final script = ScriptBuilder.buildNightScript(players, 1);
@@ -145,7 +145,7 @@ void main() {
 
       test('Messy Bitch Kill does not generate step if used', () {
         final players = [
-          _makePlayer('1', RoleIds.messyBitch, messyBitchKillUsed: true),
+          makePlayer('1', RoleIds.messyBitch, messyBitchKillUsed: true),
         ];
 
         final script = ScriptBuilder.buildNightScript(players, 1);
@@ -156,14 +156,15 @@ void main() {
 
       test('Wallflower witness step is inserted after Dealer step', () {
         final players = [
-          _makePlayer('1', RoleIds.dealer, nightPriority: 10),
-          _makePlayer('2', RoleIds.wallflower, nightPriority: 100), // Wallflower is passive usually but has a notice
+          makePlayer('1', RoleIds.dealer, nightPriority: 10),
+          makePlayer('2', RoleIds.wallflower, nightPriority: 100), // Wallflower is passive usually but has a notice
         ];
 
         final script = ScriptBuilder.buildNightScript(players, 1);
 
         final dealerIndex = script.indexWhere((s) => s.id.startsWith('dealer_act_'));
-        final wallflowerIndex = script.indexWhere((s) => s.id == 'wallflower_witness');
+        final wallflowerIndex =
+          script.indexWhere((s) => s.id.startsWith('wallflower_witness_'));
 
         expect(dealerIndex, isNot(-1));
         expect(wallflowerIndex, isNot(-1));
@@ -172,19 +173,19 @@ void main() {
 
       test('Wallflower witness step is NOT inserted if no Dealer step', () {
         final players = [
-           _makePlayer('2', RoleIds.wallflower),
+           makePlayer('2', RoleIds.wallflower),
            // No dealer
         ];
 
         final script = ScriptBuilder.buildNightScript(players, 1);
-        expect(script.any((s) => s.id == 'wallflower_witness'), isFalse);
+        expect(script.any((s) => s.id.startsWith('wallflower_witness_')), isFalse);
       });
     });
 
     group('Medic', () {
       test('Medic generates step for PROTECT_DAILY', () {
         final players = [
-          _makePlayer('1', RoleIds.medic, medicChoice: 'PROTECT_DAILY'),
+          makePlayer('1', RoleIds.medic, medicChoice: 'PROTECT_DAILY'),
         ];
         final script = ScriptBuilder.buildNightScript(players, 1);
         expect(script.any((s) => s.id.startsWith('medic_act_')), isTrue);
@@ -192,7 +193,7 @@ void main() {
 
       test('Medic generates step for REVIVE if has token', () {
         final players = [
-          _makePlayer('1', RoleIds.medic, medicChoice: 'REVIVE', hasReviveToken: true),
+          makePlayer('1', RoleIds.medic, medicChoice: 'REVIVE', hasReviveToken: true),
         ];
         final script = ScriptBuilder.buildNightScript(players, 1);
         expect(script.any((s) => s.id.startsWith('medic_act_')), isTrue);
@@ -200,7 +201,7 @@ void main() {
 
       test('Medic does NOT generate step for REVIVE if token used', () {
         final players = [
-          _makePlayer('1', RoleIds.medic, medicChoice: 'REVIVE', hasReviveToken: false),
+          makePlayer('1', RoleIds.medic, medicChoice: 'REVIVE', hasReviveToken: false),
         ];
         final script = ScriptBuilder.buildNightScript(players, 1);
         expect(script.any((s) => s.id.startsWith('medic_act_')), isFalse);
@@ -210,12 +211,12 @@ void main() {
     test('adds night_no_actions if no steps generated', () {
       // Create a player that is alive but has no night strategy (e.g. Party Animal)
       final players = [
-        _makePlayer('1', RoleIds.partyAnimal),
+        makePlayer('1', RoleIds.partyAnimal),
       ];
 
       final script = ScriptBuilder.buildNightScript(players, 1);
 
-      expect(script.any((s) => s.id == 'night_no_actions'), isTrue);
+      expect(script.any((s) => s.id.startsWith('night_no_actions_')), isTrue);
       // It should also have night_start and night_end
       expect(script.length, 3);
     });

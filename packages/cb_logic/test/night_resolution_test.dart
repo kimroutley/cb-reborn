@@ -1,4 +1,3 @@
-import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_logic/src/game_resolution_logic.dart';
 import 'package:cb_models/cb_models.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,7 +34,7 @@ void main() {
       final players = [dealer, victim];
 
       final log = {
-        'dealer_act_${dealer.id}': victim.id,
+        'dealer_act_${dealer.id}_1': victim.id,
       };
 
       final result = GameResolutionLogic.resolveNightActions(
@@ -58,8 +57,8 @@ void main() {
       final players = [dealer, medic, victim];
 
       final log = {
-        'dealer_act_${dealer.id}': victim.id,
-        'medic_act_${medic.id}': victim.id,
+        'dealer_act_${dealer.id}_1': victim.id,
+        'medic_act_${medic.id}_1': victim.id,
       };
 
       final result = GameResolutionLogic.resolveNightActions(
@@ -81,8 +80,8 @@ void main() {
       final players = [dealer, sober, victim];
 
       final log = {
-        'dealer_act_${dealer.id}': victim.id,
-        'sober_act_${sober.id}': dealer.id,
+        'dealer_act_${dealer.id}_1': victim.id,
+        'sober_act_${sober.id}_1': dealer.id,
       };
 
       final result = GameResolutionLogic.resolveNightActions(
@@ -104,8 +103,8 @@ void main() {
       final players = [dealer, roofi, victim];
 
       final log = {
-        'dealer_act_${dealer.id}': victim.id,
-        'roofi_act_${roofi.id}': dealer.id,
+        'dealer_act_${dealer.id}_1': victim.id,
+        'roofi_act_${roofi.id}_1': dealer.id,
       };
 
       final result = GameResolutionLogic.resolveNightActions(
@@ -116,8 +115,8 @@ void main() {
       );
 
       final updatedVictim = result.players.firstWhere((p) => p.id == victim.id);
-      expect(updatedVictim.isAlive, true); // Dealer blocked (single dealer rule)
-      expect(result.report.any((s) => s.contains('drugged Dealer')), true);
+      expect(updatedVictim.isAlive, false); // Roofi now silences, not blocks kill
+      expect(result.report.any((s) => s.contains('silenced Dealer')), true);
 
       final updatedDealer = result.players.firstWhere((p) => p.id == dealer.id);
       expect(updatedDealer.silencedDay, 1);
@@ -131,8 +130,8 @@ void main() {
       final players = [dealer1, dealer2, roofi, victim];
 
       final log = {
-        'dealer_act_${dealer1.id}': victim.id,
-        'roofi_act_${roofi.id}': dealer1.id,
+        'dealer_act_${dealer1.id}_1': victim.id,
+        'roofi_act_${roofi.id}_1': dealer1.id,
       };
 
       final result = GameResolutionLogic.resolveNightActions(
@@ -155,7 +154,7 @@ void main() {
       final players = [bouncer, dealer];
 
       final log = {
-        'bouncer_act_${bouncer.id}': dealer.id,
+        'bouncer_act_${bouncer.id}_1': dealer.id,
       };
 
       final result = GameResolutionLogic.resolveNightActions(
@@ -175,7 +174,7 @@ void main() {
        final players = [dealer, sw];
 
        final log = {
-         'dealer_act_${dealer.id}': sw.id,
+         'dealer_act_${dealer.id}_1': sw.id,
        };
 
        final result = GameResolutionLogic.resolveNightActions(
@@ -197,7 +196,7 @@ void main() {
        final players = [dealer, sd];
 
        final log = {
-         'dealer_act_${dealer.id}': sd.id,
+         'dealer_act_${dealer.id}_1': sd.id,
        };
 
        final result = GameResolutionLogic.resolveNightActions(
@@ -219,7 +218,7 @@ void main() {
        final players = [dealer, sd];
 
        final log = {
-         'dealer_act_${dealer.id}': sd.id,
+         'dealer_act_${dealer.id}_1': sd.id,
        };
 
        final result = GameResolutionLogic.resolveNightActions(
