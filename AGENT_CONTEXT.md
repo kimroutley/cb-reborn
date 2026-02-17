@@ -121,7 +121,7 @@ The game logic now uses a **Priority-Based Strategy Pattern** for resolving nigh
 
 ---
 
-## 6. Current Status Checklist (Feb 13, 2026)
+## 6. Current Status Checklist (Feb 17, 2026)
 
 ### Verified (Stable)
 - [x] **Universal Framework**: All roles transitioned to the new priority-based resolution engine.
@@ -135,11 +135,18 @@ The game logic now uses a **Priority-Based Strategy Pattern** for resolving nigh
 - [ ] **Deep Links**: Verify "Join via URL" robustly handles app cold starts vs warm resumes.
 - [ ] **Host Parity**: Ghost Lounge and Dead Pool integration needs UI polish.
 
+### Automated Validation Completed (Feb 17, 2026)
+
+* [x] **Join/Registration Stabilization**: Local + cloud join flow now sends identity-backed registration and avoids false `joinAccepted` resets.
+* [x] **Regression Coverage**: Updated `apps/player/test/player_bridge_test.dart` and `apps/host/test/host_bridge_test.dart` for join/duplicate-join stability.
+* [x] **Player Build Health**: `apps/player` full analyze + tests pass after join-flow refactor.
+* [x] **Manual Assignment UX**: Host manual role assignment now supports drag-and-drop in lobby setup sheet.
+
 ---
 
 ## 7. Agent Directives
 
-1.  **Read Context First**: Before starting any task, verify your understanding against this document.
-2.  **Verify, Don't Assume**: After editing code, run `flutter test` in the relevant package.
-3.  **Respect the Architecture**: Do not bypass `RoleIds` or direct Firestore calls outside the Bridges.
-4.  **Update This Doc**: If you discover a new pattern or fix a critical bug, update this file.
+1. **Read Context First**: Before starting any task, verify your understanding against this document.
+2. **Verify, Don't Assume**: After editing code, run `flutter test` in the relevant package.
+3. **Respect the Architecture**: Do not bypass `RoleIds` or direct Firestore calls outside the Bridges.
+4. **Update This Doc**: If you discover a new pattern or fix a critical bug, update this file.

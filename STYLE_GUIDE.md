@@ -1,6 +1,6 @@
 # Club Blackout Reborn: UI Style Guide
 
-> **Last Updated:** February 12, 2026
+> **Last Updated:** February 13, 2026
 > **Source of Truth:** This guide reflects the actual `cb_theme` package implementation.
 
 ---
@@ -132,9 +132,31 @@ When `isPrismatic: true` is set on a `CBGlassTile`, the component enters "The Sh
 -   **Animation:** This gradient should slowly shift or rotate, creating an "Oil Slick" effect that implies an unstable, biorefractive surface.
 -   **Usage:** Use this for items affected by glitches, anomalies, or rare "Shiny" statuses.
 
+### 5.2 CBRoleIDCard
+
+The standard "trading card" style widget for role reveals and dossiers.
+
+-   **Usage:** Use in "Role Reveal" dialogs, Club Bible "Operatives" list, and Player Status.
+-   **Features:** Wide layout, large role avatar (breathing animation), status badges (Class, Priority), and description text.
+-   **Color:** Derives accent color directly from the role's hex code.
+
 ---
 
-## 6. Iconography
+## 6. Navigation Patterns
+
+### The Navigation Drawer
+The Host App uses a persistent side drawer for top-level navigation.
+
+-   **Widget:** `NavigationDrawer` (M3).
+-   **State:** Managed via `hostNavigationProvider`.
+-   **Layout:**
+    -   **Header:** "CLUB BLACKOUT" in Neon Pink.
+    -   **Groups:** Core (Home/Lobby/Game), Management (Guides/Recap), System (Settings/About).
+    -   **Dividers:** Used to visually separate groups.
+
+---
+
+## 7. Iconography
 
 -   **Source:** Standard Material Icons (`Icons.*`), prefer rounded variants (`Icons.*_rounded`).
 -   **Standard Size:** `24px`.
@@ -144,7 +166,7 @@ When `isPrismatic: true` is set on a `CBGlassTile`, the component enters "The Sh
 
 ---
 
-## 7. Animation & Motion
+## 8. Animation & Motion
 
 Animations should be subtle and functional.
 
@@ -159,7 +181,7 @@ Animations should be subtle and functional.
 
 ---
 
-## 8. Haptic Feedback (`HapticService`)
+## 9. Haptic Feedback (`HapticService`)
 
 Game events trigger contextual haptic patterns:
 
@@ -177,7 +199,7 @@ Game events trigger contextual haptic patterns:
 
 ---
 
-## 9. Dynamic Theming
+## 10. Dynamic Theming
 
 Both apps wrap in `DynamicColorBuilder` to support device-specific color tinting:
 

@@ -402,3 +402,80 @@ Date: 2026-02-13
     - `apps/host/lib/sync_mode_runtime.dart`
     - `apps/host/test/sync_mode_runtime_test.dart`
   - Dry-run completed successfully and repository state remained unchanged.
+
+34) Second Commit + Remaining Tree Triage Map (Feb 17, 2026)
+- Second follow-up commit created:
+  - `bdf1fd1` — `test(player): add end-game victory logic unit tests`
+  - Scope: `apps/player/test/end_game_card_logic_test.dart`
+  - Validation: targeted test file pass (`5 passed, 0 failed`)
+
+- Remaining uncommitted workspace (high-level buckets):
+  - `apps/host`: 38 files
+  - `apps/player`: 32 files
+  - `packages/cb_logic`: 21 files
+  - `packages/cb_theme`: 32 files
+  - `packages/cb_models`: 3 files
+  - `packages/cb_comms`: 2 files
+  - docs/meta: 6 files
+
+- Keep / Shelve / Discard guidance:
+  - KEEP NEXT (high-value product code):
+    - auth/onboarding flow changes across `apps/host/lib/auth/**`, `apps/player/lib/auth/**`, `apps/*/lib/main.dart`
+    - gameplay/bridge runtime changes in `apps/player/lib/player_bridge*.dart`, `apps/host/lib/widgets/lobby/**`
+    - core logic/state updates in `packages/cb_logic/lib/src/**`, `packages/cb_models/lib/src/**`, `packages/cb_comms/lib/src/firebase_bridge.dart`
+  - SHELVE (defer for focused PRs):
+    - broad visual/theming sweep in `packages/cb_theme/lib/src/widgets/**`
+    - wide host/player UI polish files not tied to critical runtime fixes
+  - DISCARD OR REGENERATE (low signal/noise):
+    - transient logs/artifacts: `analysis_results.txt`, `apps/player/widget_test_output.txt`
+    - local workspace files unless intentionally versioned: `*.code-workspace`
+
+35) Commit Pass #3 Completed + Map Refresh (Feb 17, 2026)
+- Commit 3A (auth/onboarding) created:
+  - `a19387d` — `feat(auth): align host and player onboarding auth flows`
+  - Includes host+player auth providers/screens and `apps/player` login-screen removal.
+  - Validation: targeted tests PASS (`apps/host/test/auth_provider_test.dart`, `apps/player/test/widget_test.dart`).
+
+- Commit 3B (bridge/core runtime) created:
+  - `6581702` — `feat(core): stabilize bridge sync and game state resolution`
+  - Includes player bridge/runtime + `cb_logic/cb_models/cb_comms` sync-resolution updates.
+  - Validation: focused tests PASS (`player_bridge_test`, `host_overview_screen_test`, `game_provider_test`, `script_builder_test`) with 104 passed, 0 failed.
+
+- Remaining uncommitted buckets after commit pass #3:
+  - `apps/host`: 31 files
+  - `apps/player`: 10 files
+  - `packages/cb_theme`: 32 files
+  - `packages/cb_logic`: 2 files
+  - docs/meta: 7 files
+
+- Updated Keep / Shelve / Discard recommendations:
+  - KEEP NEXT:
+    - Host/player gameplay UI surfaces still paired to recent core behavior
+      (`apps/host/lib/screens/**`, `apps/host/lib/widgets/**`, `apps/player/lib/widgets/**`).
+    - Residual logic extension file in `packages/cb_logic/lib/src/night_actions/resolution/ally_cat_handler.dart`.
+  - SHELVE:
+    - Broad `cb_theme` widget/style sweep (`packages/cb_theme/lib/src/widgets/**`) as a dedicated styling PR.
+  - DISCARD/REGENERATE:
+    - transient artifacts (`analysis_results.txt`, `apps/player/widget_test_output.txt`),
+      and local workspace files unless intentionally tracked.
+
+36) Commit Pass #5 (Logic Tail) + Final Residual Map (Feb 17, 2026)
+- Commit created:
+  - `0f701d9` — `feat(cb_logic): add layered protection handlers and resolution updates`
+  - Includes:
+    - `packages/cb_logic/lib/src/game_provider.dart`
+    - `packages/cb_logic/lib/src/game_resolution_logic.dart`
+    - `packages/cb_logic/lib/src/night_actions/actions/bouncer_action.dart`
+    - `packages/cb_logic/lib/src/night_actions/actions/dealer_action.dart`
+    - `packages/cb_logic/lib/src/night_actions/resolution/death_resolution_strategy.dart`
+    - `packages/cb_logic/lib/src/night_actions/resolution/ally_cat_handler.dart`
+    - `packages/cb_logic/lib/src/night_actions/resolution/minor_protection_handler.dart`
+    - `packages/cb_logic/test/game_provider_test.dart`
+    - `packages/cb_logic/test/night_resolution_test.dart`
+- Validation: PASS (`game_provider_test` + `night_resolution_test`, 93 passed, 0 failed)
+
+- Residual workspace now mostly shelved theme/docs noise:
+  - `packages/cb_theme`: 32 files (plus `glass_tile_test.dart` deletion)
+  - `apps/host`: 1 file
+  - `apps/player`: 3 files
+  - docs/meta + local artifacts: remaining
