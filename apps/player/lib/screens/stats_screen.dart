@@ -4,68 +4,88 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../widgets/custom_drawer.dart';
 import '../player_stats.dart';
-import '../player_bridge.dart'; // Import player bridge to get current player ID
 
 class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final playerState = ref.watch(playerBridgeProvider);
-    final statsNotifier = ref.read(playerStatsProvider.notifier);
-
-    // Update the active player ID for stats calculation
-    // This assumes the player has claimed an ID.
-    if (playerState.myPlayerId != null) {
-      statsNotifier.setActivePlayerId(playerState.myPlayerId!);
-    }
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     final stats = ref.watch(playerStatsProvider);
-    final scheme = Theme.of(context).colorScheme;
 
-    return CBPrismScaffold(
-      title: 'GAME STATS',
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text(
+          'GAME STATS',
+          style: textTheme.titleLarge!,
+        ),
+        centerTitle: true,
+      ),
       drawer:
           const CustomDrawer(), // Keep as const for now, revisit drawer integration later
-      body: Center(
-        child: Padding(
-          padding: CBInsets.panel,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CBGlassTile(
-                title: "CAREER METRICS",
-                subtitle: "ANALYZE YOUR PERFORMANCE",
-                accentColor: scheme.primary,
-                icon: Icon(Icons.show_chart_rounded,
-                    size: 48, color: scheme.primary),
-                content: Column(
-                  children: [
-                    _buildStatRow(
-                      "GAMES PLAYED",
-                      "${stats.gamesPlayed}",
-                      scheme.secondary, // Migrated from CBColors.neonPurple
-                      context,
+      body: CBNeonBackground(
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: CBInsets.panel,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CBPanel(
+                    borderColor: scheme.primary.withValues(alpha: 0.4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CBSectionHeader(
+                          title: "CAREER METRICS",
+                          icon: Icons.show_chart_rounded,
+                          color: scheme.primary,
+                        ),
+                        const SizedBox(height: CBSpace.x4),
+                        _buildStatRow(
+                          "GAMES PLAYED",
+                          "${stats.gamesPlayed}",
+                          scheme.secondary,
+                          context,
+                        ),
+                        const SizedBox(height: CBSpace.x3),
+                        _buildStatRow(
+                          "GAMES WON",
+                          "${stats.gamesWon}",
+                          scheme.primary,
+                          context,
+                        ),
+                        const SizedBox(height: CBSpace.x3),
+                        _buildStatRow(
+                          "WIN RATE",
+                          "${stats.winRate.toStringAsFixed(0)}%",
+                          scheme.tertiary,
+                          context,
+                        ),
+                        const SizedBox(height: CBSpace.x3),
+                        _buildStatRow(
+                          "FAVORITE ROLE",
+                          stats.favoriteRole.toUpperCase(),
+                          scheme.primary,
+                          context,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: CBSpace.x3),
-                    _buildStatRow(
-                      "WIN RATE",
-                      "${stats.winRate.toStringAsFixed(0)}%",
-                      scheme.tertiary, // Migrated from CBColors.matrixGreen
-                      context,
-                    ),
-                    const SizedBox(height: CBSpace.x3),
-                    _buildStatRow(
-                      "FAVORITE ROLE",
-                      stats.favoriteRole.toUpperCase(),
-                      scheme
-                          .primary, // Migrated from CBColors.hotPink (using primary as a general accent)
-                      context,
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: CBSpace.x6),
+                  CBPrimaryButton(
+                    label: 'VIEW HALL OF FAME',
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/hall-of-fame');
+                    },
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

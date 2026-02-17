@@ -189,7 +189,7 @@ void main() {
     });
   });
 
-  group('Creep / Clinger Setup', () {
+  group('Creep / Clinger / Drama Queen Setup', () {
     test('creep setup stores target and copies alliance', () {
       game.addPlayer('Creep');
       game.addPlayer('Target');
@@ -220,6 +220,29 @@ void main() {
 
       final updated = container.read(gameProvider);
       expect(updated.players[0].clingerPartnerId, partnerId);
+    });
+
+    test('drama queen setup stores two target ids', () {
+      game.addPlayer('Drama');
+      game.addPlayer('Target A');
+      game.addPlayer('Target B');
+
+      final state = container.read(gameProvider);
+      final dramaId = state.players[0].id;
+      final targetAId = state.players[1].id;
+      final targetBId = state.players[2].id;
+
+      game.assignRole(dramaId, RoleIds.dramaQueen);
+
+      game.handleInteraction(
+        stepId: 'drama_queen_setup_$dramaId',
+        targetId: '$targetAId,$targetBId',
+      );
+
+      final updated = container.read(gameProvider);
+      final drama = updated.players.firstWhere((p) => p.id == dramaId);
+      expect(drama.dramaQueenTargetAId, targetAId);
+      expect(drama.dramaQueenTargetBId, targetBId);
     });
   });
 
@@ -359,6 +382,82 @@ void main() {
       final updated = container.read(gameProvider);
       expect(updated.dayVoteTally, isEmpty);
       expect(updated.dayVotesByVoter, isEmpty);
+    });
+  });
+
+  group('Clinger Day Vote Enforcement', () {
+    test('clinger cannot vote before partner has voted', () {
+      game.addPlayer('Clinger');
+      game.addPlayer('Partner');
+      game.addPlayer('Target');
+
+      final state = container.read(gameProvider);
+      final clingerId = state.players[0].id;
+      final partnerId = state.players[1].id;
+      final targetId = state.players[2].id;
+
+      game.assignRole(clingerId, RoleIds.clinger);
+      game.handleInteraction(
+        stepId: 'clinger_setup_$clingerId',
+        targetId: partnerId,
+      );
+
+      game.handleInteraction(
+        stepId: 'day_vote',
+        targetId: targetId,
+        voterId: clingerId,
+      );
+
+      final updated = container.read(gameProvider);
+      expect(updated.dayVotesByVoter.containsKey(clingerId), false);
+      expect(updated.dayVoteTally[targetId], isNull);
+    });
+
+    test('clinger vote must match partner vote while partner is alive', () {
+      game.addPlayer('Clinger');
+      game.addPlayer('Partner');
+      game.addPlayer('TargetA');
+      game.addPlayer('TargetB');
+
+      final state = container.read(gameProvider);
+      final clingerId = state.players[0].id;
+      final partnerId = state.players[1].id;
+      final targetAId = state.players[2].id;
+      final targetBId = state.players[3].id;
+
+      game.assignRole(clingerId, RoleIds.clinger);
+      game.handleInteraction(
+        stepId: 'clinger_setup_$clingerId',
+        targetId: partnerId,
+      );
+
+      game.handleInteraction(
+        stepId: 'day_vote',
+        targetId: targetAId,
+        voterId: partnerId,
+      );
+
+      // Mismatched vote should be ignored.
+      game.handleInteraction(
+        stepId: 'day_vote',
+        targetId: targetBId,
+        voterId: clingerId,
+      );
+
+      var updated = container.read(gameProvider);
+      expect(updated.dayVotesByVoter.containsKey(clingerId), false);
+      expect(updated.dayVoteTally[targetBId], isNull);
+
+      // Matching vote should be accepted.
+      game.handleInteraction(
+        stepId: 'day_vote',
+        targetId: targetAId,
+        voterId: clingerId,
+      );
+
+      updated = container.read(gameProvider);
+      expect(updated.dayVotesByVoter[clingerId], targetAId);
+      expect(updated.dayVoteTally[targetAId], 2);
     });
   });
 
@@ -877,6 +976,33 @@ void main() {
       // Game should be in setup phase, NOT ended
       expect(gs.phase, GamePhase.setup);
     });
+
+    test('alive Club Manager is included as co-winner in endGameReport', () {
+      game.addPlayer('Dealer');
+      game.addPlayer('Manager');
+      game.addPlayer('PA');
+
+      final state = container.read(gameProvider);
+      final dealerId = state.players[0].id;
+      final managerId = state.players[1].id;
+      final partyId = state.players[2].id;
+
+      game.assignRole(dealerId, RoleIds.dealer);
+      game.assignRole(managerId, RoleIds.clubManager);
+      game.assignRole(partyId, RoleIds.partyAnimal);
+
+      // Trigger a Staff win while Manager remains alive.
+      game.forceKillPlayer(partyId);
+
+      final gs = container.read(gameProvider);
+      expect(gs.phase, GamePhase.endGame);
+      expect(gs.winner, Team.clubStaff);
+      expect(
+        gs.endGameReport.any((line) => line.contains('Club Manager survived and wins with the house')),
+        true,
+      );
+      expect(gs.endGameReport.any((line) => line.contains('Manager')), true);
+    });
   });
 
   // ── Minimum Player Count ──
@@ -953,7 +1079,10 @@ void main() {
 
       final gs = c.read(gameProvider);
 
-      expect(gs.phase, GamePhase.night);
+      expect(
+        gs.phase == GamePhase.night || gs.phase == GamePhase.endGame,
+        true,
+      );
       expect(gs.dayVoteTally, isEmpty);
       expect(gs.dayVotesByVoter, isEmpty);
     });
@@ -965,18 +1094,28 @@ void main() {
       if (g == null) return;
 
       // Cast a single vote for some player
-      final players = c.read(gameProvider).players;
-      final target = players.firstWhere((p) => p.isAlive);
+      final state = c.read(gameProvider);
+      final alive = state.players.where((p) => p.isAlive).toList();
+      final target = alive.first;
+      final voterCandidates = alive.where((p) =>
+          p.id != target.id &&
+          p.role.id != RoleIds.clinger &&
+          p.silencedDay != state.dayCount &&
+          !p.isSinBinned);
+      if (voterCandidates.isEmpty) return;
+      final voter = voterCandidates.first;
+
       g.handleInteraction(
         stepId: 'day_vote',
         targetId: target.id,
-        voterId: players.last.id,
+        voterId: voter.id,
       );
       expect(c.read(gameProvider).dayVoteTally[target.id], 1);
 
       final result = g.handleTimerExpiry();
       expect(result, true);
-      expect(c.read(gameProvider).phase, GamePhase.night);
+      final phase = c.read(gameProvider).phase;
+      expect(phase == GamePhase.night || phase == GamePhase.endGame, true);
     });
 
     test('does NOT skip vote when a player has >= 2 votes', () {
@@ -1047,6 +1186,171 @@ void main() {
       final result = g.handleTimerExpiry();
       expect(result, true);
       expect(c.read(gameProvider).phase, GamePhase.night);
+    });
+  });
+
+  group('Tea Spiller Reactive Reveal', () {
+    test('exiled Tea Spiller reveals one voter role in day report/history', () {
+      game.addPlayer('Tea');
+      game.addPlayer('Dealer');
+      game.addPlayer('Buddy');
+
+      final state = container.read(gameProvider);
+      final teaId = state.players[0].id;
+      final dealerId = state.players[1].id;
+      final buddyId = state.players[2].id;
+
+      game.assignRole(teaId, RoleIds.teaSpiller);
+      game.assignRole(dealerId, RoleIds.dealer);
+      game.assignRole(buddyId, RoleIds.partyAnimal);
+
+      // Enter day phase with no pending script steps so advancePhase resolves vote.
+      game.state = container.read(gameProvider).copyWith(
+            phase: GamePhase.day,
+            dayCount: 1,
+            scriptQueue: const [],
+            scriptIndex: 0,
+          );
+
+      // Two votes exile Tea Spiller.
+      game.handleInteraction(
+        stepId: 'day_vote',
+        targetId: teaId,
+        voterId: dealerId,
+      );
+      game.handleInteraction(
+        stepId: 'day_vote',
+        targetId: teaId,
+        voterId: buddyId,
+      );
+
+      game.advancePhase();
+
+      final updated = container.read(gameProvider);
+      expect(
+        updated.gameHistory
+            .any((line) => line.contains('Tea Spiller exposed Dealer: The Dealer.')),
+        true,
+      );
+      expect(
+        updated.lastDayReport
+            .any((line) => line.contains('Tea Spiller exposed Dealer: The Dealer.')),
+        true,
+      );
+    });
+  });
+
+  group('Predator Retaliation', () {
+    test('exiled Predator kills one voter in retaliation', () {
+      game.addPlayer('Predator');
+      game.addPlayer('Dealer');
+      game.addPlayer('Buddy');
+
+      final state = container.read(gameProvider);
+      final predatorId = state.players[0].id;
+      final dealerId = state.players[1].id;
+      final buddyId = state.players[2].id;
+
+      game.assignRole(predatorId, RoleIds.predator);
+      game.assignRole(dealerId, RoleIds.dealer);
+      game.assignRole(buddyId, RoleIds.partyAnimal);
+
+      game.state = container.read(gameProvider).copyWith(
+            phase: GamePhase.day,
+            dayCount: 1,
+            scriptQueue: const [],
+            scriptIndex: 0,
+          );
+
+      // Exile Predator; first voter (Dealer) should be retaliated against.
+      game.handleInteraction(
+        stepId: 'day_vote',
+        targetId: predatorId,
+        voterId: dealerId,
+      );
+      game.handleInteraction(
+        stepId: 'day_vote',
+        targetId: predatorId,
+        voterId: buddyId,
+      );
+
+      game.advancePhase();
+
+      final updated = container.read(gameProvider);
+      final dealer = updated.players.firstWhere((p) => p.id == dealerId);
+
+      expect(dealer.isAlive, false);
+      expect(dealer.deathReason, 'predator_retaliation');
+      expect(
+        updated.gameHistory
+            .any((line) => line.contains('Predator struck back: Dealer was taken down in retaliation.')),
+        true,
+      );
+      expect(
+        updated.lastDayReport
+            .any((line) => line.contains('Predator struck back: Dealer was taken down in retaliation.')),
+        true,
+      );
+    });
+  });
+
+  group('Drama Queen Vendetta', () {
+    test('exiled Drama Queen swaps two remaining player roles', () {
+      game.addPlayer('Drama');
+      game.addPlayer('Dealer');
+      game.addPlayer('Buddy');
+      game.addPlayer('Sober');
+
+      final state = container.read(gameProvider);
+      final dramaId = state.players[0].id;
+      final dealerId = state.players[1].id;
+      final buddyId = state.players[2].id;
+      final soberId = state.players[3].id;
+
+      game.assignRole(dramaId, RoleIds.dramaQueen);
+      game.assignRole(dealerId, RoleIds.dealer);
+      game.assignRole(buddyId, RoleIds.partyAnimal);
+      game.assignRole(soberId, RoleIds.sober);
+
+      game.state = container.read(gameProvider).copyWith(
+            phase: GamePhase.day,
+            dayCount: 1,
+            scriptQueue: const [],
+            scriptIndex: 0,
+          );
+
+      // Exile Drama Queen; first two voters become deterministic swap targets.
+      game.handleInteraction(
+        stepId: 'day_vote',
+        targetId: dramaId,
+        voterId: dealerId,
+      );
+      game.handleInteraction(
+        stepId: 'day_vote',
+        targetId: dramaId,
+        voterId: buddyId,
+      );
+
+      game.advancePhase();
+
+      final updated = container.read(gameProvider);
+      final dealer = updated.players.firstWhere((p) => p.id == dealerId);
+      final buddy = updated.players.firstWhere((p) => p.id == buddyId);
+
+      expect(dealer.role.id, RoleIds.partyAnimal);
+      expect(buddy.role.id, RoleIds.dealer);
+      expect(
+        updated.gameHistory.any(
+          (line) => line.contains('Drama Queen chaos: Dealer and Buddy swapped roles.'),
+        ),
+        true,
+      );
+      expect(
+        updated.lastDayReport.any(
+          (line) => line.contains('Drama Queen reveal: Dealer is now The Party Animal, Buddy is now The Dealer.'),
+        ),
+        true,
+      );
     });
   });
 

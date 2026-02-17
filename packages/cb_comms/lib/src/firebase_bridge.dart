@@ -159,6 +159,19 @@ class FirebaseBridge {
     }
   }
 
+  /// Player: Send role confirmation acknowledgment.
+  Future<void> sendRoleConfirm({required String playerId}) async {
+    try {
+      await gameDoc.collection('actions').add({
+        'type': 'role_confirm',
+        'playerId': playerId,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('[FirebaseBridge] Failed to send role confirm: $e');
+    }
+  }
+
   /// Host: Listen to join requests.
   Stream<QuerySnapshot<Map<String, dynamic>>> subscribeToJoinRequests() {
     return gameDoc

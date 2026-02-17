@@ -15,6 +15,9 @@ abstract class PlayerBridgeActions {
     String? voterId,
   });
 
+  /// Confirm that this player has acknowledged their revealed role.
+  Future<void> confirmRole({required String playerId});
+
   /// ── GHOST LOUNGE: PLACE BET ──
   Future<void> placeDeadPoolBet({
     required String playerId,

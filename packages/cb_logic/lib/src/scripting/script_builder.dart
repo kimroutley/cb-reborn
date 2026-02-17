@@ -3,7 +3,8 @@ import 'role_logic.dart';
 
 class ScriptBuilder {
   /// Generates the setup script (Night 0 / Day 1 Intro)
-  static List<ScriptStep> buildSetupScript(List<Player> players) {
+  static List<ScriptStep> buildSetupScript(List<Player> players,
+      {int dayCount = 0}) {
     final steps = <ScriptStep>[
       const ScriptStep(
         id: 'intro_01',
@@ -31,7 +32,7 @@ class ScriptBuilder {
         players.where((p) => p.role.id == RoleIds.medic && p.isAlive).toList();
     for (final medic in medics) {
       steps.add(ScriptStep(
-        id: 'medic_choice_${medic.id}',
+        id: 'medic_choice_${medic.id}_$dayCount',
         title: 'MEDIC - CHOICE',
         readAloudText: 'Medic, choose your strategy for the game.',
         instructionText: 'Protect Daily or Revive (one time).',
@@ -46,7 +47,7 @@ class ScriptBuilder {
         players.where((p) => p.role.id == RoleIds.creep && p.isAlive).toList();
     for (final creep in creeps) {
       steps.add(ScriptStep(
-        id: 'creep_setup_${creep.id}',
+        id: 'creep_setup_${creep.id}_$dayCount',
         title: 'THE CREEP',
         readAloudText: 'Creep, wake up and choose a player to mimic.',
         instructionText:
@@ -61,7 +62,7 @@ class ScriptBuilder {
         players.where((p) => p.role.id == RoleIds.clinger && p.isAlive).toList();
     for (final clinger in clingers) {
       steps.add(ScriptStep(
-        id: 'clinger_setup_${clinger.id}',
+        id: 'clinger_setup_${clinger.id}_$dayCount',
         title: 'THE CLINGER',
         readAloudText: 'Clinger, wake up and choose your partner.',
         instructionText:
@@ -71,18 +72,36 @@ class ScriptBuilder {
       ));
     }
 
+    // ── Drama Queen chooses two swap targets at Night 0 ──
+    final dramaQueens = players
+        .where((p) => p.role.id == RoleIds.dramaQueen && p.isAlive)
+        .toList();
+    for (final dramaQueen in dramaQueens) {
+      steps.add(ScriptStep(
+        id: 'drama_queen_setup_${dramaQueen.id}_$dayCount',
+        title: 'THE DRAMA QUEEN',
+        readAloudText: 'Drama Queen, wake up and pick two players for your vendetta.',
+        instructionText:
+            'Select two players. If you are exiled, their role cards will be swapped.',
+        actionType: ScriptActionType.selectTwoPlayers,
+        roleId: RoleIds.dramaQueen,
+      ));
+    }
+
     // ── Wallflower instruction ──
     final wallflowers =
         players.where((p) => p.role.id == RoleIds.wallflower && p.isAlive).toList();
     if (wallflowers.isNotEmpty) {
-      steps.add(const ScriptStep(
-        id: 'wallflower_info',
-        title: 'WALLFLOWER NOTICE',
-        readAloudText:
-            'There is a Wallflower in tonight\'s game. They may open their eyes during the murder.',
-        instructionText: 'Reminder: Wallflower can peek during Dealer phase.',
-        actionType: ScriptActionType.info,
-      ));
+      for (final wallflower in wallflowers) {
+        steps.add(ScriptStep(
+          id: 'wallflower_info_${wallflower.id}',
+          title: 'WALLFLOWER NOTICE',
+          readAloudText:
+              'There is a Wallflower in tonight\'s game. They may open their eyes during the murder.',
+          instructionText: 'Reminder: Wallflower can peek during Dealer phase.',
+          actionType: ScriptActionType.info,
+        ));
+      }
     }
 
     return steps;
@@ -92,12 +111,12 @@ class ScriptBuilder {
   static List<ScriptStep> buildNightScript(List<Player> players, int dayCount) {
     if (dayCount == 0 || players.isEmpty) {
       // Fallback for empty state or setup
-      return buildSetupScript(players);
+      return buildSetupScript(players, dayCount: dayCount);
     }
 
     final steps = <ScriptStep>[
-      const ScriptStep(
-        id: 'night_start',
+      ScriptStep(
+        id: 'night_start_$dayCount',
         title: 'NIGHT PHASE',
         readAloudText: 'It is now night time. Everyone close your eyes.',
         instructionText: 'Wait for silence.',
@@ -150,8 +169,8 @@ class ScriptBuilder {
       if (dealerIdx >= 0) {
         steps.insert(
             dealerIdx + 1,
-            const ScriptStep(
-              id: 'wallflower_witness',
+            ScriptStep(
+              id: 'wallflower_witness_$dayCount',
               title: 'WALLFLOWER',
               readAloudText: 'Wallflower, you may briefly open your eyes.',
               instructionText:
@@ -163,8 +182,8 @@ class ScriptBuilder {
     }
 
     if (steps.length == 1) {
-      steps.add(const ScriptStep(
-        id: 'night_no_actions',
+      steps.add(ScriptStep(
+        id: 'night_no_actions_$dayCount',
         title: 'NIGHT PHASE',
         readAloudText: 'The night is quiet. No actions are taken.',
         instructionText: 'Proceed to morning.',
@@ -172,8 +191,8 @@ class ScriptBuilder {
       ));
     }
 
-    steps.add(const ScriptStep(
-      id: 'night_end',
+    steps.add(ScriptStep(
+      id: 'night_end_$dayCount',
       title: 'WAKE UP',
       readAloudText: 'The sun is rising. Everyone wake up.',
       instructionText: 'Proceed to Morning Report.',
@@ -190,8 +209,8 @@ class ScriptBuilder {
     final timerSeconds = alive > 0 ? (alive * 30).clamp(30, 300) : 300;
 
     final steps = <ScriptStep>[
-      const ScriptStep(
-        id: 'day_results',
+      ScriptStep(
+        id: 'day_results_$dayCount',
         title: 'MORNING REPORT',
         readAloudText: 'The night is over. Here is what happened.',
         instructionText: 'Review the night report.',
@@ -208,7 +227,7 @@ class ScriptBuilder {
     );
     for (final sw in pendingConversions) {
       steps.add(ScriptStep(
-        id: 'second_wind_convert_${sw.id}',
+        id: 'second_wind_convert_${sw.id}_$dayCount',
         title: 'SECOND WIND',
         readAloudText:
             '${sw.name} survived the Dealer\'s attack. Dealers, do you convert or execute?',
@@ -222,15 +241,15 @@ class ScriptBuilder {
 
     steps.addAll([
       ScriptStep(
-        id: 'day_start',
+        id: 'day_start_$dayCount',
         title: 'DAY $dayCount',
         readAloudText: 'The Club is open. Discuss amongst yourselves.',
         instructionText: 'Start the timer.',
         actionType: ScriptActionType.showTimer,
         timerSeconds: timerSeconds,
       ),
-      const ScriptStep(
-        id: 'day_vote',
+      ScriptStep(
+        id: 'day_vote_$dayCount',
         title: 'VOTING',
         readAloudText: 'Who do you want to exile from the club?',
         instructionText: 'Select the player to eliminate (if any).',

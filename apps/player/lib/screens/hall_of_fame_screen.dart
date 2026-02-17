@@ -103,28 +103,39 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
 
-    return CBPrismScaffold(
-      title: 'HALL OF FAME',
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text(
+          'HALL OF FAME',
+          style: Theme.of(context).textTheme.titleLarge!,
+        ),
+        centerTitle: true,
+      ),
       drawer:
           const CustomDrawer(), // Keep as const for now, revisit drawer integration later
-      body: _isLoading
-          ? const Center(child: CBBreathingSpinner())
-          : _stats.isEmpty
-              ? Center(
-                  child: Text(
-                    'No game records found. Play a game to enter the Hall of Fame!',
-                    textAlign: TextAlign.center,
-                    style: textTheme.headlineMedium?.copyWith(
-                        color: scheme.onSurface.withValues(alpha: 0.7)),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(top: 16, bottom: 32),
-                  itemCount: _stats.length,
-                  itemBuilder: (context, index) {
-                    return _buildProfileCard(_stats[index], index, scheme);
-                  },
-                ),
+      body: CBNeonBackground(
+        child: SafeArea(
+          child: _isLoading
+              ? const Center(child: CBBreathingSpinner())
+              : _stats.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No game records found. Play a game to enter the Hall of Fame!',
+                        textAlign: TextAlign.center,
+                        style: textTheme.headlineMedium?.copyWith(
+                            color: scheme.onSurface.withValues(alpha: 0.7)),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(top: 16, bottom: 32),
+                      itemCount: _stats.length,
+                      itemBuilder: (context, index) {
+                        return _buildProfileCard(_stats[index], index, scheme);
+                      },
+                    ),
+        ),
+      ),
     );
   }
 
@@ -153,20 +164,34 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
     }
 
     return CBGlassTile(
-      title: '#${index + 1} ${stat.playerName}',
-      subtitle:
-          'Wins: ${stat.gamesWon} • Win Rate: ${stat.winPercentage.toStringAsFixed(1)}%',
-      accentColor: rankColor,
-      isCritical: index < 3,
       isPrismatic: true,
-      icon: rankIcon != null
-          ? Icon(rankIcon, color: rankColor, shadows: [
-              BoxShadow(color: rankColor, blurRadius: 10, spreadRadius: 1)
-            ])
-          : null,
-      content: Column(
+      borderColor: rankColor,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              if (rankIcon != null)
+                Icon(rankIcon, color: rankColor, shadows: [
+                  BoxShadow(color: rankColor, blurRadius: 10, spreadRadius: 1)
+                ]),
+              if (rankIcon != null) const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '#${index + 1} ${stat.playerName}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Wins: ${stat.gamesWon} • Win Rate: ${stat.winPercentage.toStringAsFixed(1)}%',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: rankColor),
+          ),
           const SizedBox(height: 12),
           _buildStatRow('Games Played', '${stat.gamesPlayed}', scheme: scheme),
           _buildStatRow('Games Won', '${stat.gamesWon}', scheme: scheme),

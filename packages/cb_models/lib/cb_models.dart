@@ -5,6 +5,7 @@ export 'src/data/role_catalog.dart';
 export 'src/data/rumour_catalog.dart';
 export 'src/strategy_data.dart';
 export 'src/player.dart';
+export 'src/player_snapshot.dart';
 export 'src/script/script_action_type.dart';
 export 'src/script/script_step.dart';
 export 'src/bulletin_entry.dart';

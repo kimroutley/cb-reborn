@@ -48,38 +48,49 @@ class _GamesNightScreenState extends ConsumerState<GamesNightScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return CBPrismScaffold(
-      title: 'GAMES NIGHT',
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text(
+          'GAMES NIGHT',
+          style: Theme.of(context).textTheme.titleLarge!,
+        ),
+        centerTitle: true,
+      ),
       drawer:
           const CustomDrawer(), // Keep as const for now, revisit drawer integration later
-      body: _isLoading
-          ? const Center(child: CBBreathingSpinner())
-          : RefreshIndicator(
-              onRefresh: _loadData,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                children: [
-                  CBSectionHeader(
-                      title: 'YOUR SESSION HISTORY', color: scheme.tertiary),
-                  const SizedBox(height: 16),
-                  if (_sessions.isEmpty)
-                    CBPanel(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        'No game sessions found. Play a game to see your history here.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurface.withValues(alpha: 0.75)),
-                      ),
-                    )
-                  else
-                    ..._sessions
-                        .map((s) => _buildSessionEntry(context, s, scheme)),
-                  const SizedBox(height: 120), // Provide some bottom padding
-                ],
-              ),
-            ),
+      body: CBNeonBackground(
+        child: SafeArea(
+          child: _isLoading
+              ? const Center(child: CBBreathingSpinner())
+              : RefreshIndicator(
+                  onRefresh: _loadData,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                    children: [
+                      CBSectionHeader(
+                          title: 'YOUR SESSION HISTORY', color: scheme.tertiary),
+                      const SizedBox(height: 16),
+                      if (_sessions.isEmpty)
+                        CBPanel(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            'No game sessions found. Play a game to see your history here.',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurface.withValues(alpha: 0.75)),
+                          ),
+                        )
+                      else
+                        ..._sessions
+                            .map((s) => _buildSessionEntry(context, s, scheme)),
+                      const SizedBox(height: 120), // Provide some bottom padding
+                    ],
+                  ),
+                ),
+        ),
+      ),
     );
   }
 
@@ -108,12 +119,8 @@ class _GamesNightScreenState extends ConsumerState<GamesNightScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: CBGlassTile(
-        title: session.sessionName,
-        subtitle:
-            '$totalGames game${totalGames == 1 ? '' : 's'}, $wins win${wins == 1 ? '' : 's'} • $dateRange',
-        accentColor: accentColor,
-        icon: Icon(Icons.history_rounded, color: accentColor, size: 24),
         isPrismatic: true,
+        borderColor: accentColor,
         onTap: () {
           Navigator.push(
             context,
@@ -125,7 +132,31 @@ class _GamesNightScreenState extends ConsumerState<GamesNightScreen> {
             ),
           );
         },
-        content: const SizedBox.shrink(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.history_rounded, color: accentColor, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    session.sessionName,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$totalGames game${totalGames == 1 ? '' : 's'}, $wins win${wins == 1 ? '' : 's'} • $dateRange',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: accentColor),
+            ),
+          ],
+        ),
       ),
     );
   }

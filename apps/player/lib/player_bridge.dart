@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:cb_comms/cb_comms.dart';
 import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_models/cb_models.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cb_theme/cb_theme.dart';
@@ -219,6 +222,8 @@ class StepSnapshot {
 /// ```
 class PlayerBridge extends Notifier<PlayerGameState>
     implements PlayerBridgeActions {
+  static const Duration _connectTimeout = Duration(seconds: 8);
+
   /// Testing injection point for PlayerClient
   @visibleForTesting
   static PlayerClient Function({
@@ -282,11 +287,21 @@ class PlayerBridge extends Notifier<PlayerGameState>
     }
 
     try {
-      await _client!.connect(url);
+      await _client!.connect(url).timeout(_connectTimeout);
+
+      if (_connectionState != PlayerConnectionState.connected) {
+        throw Exception('Could not connect to host');
+      }
     } catch (e) {
       debugPrint('[PlayerBridge] Connection failed: $e');
-      state = state.copyWith(joinError: 'Failed to connect to host');
+      final isTimeout = e is TimeoutException;
+      state = state.copyWith(
+        joinError: isTimeout
+            ? 'Connection timed out. Check host address and network.'
+            : 'Failed to connect to host',
+      );
       await disconnect(); // Ensure client is fully disconnected on error
+      throw Exception(state.joinError);
     }
   }
 
@@ -299,11 +314,26 @@ class PlayerBridge extends Notifier<PlayerGameState>
 
   // ─── OUTBOUND ─────────────────────────────────
 
-  void joinWithCode(String code) => _client?.joinWithCode(code);
+  void joinWithCode(String code, {String? playerName, String? authUid}) {
+    _client?.joinWithCode(
+      code,
+      playerName: playerName,
+      uid: authUid,
+    );
+  }
 
   @override
   Future<void> joinGame(String joinCode, String playerName) async {
-    joinWithCode(joinCode);
+    String? uid;
+    try {
+      uid = FirebaseAuth.instance.currentUser?.uid;
+    } catch (_) {
+      uid = null;
+    }
+
+    final resolvedName =
+        playerName.trim().isEmpty ? 'Player' : playerName.trim();
+    joinWithCode(joinCode, playerName: resolvedName, authUid: uid);
   }
 
   @override

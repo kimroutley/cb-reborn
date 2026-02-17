@@ -4,6 +4,7 @@ import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_models/cb_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'player_bridge.dart';
 
 @immutable
 class PlayerStats {
@@ -46,24 +47,21 @@ class PlayerStats {
 }
 
 class PlayerStatsNotifier extends Notifier<PlayerStats> {
-  // For simplicity, this will track stats for the currently active player ID.
-  // A more robust solution might store stats per player ID.
-  String _activePlayerId = 'player_1'; // Default/placeholder
-
   @override
   PlayerStats build() {
-    _loadStats();
-    return PlayerStats(playerId: _activePlayerId);
+    // Watch the player bridge for ID changes
+    final activePlayerId = ref.watch(playerBridgeProvider.select((s) => s.myPlayerId)) ?? 'player_1';
+    
+    // Initial state
+    final stats = PlayerStats(playerId: activePlayerId);
+    
+    // Schedule loading
+    Future.microtask(() => _loadStats(activePlayerId));
+    
+    return stats;
   }
 
-  // Setter to update the active player ID and reload stats
-  void setActivePlayerId(String id) {
-    if (_activePlayerId == id) return;
-    _activePlayerId = id;
-    _loadStats();
-  }
-
-  Future<void> _loadStats() async {
+  Future<void> _loadStats(String activePlayerId) async {
     final records = PersistenceService.instance.loadGameRecords();
 
     int gamesPlayed = 0;
@@ -73,7 +71,7 @@ class PlayerStatsNotifier extends Notifier<PlayerStats> {
     for (final record in records) {
       // Only consider games where this player participated
       final playerInRecord = record.roster.firstWhereOrNull(
-        (p) => p.id == _activePlayerId,
+        (p) => p.id == activePlayerId,
       );
       if (playerInRecord != null) {
         gamesPlayed++;
@@ -90,6 +88,11 @@ class PlayerStatsNotifier extends Notifier<PlayerStats> {
       gamesWon: gamesWon,
       rolesPlayed: rolesPlayed,
     );
+  }
+
+  // Keep manual refresh if needed, but the watcher handles the ID change
+  Future<void> refresh() async {
+    await _loadStats(state.playerId);
   }
 }
 

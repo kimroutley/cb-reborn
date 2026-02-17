@@ -221,4 +221,22 @@ void main() {
       expect(script.length, 3);
     });
   });
+
+  group('ScriptBuilder.buildSetupScript', () {
+    test('includes drama queen setup step with selectTwoPlayers action', () {
+      final players = [
+        makePlayer('1', RoleIds.dramaQueen),
+        makePlayer('2', RoleIds.dealer),
+        makePlayer('3', RoleIds.partyAnimal),
+      ];
+
+      final script = ScriptBuilder.buildSetupScript(players, dayCount: 0);
+      final dramaStep = script.firstWhere(
+        (s) => s.id.startsWith('drama_queen_setup_'),
+      );
+
+      expect(dramaStep.roleId, RoleIds.dramaQueen);
+      expect(dramaStep.actionType, ScriptActionType.selectTwoPlayers);
+    });
+  });
 }

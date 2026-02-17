@@ -8,7 +8,6 @@ import 'package:http/testing.dart';
 void main() {
   group('GeminiNarrationService', () {
     const validApiKey = 'test_api_key';
-    const validModel = 'gemini-1.5-flash';
 
     test('generateNightNarration returns generated text on success', () async {
       final client = MockClient((request) async {

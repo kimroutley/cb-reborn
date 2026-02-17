@@ -25,55 +25,83 @@ class LobbyAccessCodeTile extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final port = bridge.port;
 
-    return CBGlassTile(
-      title: "ACCESS CODE",
-      subtitle: isCloud ? "CLOUD SYNC ENABLED" : "LOCAL BROADCAST ACTIVE",
-      accentColor: primaryColor,
-      isPrismatic: true,
-      icon: Icon(
-          isCloud ? Icons.cloud_done_outlined : Icons.wifi_tethering_rounded,
-          color: primaryColor),
-      content: Row(
+    return CBPanel(
+      borderColor: primaryColor.withValues(alpha: 0.4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "PATRONS ENTER THIS CODE TO CONNECT",
-                  style: CBTypography.labelSmall.copyWith(
-                      color: scheme.onSurface.withValues(alpha: 0.5),
-                      fontSize: 8,
-                      letterSpacing: 2.0),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color:
-                        scheme.surfaceContainerHighest.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: primaryColor.withValues(
-                            alpha: 0.3)), // Migrated from CBColors.neonBlue
-                  ),
-                  child: Text(
-                    session.joinCode,
-                    style: CBTypography.code.copyWith(
-                      color: primaryColor, // Migrated from CBColors.neonBlue
-                      fontSize: 32,
-                      letterSpacing: 12,
-                      shadows: CBColors.textGlow(
-                          primaryColor), // Migrated from CBColors.neonBlue
+          Row(
+            children: [
+              Icon(
+                isCloud
+                    ? Icons.cloud_done_outlined
+                    : Icons.wifi_tethering_rounded,
+                color: primaryColor,
+              ),
+              const SizedBox(width: CBSpace.x3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "ACCESS CODE",
+                      style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isCloud ? "CLOUD SYNC ENABLED" : "LOCAL BROADCAST ACTIVE",
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                            color: primaryColor.withValues(alpha: 0.7),
+                          ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          _buildJoinQrCode(context, ref, session, isCloud, port),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "PATRONS ENTER THIS CODE TO CONNECT",
+                      style: CBTypography.labelSmall.copyWith(
+                          color: scheme.onSurface.withValues(alpha: 0.5),
+                          fontSize: 8,
+                          letterSpacing: 2.0),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        session.joinCode,
+                        style: CBTypography.code.copyWith(
+                          color: primaryColor,
+                          fontSize: 32,
+                          letterSpacing: 12,
+                          shadows: CBColors.textGlow(primaryColor),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              _buildJoinQrCode(context, ref, session, isCloud, port),
+            ],
+          ),
         ],
       ),
     );
@@ -88,7 +116,7 @@ class LobbyAccessCodeTile extends ConsumerWidget {
   ) {
     if (isCloud) {
       final cloudJoinUrl =
-          'https://cb-reborn.web.app/join?mode=cloud&code=${session.joinCode}';
+          'https://cb-reborn.web.app/join?mode=cloud&sid=${session.sessionId}&code=${session.joinCode}';
       return _buildQrWidget(context, cloudJoinUrl, 'SCAN CLOUD LINK');
     }
 
@@ -101,7 +129,7 @@ class LobbyAccessCodeTile extends ConsumerWidget {
         final ip = ips.first;
         final host = Uri.encodeComponent('ws://$ip:$port');
         final joinUrl =
-            'https://cb-reborn.web.app/join?mode=local&host=$host&code=${session.joinCode}';
+          'https://cb-reborn.web.app/join?mode=local&sid=${session.sessionId}&host=$host&code=${session.joinCode}';
         return _buildQrWidget(context, joinUrl, 'SCAN LOCAL LINK');
       },
       loading: () => const SizedBox.shrink(),

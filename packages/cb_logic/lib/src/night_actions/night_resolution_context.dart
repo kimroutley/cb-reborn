@@ -13,11 +13,12 @@ class NightResolutionContext {
   final List<GameEvent> events = [];
 
   // Accumulated data from actions
-  final Set<String> blockedIds = {};
-  final Set<String> protectedIds = {};
-  final Set<String> silencedIds = {};
-  final List<String> murderTargets = [];
+  final Set<String> blockedPlayerIds = {};
+  final Set<String> protectedPlayerIds = {};
+  final Set<String> silencedPlayerIds = {};
+  final Set<String> killedPlayerIds = {};
   final Map<String, String> dealerAttacks = {}; // killerId -> targetId
+  final Map<String, String> redirectedActions = {};
 
   NightResolutionContext({
     required List<Player> players,
@@ -39,6 +40,14 @@ class NightResolutionContext {
 
   void addPrivateMessage(String playerId, String message) {
     _privateMessages.putIfAbsent(playerId, () => []).add(message);
+  }
+
+  void addReport(String message) {
+    report.add(message);
+  }
+
+  void addTeaser(String message) {
+    teasers.add(message);
   }
 
   Player getPlayer(String id) {

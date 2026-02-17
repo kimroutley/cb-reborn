@@ -39,19 +39,27 @@ class MockPlayerBridge extends PlayerBridge {
   @override
   Future<void> disconnect() async {}
   @override
-  void joinWithCode(String code) {}
+  void joinWithCode(String code, {String? playerName, String? authUid}) {}
   @override
   Future<void> joinGame(String joinCode, String playerName) async {}
   @override
   Future<void> claimPlayer(String playerId) async {}
   @override
-  Future<void> vote({required String voterId, required String targetId}) async {}
+  Future<void> vote(
+      {required String voterId, required String targetId}) async {}
   @override
-  Future<void> sendAction({required String stepId, required String targetId, String? voterId}) async {}
+  Future<void> sendAction(
+      {required String stepId,
+      required String targetId,
+      String? voterId}) async {}
   @override
-  Future<void> placeDeadPoolBet({required String playerId, required String targetPlayerId}) async {}
+  Future<void> placeDeadPoolBet(
+      {required String playerId, required String targetPlayerId}) async {}
   @override
-  Future<void> sendGhostChat({required String playerId, required String message, String? playerName}) async {}
+  Future<void> sendGhostChat(
+      {required String playerId,
+      required String message,
+      String? playerName}) async {}
   @override
   Future<void> leave() async {}
   @override
@@ -59,14 +67,16 @@ class MockPlayerBridge extends PlayerBridge {
 }
 
 void main() {
-  testWidgets('HostOverviewScreen displays day count and player count', (WidgetTester tester) async {
+  testWidgets('HostOverviewScreen displays day count and player count',
+      (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           playerBridgeProvider.overrideWith(() => MockPlayerBridge()),
         ],
         child: MaterialApp(
-          theme: CBTheme.buildTheme(CBTheme.buildColorScheme(null)), // Use the app theme
+          theme: CBTheme.buildTheme(
+              CBTheme.buildColorScheme(null)), // Use the app theme
           home: const HostOverviewScreen(),
         ),
       ),

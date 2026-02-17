@@ -5,7 +5,7 @@ export 'package:cb_models/cb_models.dart'
         SessionState,
         generateJoinCode,
         GameRecord,
-        PlayerSnapshot,
+        GameRecordPlayerSnapshot,
         GameStats,
         GamesNightRecord;
 
@@ -20,5 +20,6 @@ export 'src/persistence/persistence_service.dart';
 export 'src/chat_provider.dart';
 export 'src/strategy_generator.dart';
 export 'src/analytics_service.dart';
+export 'src/firebase_analytics_provider.dart';
 export 'src/gemini_narration_service.dart';
 export 'src/room_effects_provider.dart';

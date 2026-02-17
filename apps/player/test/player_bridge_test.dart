@@ -157,6 +157,19 @@ void main() {
     expect(msg.payload['joinCode'], 'CODE123');
   });
 
+  test('joinGame includes playerName in join payload', () async {
+    final notifier = container.read(playerBridgeProvider.notifier);
+    await notifier.connect('ws://test');
+
+    await notifier.joinGame('CODE123', 'Alice');
+
+    expect(mockClient.sentMessages, isNotEmpty);
+    final msg = mockClient.sentMessages.last;
+    expect(msg.type, 'player_join');
+    expect(msg.payload['joinCode'], 'CODE123');
+    expect(msg.payload['playerName'], 'Alice');
+  });
+
   test('Claim sends correct message', () async {
     final notifier = container.read(playerBridgeProvider.notifier);
     await notifier.connect('ws://test');

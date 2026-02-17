@@ -226,7 +226,7 @@ GameRecord _createGame({
   Team winner = Team.clubStaff,
   int dayCount = 3,
   List<String> history = const [],
-  List<PlayerSnapshot>? roster,
+  List<GameRecordPlayerSnapshot>? roster,
 }) {
   return GameRecord(
     id: id,
@@ -240,7 +240,7 @@ GameRecord _createGame({
   );
 }
 
-List<PlayerSnapshot> _defaultRoster() {
+List<GameRecordPlayerSnapshot> _defaultRoster() {
   return [
     _player('Alice', Team.clubStaff, true),
     _player('Bob', Team.partyAnimals, true),
@@ -250,8 +250,8 @@ List<PlayerSnapshot> _defaultRoster() {
   ];
 }
 
-PlayerSnapshot _player(String name, Team alliance, bool alive) {
-  return PlayerSnapshot(
+GameRecordPlayerSnapshot _player(String name, Team alliance, bool alive) {
+  return GameRecordPlayerSnapshot(
     id: name.toLowerCase(),
     name: name,
     roleId: 'villager',

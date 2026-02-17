@@ -18,7 +18,10 @@ class FirebaseAnalyticsProvider implements AnalyticsProvider {
 
   @override
   Future<void> logScreenView({String? screenName, String? screenClass}) async {
-    await _analytics.logScreenView(screenName: screenName, screenClassFilter: screenClass != null ? [screenClass] : null);
+    await _analytics.logScreenView(
+      screenName: screenName,
+      screenClass: screenClass,
+    );
     if (kDebugMode) {
       debugPrint('Firebase Analytics: Screen view - $screenName');
     }

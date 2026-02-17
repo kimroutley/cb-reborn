@@ -326,6 +326,7 @@ class Game extends _$Game {
     'medic_choice_',
     'creep_setup_',
     'clinger_setup_',
+    'drama_queen_setup_',
     'minor_id_',
     'second_wind_convert_',
   ];
@@ -834,6 +835,23 @@ class Game extends _$Game {
         if (voter.silencedDay == state.dayCount || voter.isSinBinned) {
           return;
         }
+
+        // Clinger must support their partner's current vote while partner is alive.
+        if (voter.role.id == RoleIds.clinger &&
+            voter.clingerPartnerId != null &&
+            voter.clingerPartnerId!.isNotEmpty) {
+          final partnerMatches =
+              state.players.where((p) => p.id == voter.clingerPartnerId);
+          if (partnerMatches.isNotEmpty) {
+            final partner = partnerMatches.first;
+            if (partner.isAlive) {
+              final partnerVote = state.dayVotesByVoter[partner.id];
+              if (partnerVote == null || partnerVote != targetId) {
+                return;
+              }
+            }
+          }
+        }
       }
 
       final updatedTally = Map<String, int>.from(state.dayVoteTally);
@@ -936,6 +954,49 @@ class Game extends _$Game {
       );
     }
 
+    // Special case: Drama Queen setup (select two players, comma-separated IDs)
+    if (stepId.startsWith('drama_queen_setup_')) {
+      final dramaQueenId = _extractScopedPlayerId(
+        stepId: stepId,
+        prefix: 'drama_queen_setup_',
+      );
+      if (dramaQueenId == null) return;
+
+      final targetIds = targetId
+          .split(',')
+          .map((id) => id.trim())
+          .where((id) => id.isNotEmpty)
+          .toList();
+
+      if (targetIds.length < 2) return;
+      final targetAId = targetIds[0];
+      final targetBId = targetIds[1];
+
+      if (targetAId == targetBId) return;
+      if (targetAId == dramaQueenId || targetBId == dramaQueenId) return;
+
+      final alivePlayerIds = state.players
+          .where((p) => p.isAlive)
+          .map((p) => p.id)
+          .toSet();
+      if (!alivePlayerIds.contains(targetAId) ||
+          !alivePlayerIds.contains(targetBId)) {
+        return;
+      }
+
+      state = state.copyWith(
+        players: state.players.map((p) {
+          if (p.id == dramaQueenId) {
+            return p.copyWith(
+              dramaQueenTargetAId: targetAId,
+              dramaQueenTargetBId: targetBId,
+            );
+          }
+          return p;
+        }).toList(),
+      );
+    }
+
     // Special case: Whore act
     if (stepId.startsWith('whore_act_')) {
       final whoreId = _extractScopedPlayerId(
@@ -943,6 +1004,7 @@ class Game extends _$Game {
         prefix: 'whore_act_',
       );
       if (whoreId == null) return;
+      if (targetId == whoreId) return;
       state = state.copyWith(
         players: state.players.map((p) {
           if (p.id == whoreId) {
@@ -1661,6 +1723,7 @@ class Game extends _$Game {
         _checkAndResolveWinCondition(state.players);
         break;
       case GamePhase.day:
+        final dayVotesSnapshot = Map<String, String>.from(state.dayVotesByVoter);
         final res = GameResolutionLogic.resolveDayVote(
           state.players,
           state.dayVoteTally,
@@ -1686,20 +1749,106 @@ class Game extends _$Game {
           _resolveDeadPool(exiledPlayerId);
         }
 
+        final teaSpillerRevealLines = _resolveTeaSpillerReveals(
+          players: state.players,
+          votesByVoter: dayVotesSnapshot,
+        );
+
+        final dramaQueenSwap = _resolveDramaQueenSwaps(
+          players: state.players,
+          votesByVoter: dayVotesSnapshot,
+        );
+        state = state.copyWith(players: dramaQueenSwap.players);
+
+        final predatorRetaliationLines = <String>[];
+        final predatorRetaliationEvents = <GameEvent>[];
+        final predatorRetaliationVictimIds = <String>[];
+
+        final exiledPredators = state.players.where((p) =>
+            !p.isAlive &&
+            p.deathReason == 'exile' &&
+            p.role.id == RoleIds.predator);
+
+        for (final predator in exiledPredators) {
+          final votersAgainst = dayVotesSnapshot.entries
+              .where((e) => e.value == predator.id)
+              .map((e) => e.key)
+              .toList();
+
+          String? retaliationTargetId;
+          for (final voterId in votersAgainst) {
+            if (voterId == predator.id) {
+              continue;
+            }
+            final voterMatches =
+                state.players.where((p) => p.id == voterId).toList();
+            if (voterMatches.isEmpty) {
+              continue;
+            }
+            if (voterMatches.first.isAlive) {
+              retaliationTargetId = voterId;
+              break;
+            }
+          }
+
+          if (retaliationTargetId == null) {
+            continue;
+          }
+
+          state = state.copyWith(
+            players: state.players.map((p) {
+              if (p.id == retaliationTargetId) {
+                return p.copyWith(
+                  isAlive: false,
+                  deathReason: 'predator_retaliation',
+                  deathDay: state.dayCount,
+                );
+              }
+              return p;
+            }).toList(),
+          );
+
+          final retaliationTarget =
+              state.players.firstWhere((p) => p.id == retaliationTargetId);
+          predatorRetaliationVictimIds.add(retaliationTargetId);
+          predatorRetaliationLines.add(
+            'Predator struck back: ${retaliationTarget.name} was taken down in retaliation.',
+          );
+          predatorRetaliationEvents.add(
+            GameEvent.death(
+              playerId: retaliationTargetId,
+              reason: 'predator_retaliation',
+              day: state.dayCount,
+            ),
+          );
+        }
+
         state = state.copyWith(
           players:
               state.players, // Current state includes resolution + deadpool
-          lastDayReport: res.report,
+          lastDayReport: [
+            ...res.report,
+            ...teaSpillerRevealLines,
+            ...dramaQueenSwap.lines,
+            ...predatorRetaliationLines,
+          ],
           gameHistory: [
             ...state.gameHistory,
             '── DAY ${state.dayCount} RESOLVED ──',
             ...res.report,
+            ...teaSpillerRevealLines,
+            ...dramaQueenSwap.lines,
+            ...predatorRetaliationLines,
           ],
-          eventLog: [...state.eventLog, ...res.events],
+          eventLog: [
+            ...state.eventLog,
+            ...res.events,
+            ...predatorRetaliationEvents,
+          ],
           dayCount: state.dayCount + 1,
           phase: GamePhase.night,
           scriptQueue: ScriptBuilder.buildNightScript(
-            res.players,
+            state.players,
             state.dayCount + 1,
           ),
           scriptIndex: 0,
@@ -1719,6 +1868,9 @@ class Game extends _$Game {
             .toList();
         for (final victim in deadInDay) {
           _handleDeathTriggers(victim.id);
+        }
+        for (final victimId in predatorRetaliationVictimIds) {
+          _handleDeathTriggers(victimId);
         }
 
         _checkAndResolveWinCondition(state.players);
@@ -1763,13 +1915,144 @@ class Game extends _$Game {
     );
   }
 
+  List<String> _resolveTeaSpillerReveals({
+    required List<Player> players,
+    required Map<String, String> votesByVoter,
+  }) {
+    final lines = <String>[];
+
+    final exiledTeaSpillers = players.where((p) =>
+        !p.isAlive &&
+        p.deathReason == 'exile' &&
+        p.role.id == RoleIds.teaSpiller);
+
+    for (final teaSpiller in exiledTeaSpillers) {
+      final votersAgainst = votesByVoter.entries
+          .where((e) => e.value == teaSpiller.id)
+          .map((e) => e.key)
+          .toList();
+
+      if (votersAgainst.isEmpty) {
+        continue;
+      }
+
+      // Deterministic reveal: first voter recorded against Tea Spiller.
+      final revealedVoterId = votersAgainst.first;
+      final revealedVoterMatches =
+          players.where((p) => p.id == revealedVoterId).toList();
+      if (revealedVoterMatches.isEmpty) {
+        continue;
+      }
+
+      final revealedVoter = revealedVoterMatches.first;
+      lines.add(
+        'Tea Spiller exposed ${revealedVoter.name}: ${revealedVoter.role.name}.',
+      );
+    }
+
+    return lines;
+  }
+
+  ({List<Player> players, List<String> lines}) _resolveDramaQueenSwaps({
+    required List<Player> players,
+    required Map<String, String> votesByVoter,
+  }) {
+    final lines = <String>[];
+    var updatedPlayers = List<Player>.from(players);
+
+    final exiledDramaQueens = updatedPlayers.where((p) =>
+        !p.isAlive &&
+        p.deathReason == 'exile' &&
+        p.role.id == RoleIds.dramaQueen);
+
+    for (final dramaQueen in exiledDramaQueens) {
+      final aliveTargets = updatedPlayers
+          .where((p) => p.isAlive && p.id != dramaQueen.id)
+          .toList();
+
+      if (aliveTargets.length < 2) {
+        continue;
+      }
+
+      final preferredTargets = [
+        dramaQueen.dramaQueenTargetAId,
+        dramaQueen.dramaQueenTargetBId,
+      ]
+          .whereType<String>()
+          .where((id) => id.isNotEmpty && id != dramaQueen.id)
+          .toSet()
+          .where((id) => aliveTargets.any((p) => p.id == id))
+          .toList();
+
+      final votersAgainst = votesByVoter.entries
+          .where((e) => e.value == dramaQueen.id)
+          .map((e) => e.key)
+          .where((id) => id != dramaQueen.id)
+          .where((id) => aliveTargets.any((p) => p.id == id))
+          .toList();
+
+      final candidateIds = [
+        ...preferredTargets,
+        ...votersAgainst,
+        ...aliveTargets.map((p) => p.id),
+      ].toSet().toList();
+
+      if (candidateIds.length < 2) {
+        continue;
+      }
+
+      final targetAId = candidateIds[0];
+      final targetBId = candidateIds[1];
+
+      final indexA = updatedPlayers.indexWhere((p) => p.id == targetAId);
+      final indexB = updatedPlayers.indexWhere((p) => p.id == targetBId);
+      if (indexA == -1 || indexB == -1) {
+        continue;
+      }
+
+      final targetA = updatedPlayers[indexA];
+      final targetB = updatedPlayers[indexB];
+
+      updatedPlayers[indexA] = targetA.copyWith(
+        role: targetB.role,
+        alliance: targetB.alliance,
+      );
+      updatedPlayers[indexB] = targetB.copyWith(
+        role: targetA.role,
+        alliance: targetA.alliance,
+      );
+
+      lines.add(
+        'Drama Queen chaos: ${targetA.name} and ${targetB.name} swapped roles.',
+      );
+      lines.add(
+        'Drama Queen reveal: ${targetA.name} is now ${targetB.role.name}, ${targetB.name} is now ${targetA.role.name}.',
+      );
+    }
+
+    return (players: updatedPlayers, lines: lines);
+  }
+
   void _checkAndResolveWinCondition(List<Player> players) {
     final win = GameResolutionLogic.checkWinCondition(players);
     if (win != null) {
+      final winningReport = List<String>.from(win.report);
+      if (win.winner != Team.neutral) {
+        final livingManagers = players.where(
+          (p) => p.isAlive && p.role.id == RoleIds.clubManager,
+        );
+        if (livingManagers.isNotEmpty) {
+          final managerNames = livingManagers.map((p) => p.name).join(', ');
+          winningReport.add(
+            'Club Manager survived and wins with the house: $managerNames.',
+          );
+        }
+      }
+
       state = state.copyWith(
         phase: GamePhase.endGame,
         winner: win.winner,
-        endGameReport: win.report,
+        endGameReport: winningReport,
         scriptQueue: const [],
         scriptIndex: 0,
       );

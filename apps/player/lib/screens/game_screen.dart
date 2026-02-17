@@ -1,15 +1,15 @@
-import 'package:cb_models/cb_models.dart' hide PlayerSnapshot, BulletinEntry;
+import 'package:cb_models/cb_models.dart' hide PlayerSnapshot;
 import 'package:cb_player/player_bridge.dart';
 import 'package:cb_player/player_bridge_actions.dart';
 import 'package:cb_theme/cb_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../widgets/biometric_identity_header.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/game_action_tile.dart';
 import '../widgets/ghost_lounge_content.dart';
-import '../widgets/stim_effect_overlay.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   final PlayerBridgeActions bridge;
@@ -49,7 +49,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     if (newStep != null && newStep.id != _lastStepId && canAct) {
       _lastStepId = newStep.id;
-      HapticService.alertDispatch();
+      HapticFeedback.mediumImpact();
       _scrollToBottom();
     } else if (newStep == null) {
       _lastStepId = null;
@@ -81,19 +81,20 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
 
     final step = widget.gameState.currentStep;
-    final roleColor = CBColors.fromHex(widget.player.roleColorHex);
+    final roleColor =
+        Color(int.parse(widget.player.roleColorHex.replaceAll('#', '0xff')));
     final canAct =
         step != null && (step.roleId == widget.player.roleId || step.isVote);
+    final isRoleConfirmed = widget.gameState.roleConfirmedPlayerIds
+      .contains(widget.playerId);
 
     // Apply dynamic theme for the role
     return Theme(
       data: CBTheme.buildTheme(CBTheme.buildColorScheme(roleColor)),
-      child: StimEffectOverlay(
-        bulletinBoard: widget.gameState.bulletinBoard,
-        child: CBPrismScaffold(
-          title: 'GAME FEED',
-          drawer: const CustomDrawer(),
-          body: Column(
+      child: Scaffold(
+        drawer: const CustomDrawer(),
+        body: CBNeonBackground(
+          child: Column(
             children: [
               // ── BIOMETRIC IDENTITY HEADER ──
               BiometricIdentityHeader(
@@ -110,11 +111,33 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   children: [
                     // 1. Current Phase Header
                     CBMessageBubble(
-                      variant: CBMessageVariant.system,
-                      content:
+                      sender: 'SYSTEM',
+                      message:
                           "${widget.gameState.phase.toUpperCase()} - DAY ${widget.gameState.dayCount}",
-                      accentColor: roleColor,
+                      isSystemMessage: true,
                     ),
+
+                    if (widget.gameState.phase == 'setup' && !isRoleConfirmed)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                        child: CBPrimaryButton(
+                          label: 'CONFIRM ROLE',
+                          icon: Icons.verified_user_rounded,
+                          onPressed: () {
+                            widget.bridge.confirmRole(playerId: widget.playerId);
+                            HapticFeedback.selectionClick();
+                          },
+                        ),
+                      ),
+
+                    if (widget.gameState.phase == 'setup' && isRoleConfirmed)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                        child: CBBadge(
+                          text: 'ROLE CONFIRMED',
+                          color: theme.colorScheme.tertiary,
+                        ),
+                      ),
 
                     // 2. Bulletin History (Public events)
                     ...widget.gameState.bulletinBoard.map((entry) {
@@ -123,21 +146,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                       final color = entry.roleId != null
                           ? CBColors.fromHex(role.colorHex)
                           : theme.colorScheme.primary; // Use theme color
+                      final senderName =
+                          role.id == 'unassigned' ? entry.title : role.name;
 
                       return CBMessageBubble(
-                        variant: entry.type == 'system'
-                            ? CBMessageVariant.system
-                            : CBMessageVariant.narrative,
-                        content: entry.content,
-                        senderName:
-                            role.id == 'unassigned' ? entry.title : role.name,
-                        accentColor: color,
-                        avatar: entry.roleId != null
-                            ? CBRoleAvatar(
-                                assetPath: role.assetPath,
-                                color: color,
-                                size: 32)
-                            : null,
+                        sender: senderName,
+                        message: entry.content,
+                        isSystemMessage: entry.type == 'system',
+                        color: color,
+                        avatarAsset: entry.roleId != null ? role.assetPath : null,
                       );
                     }),
 
@@ -146,24 +163,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         .containsKey(widget.playerId))
                       ...widget.gameState.privateMessages[widget.playerId]!
                           .map((msg) => CBMessageBubble(
-                                variant: CBMessageVariant.directive,
-                                content: msg,
-                                accentColor: theme.colorScheme.tertiary,
+                                sender: 'PRIVATE',
+                                message: msg,
                               )),
 
                     // 4. Current Directive
                     if (step != null) ...[
                       CBMessageBubble(
-                        variant: CBMessageVariant.narrative,
-                        senderName: "DIRECTIVE",
-                        content: step.readAloudText,
-                        accentColor: roleColor,
-                        avatar: CBRoleAvatar(
-                            assetPath:
-                                'assets/roles/${widget.player.roleId}.png',
-                            color: roleColor,
-                            size: 34,
-                            pulsing: true),
+                        sender: 'DIRECTIVE',
+                        message: step.readAloudText,
+                        avatarAsset: 'assets/roles/${widget.player.roleId}.png',
+                        color: roleColor,
                       ),
 
                       // 5. Action Tile (Interactive)

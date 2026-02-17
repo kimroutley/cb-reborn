@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Interface for analytics provider.
 abstract class AnalyticsProvider {
   Future<void> setAnalyticsCollectionEnabled(bool enabled);

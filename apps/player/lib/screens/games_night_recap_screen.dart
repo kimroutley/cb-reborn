@@ -19,24 +19,52 @@ class GamesNightRecapScreen extends StatelessWidget {
     final sortedGames = List<GameRecord>.from(games)
       ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
 
-    return CBPrismScaffold(
-      title: 'SESSION RECAP',
-      showAppBar: true,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text(
+          'SESSION RECAP',
+          style: Theme.of(context).textTheme.titleLarge!,
+        ),
+        centerTitle: true,
+      ),
+      body: CBNeonBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
             // Session Header
             CBGlassTile(
-              title: session.sessionName,
-              subtitle: DateFormat('MMM dd, yyyy').format(session.startedAt),
-              accentColor: scheme.primary,
+              borderColor: scheme.primary,
               isPrismatic: true,
-              icon: Icon(Icons.calendar_today, color: scheme.primary),
-              content: Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: _buildStatsSummary(context, scheme),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, color: scheme.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          session.sessionName.toUpperCase(),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    DateFormat('MMM dd, yyyy').format(session.startedAt),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: scheme.primary),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStatsSummary(context, scheme),
+                ],
               ),
             ),
             const SizedBox(height: 32),
@@ -72,7 +100,9 @@ class GamesNightRecapScreen extends StatelessWidget {
               }),
 
             const SizedBox(height: 48),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -151,14 +181,31 @@ class GamesNightRecapScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: CBGlassTile(
-        title: 'GAME $number • ${game.dayCount} ROUNDS',
-        subtitle: 'WINNER: $winnerName • $durationStr',
-        accentColor: winColor,
-        icon: Icon(isPartyWin ? Icons.celebration : Icons.security,
-            color: winColor),
-        content: Column(
+        borderColor: winColor,
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                Icon(isPartyWin ? Icons.celebration : Icons.security,
+                    color: winColor),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'GAME • ${game.dayCount} ROUNDS',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'WINNER: $winnerName • $durationStr',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: winColor),
+            ),
             const SizedBox(height: 12),
             Text("ROSTER (${game.playerCount})",
                 style: CBTypography.labelSmall

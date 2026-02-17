@@ -69,21 +69,21 @@ GameRecord _fakeRecord({
     dayCount: dayCount,
     rolesInPlay: ['dealer', 'bouncer', 'party_animal', 'medic'],
     roster: [
-      const PlayerSnapshot(
+      const GameRecordPlayerSnapshot(
         id: 'p1',
         name: 'Alice',
         roleId: 'dealer',
         alliance: Team.clubStaff,
         alive: true,
       ),
-      const PlayerSnapshot(
+      const GameRecordPlayerSnapshot(
         id: 'p2',
         name: 'Bob',
         roleId: 'party_animal',
         alliance: Team.partyAnimals,
         alive: true,
       ),
-      const PlayerSnapshot(
+      const GameRecordPlayerSnapshot(
         id: 'p3',
         name: 'Charlie',
         roleId: 'medic',

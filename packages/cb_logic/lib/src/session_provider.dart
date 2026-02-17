@@ -8,6 +8,7 @@ class Session extends _$Session {
   @override
   SessionState build() {
     return SessionState(
+      sessionId: generateSessionId(),
       joinCode: generateJoinCode(),
     );
   }
@@ -27,6 +28,25 @@ class Session extends _$Session {
     state = state.copyWith(
       claimedPlayerIds:
           state.claimedPlayerIds.where((id) => id != playerId).toList(),
+      roleConfirmedPlayerIds:
+          state.roleConfirmedPlayerIds.where((id) => id != playerId).toList(),
     );
+  }
+
+  void confirmRole(String playerId) {
+    if (state.roleConfirmedPlayerIds.contains(playerId)) {
+      return;
+    }
+    state = state.copyWith(
+      roleConfirmedPlayerIds: [...state.roleConfirmedPlayerIds, playerId],
+    );
+  }
+
+  void clearRoleConfirmations() {
+    state = state.copyWith(roleConfirmedPlayerIds: const []);
+  }
+
+  void setForceStartOverride(bool enabled) {
+    state = state.copyWith(forceStartOverride: enabled);
   }
 }

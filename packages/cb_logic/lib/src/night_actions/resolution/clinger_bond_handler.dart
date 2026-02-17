@@ -12,7 +12,11 @@ class ClingerBondHandler implements DeathHandler {
         p.clingerPartnerId == victim.id);
 
     for (final clinger in clingers) {
-      if (victim.deathReason == 'murder') {
+      final isDealerMurder =
+          victim.deathReason == 'murder' ||
+          context.dealerAttacks.values.contains(victim.id);
+
+      if (isDealerMurder) {
         // Freed as Attack Dog!
         context.updatePlayer(clinger.copyWith(clingerFreedAsAttackDog: true));
         context.report.add('${clinger.name} witnessed the murder of their partner and has snapped! They are now an Attack Dog.');

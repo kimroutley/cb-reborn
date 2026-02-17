@@ -37,6 +37,7 @@ enum GameStyle {
   offensive, // "Blood Bath" - high kill/aggression
   defensive, // "Last One Standing" - high protection/tank
   reactive, // "Whodunit" - high investigation/information
+  manual, // Host assigns all roles manually
   chaos, // "Free For All" - all 22 roles possible
 }
 
@@ -44,13 +45,15 @@ extension GameStyleExtension on GameStyle {
   String get label {
     switch (this) {
       case GameStyle.offensive:
-        return 'BLOOD BATH';
+        return 'BLOOD_BATH';
       case GameStyle.defensive:
-        return 'LAST STAND';
+        return 'POLITICAL';
       case GameStyle.reactive:
-        return 'WHODUNIT';
-      case GameStyle.chaos:
         return 'CHAOS';
+      case GameStyle.manual:
+        return 'MANUAL';
+      case GameStyle.chaos:
+        return 'FREE_FOR_ALL';
     }
   }
 
@@ -59,11 +62,13 @@ extension GameStyleExtension on GameStyle {
       case GameStyle.offensive:
         return 'High aggression. More kills, less protection.';
       case GameStyle.defensive:
-        return 'Endurance match. High defense and survival.';
+        return 'Strategic social play with balanced pressure.';
       case GameStyle.reactive:
-        return 'Information is key. Heavy on investigation.';
+        return 'Guide CHAOS mode with weighted disruptive roles.';
+      case GameStyle.manual:
+        return 'Host assigns every role before setup starts.';
       case GameStyle.chaos:
-        return 'Anything goes. The full 22-role catalog.';
+        return 'Legacy full random from all available roles.';
     }
   }
 
@@ -106,6 +111,8 @@ extension GameStyleExtension on GameStyle {
           RoleIds.creep,
           RoleIds.partyAnimal
         ];
+      case GameStyle.manual:
+        return []; // Host chooses roles directly.
       case GameStyle.chaos:
         return []; // Empty means all roles
     }

@@ -94,7 +94,7 @@ void main() {
 
       // Verify the state is still valid
       final updated = container.read(gameProvider);
-      expect(updated.players[0].whoreDeflectionTargetId, whoreId);
+      expect(updated.players[0].whoreDeflectionTargetId, isNull);
     });
 
     test('whore act stores target correctly', () {

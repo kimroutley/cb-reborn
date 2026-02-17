@@ -75,8 +75,8 @@ GamesNightRecord _generateSession(List<GameRecord> games) {
   );
 }
 
-PlayerSnapshot _player(String name, Team alliance, bool alive) {
-  return PlayerSnapshot(
+GameRecordPlayerSnapshot _player(String name, Team alliance, bool alive) {
+  return GameRecordPlayerSnapshot(
     id: name.toLowerCase(),
     name: name,
     roleId: 'villager',
