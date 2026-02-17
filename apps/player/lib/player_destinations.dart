@@ -4,6 +4,7 @@ enum PlayerDestination {
   home,
   lobby,
   claim,
+  transition,
   game,
   guides,
   gamesNight,
