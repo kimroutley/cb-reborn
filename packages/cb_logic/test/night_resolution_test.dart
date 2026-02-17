@@ -386,6 +386,33 @@ void main() {
        expect(updatedSD.isAlive, false);
     });
 
+    test('Seasoned Drinker dies on non-dealer kill even with extra lives', () {
+      final messy =
+          _player('Messy', _role(RoleIds.messyBitch, alliance: Team.neutral));
+      final sd =
+          _player('SD', _role(RoleIds.seasonedDrinker)).copyWith(lives: 3);
+      final players = [messy, sd];
+
+      final log = {
+        '${RoleIds.messyBitch}_kill_${messy.id}_1': sd.id,
+      };
+
+      final result = GameResolutionLogic.resolveNightActions(
+        players,
+        log,
+        1,
+        {},
+      );
+
+      final updatedSD = result.players.firstWhere((p) => p.id == sd.id);
+      expect(updatedSD.isAlive, false);
+      expect(updatedSD.lives, 3);
+      expect(
+        result.report.any((s) => s.contains('Seasoned Drinker SD lost a life')),
+        false,
+      );
+    });
+
     test('Ally Cat loses a life and survives murder when lives > 1', () {
       final dealer =
           _player('Dealer', _role(RoleIds.dealer, alliance: Team.clubStaff));
