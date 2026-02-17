@@ -98,18 +98,20 @@ class HostSettingsNotifier extends Notifier<HostSettings> {
     }
   }
 
+  void toggleGeminiNarration() {
+    final next = !state.geminiNarrationEnabled;
+    state = state.copyWith(geminiNarrationEnabled: next);
+    _persist(state);
+  }
+
   void setSfxVolume(double value) {
-    final next = state.copyWith(sfxVolume: value.clamp(0.0, 1.0));
-    state = next;
-    _applySideEffects(next);
-    unawaited(_persist(next));
+    state = state.copyWith(sfxVolume: value.clamp(0.0, 1.0));
+    _persist(state);
   }
 
   void setMusicVolume(double value) {
-    final next = state.copyWith(musicVolume: value.clamp(0.0, 1.0));
-    state = next;
-    _applySideEffects(next);
-    unawaited(_persist(next));
+    state = state.copyWith(musicVolume: value.clamp(0.0, 1.0));
+    _persist(state);
   }
 
   void setHighContrast(bool enabled) {

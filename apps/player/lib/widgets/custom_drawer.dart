@@ -4,6 +4,8 @@ import '../screens/games_night_screen.dart';
 import '../screens/guides_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/lobby_screen.dart';
+import '../screens/stats_screen.dart';
+import '../screens/hall_of_fame_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -66,6 +68,32 @@ class CustomDrawer extends StatelessWidget {
               );
             },
           ),
+          _DrawerTile(
+            icon: Icons.show_chart_rounded,
+            title: 'Career Stats',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const StatsScreen(),
+                ),
+              );
+            },
+          ),
+          _DrawerTile(
+            icon: Icons.emoji_events_rounded,
+            title: 'Hall of Fame',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HallOfFameScreen(),
+                ),
+              );
+            },
+          ),
 
           Divider(color: scheme.outlineVariant.withValues(alpha: 0.25)),
 
@@ -110,7 +138,7 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   Text(
                     "NO ACTIVE PENALTIES",
-                    style: CBTypography.nano.copyWith(
+                    style: textTheme.labelSmall?.copyWith(
                       color: scheme.onSurface.withValues(alpha: 0.35),
                     ),
                   ),
@@ -148,7 +176,7 @@ class CustomDrawer extends StatelessWidget {
           ),
           Text(
             'THE ULTIMATE SOCIAL DECEPTION',
-            style: CBTypography.nano.copyWith(
+            style: textTheme.labelSmall?.copyWith(
               color: scheme.onSurface.withValues(alpha: 0.35),
               letterSpacing: 1.0,
             ),

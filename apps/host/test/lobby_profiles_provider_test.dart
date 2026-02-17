@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:cb_host/providers/firestore_provider.dart';
 import 'package:cb_host/providers/lobby_profiles_provider.dart';
@@ -23,6 +22,7 @@ class MockFirestore extends Fake implements FirebaseFirestore {
 
 class MockCollectionReference extends Fake
     implements CollectionReference<Map<String, dynamic>> {
+  @override
   final String path;
   final List<MockQuery> queries = [];
 

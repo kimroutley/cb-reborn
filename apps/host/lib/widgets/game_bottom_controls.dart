@@ -7,15 +7,15 @@ class GameBottomControls extends StatelessWidget {
   const GameBottomControls({
     super.key,
     required this.step,
+    required this.gameState,
     required this.controller,
-    required this.firstPickId,
     required this.onConfirm,
     required this.onContinue,
   });
 
   final ScriptStep? step;
+  final GameState gameState;
   final Game controller;
-  final String? firstPickId;
   final VoidCallback onConfirm;
   final Future<void> Function() onContinue;
 
@@ -25,12 +25,18 @@ class GameBottomControls extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final canConfirm = firstPickId != null;
+    final isMultiSelect = step!.actionType == ScriptActionType.selectTwoPlayers ||
+        step!.actionType == ScriptActionType.multiSelect;
+    
+    final currentSelection = gameState.actionLog[step!.id];
+    final canConfirm = isMultiSelect
+        ? (currentSelection != null && currentSelection.split(',').length >= 2)
+        : currentSelection != null;
+
     final canSimulate = step!.id == 'day_vote' ||
         step!.actionType == ScriptActionType.selectPlayer ||
-        step!.actionType == ScriptActionType.selectTwoPlayers ||
+        isMultiSelect ||
         step!.actionType == ScriptActionType.optional ||
-        step!.actionType == ScriptActionType.multiSelect ||
         step!.actionType == ScriptActionType.binaryChoice;
 
     final theme = Theme.of(context);
@@ -71,23 +77,15 @@ class GameBottomControls extends StatelessWidget {
               ),
             ),
           if (canSimulate) const SizedBox(width: 8),
-          if (step!.actionType == ScriptActionType.selectTwoPlayers)
+          if (isMultiSelect)
             Expanded(
               child: CBPrimaryButton(
                 label: 'CONFIRM',
                 icon: Icons.check_circle_outline,
-                onPressed: canConfirm
-                    ? () {
-                        controller.handleInteraction(
-                          stepId: step!.id,
-                          targetId: firstPickId,
-                        );
-                        onConfirm();
-                      }
-                    : null,
+                onPressed: canConfirm ? onConfirm : null,
               ),
             ),
-          if (step!.actionType != ScriptActionType.selectTwoPlayers)
+          if (!isMultiSelect)
             Expanded(
               child: CBPrimaryButton(
                 label: 'CONTINUE',

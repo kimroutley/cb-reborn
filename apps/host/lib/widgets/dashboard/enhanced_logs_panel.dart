@@ -21,7 +21,7 @@ class _EnhancedLogsPanelState extends State<EnhancedLogsPanel> {
     final filteredLogs = _filterLogs(widget.logs);
 
     return CBPanel(
-      borderColor: CBColors.radiantTurquoise.withValues(alpha: 0.7),
+      borderColor: scheme.primary.withValues(alpha: 0.7),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

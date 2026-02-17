@@ -137,74 +137,73 @@ class _GamesNightRecapScreenState extends State<GamesNightRecapScreen>
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return CBPrismScaffold(
-      title: '',
-      showAppBar: false,
-      useSafeArea: false,
-      body: Stack(
-        children: [
-          // ── ANIMATED BACKGROUND ──
-          _buildDynamicBackground(scheme),
+    return Scaffold(
+      body: CBNeonBackground(
+        child: Stack(
+          children: [
+            // ── ANIMATED BACKGROUND ──
+            _buildDynamicBackground(scheme),
 
-          // ── STORY CONTENT ──
-          PageView(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-                _startTimer();
-              });
-            },
-            children: _buildSlides(scheme),
-          ),
+            // ── STORY CONTENT ──
+            PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                  _startTimer();
+                });
+              },
+              children: _buildSlides(scheme),
+            ),
 
-          // ── NAVIGATION OVERLAY ──
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: _previousPage,
-                  behavior: HitTestBehavior.translucent,
-                  child: const SizedBox.expand(),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: _nextPage,
-                  behavior: HitTestBehavior.translucent,
-                  child: const SizedBox.expand(),
-                ),
-              ),
-            ],
-          ),
-
-          // ── TOP INDICATORS ──
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildProgressBar(scheme),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      const CBConnectionDot(
-                          isConnected: true, label: "SESSION RECAP"),
-                      const SizedBox(width: 8),
-                      const SimulationModeBadgeAction(),
-                      const Spacer(),
-                      IconButton(
-                        icon: Icon(Icons.close, color: scheme.onSurface),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
+            // ── NAVIGATION OVERLAY ──
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _previousPage,
+                    behavior: HitTestBehavior.translucent,
+                    child: const SizedBox.expand(),
                   ),
-                ],
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _nextPage,
+                    behavior: HitTestBehavior.translucent,
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ],
+            ),
+
+            // ── TOP INDICATORS ──
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildProgressBar(scheme),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const CBConnectionDot(
+                            isConnected: true, label: "SESSION RECAP"),
+                        const SizedBox(width: 8),
+                        const SimulationModeBadgeAction(),
+                        const Spacer(),
+                        IconButton(
+                          icon: Icon(Icons.close, color: scheme.onSurface),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -478,20 +477,37 @@ class _GamesNightRecapScreenState extends State<GamesNightRecapScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text("SPICIEST MOMENT",
-              style: textTheme.headlineMedium!.copyWith(
-                  color: scheme.error)), // Previously CBColors.bloodOrange
+              style: textTheme.headlineMedium!
+                  .copyWith(color: scheme.error)), // Previously CBColors.bloodOrange
           const SizedBox(height: 48),
-          CBGlassTile(
-            title: "RECORDED DATA",
-            accentColor: scheme.error, // Previously CBColors.bloodOrange
-            isPrismatic: true,
-            icon: Icon(Icons.security,
-                color: scheme.error), // Previously CBColors.bloodOrange
-            content: Text(
-              _recap.spiciestMoment ?? "NONE RECORDED",
-              textAlign: TextAlign.center,
-              style: textTheme.bodyMedium!
-                  .copyWith(height: 1.5, fontStyle: FontStyle.italic),
+          CBPanel(
+            borderColor: scheme.error,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.security, color: scheme.error),
+                    const SizedBox(width: CBSpace.x3),
+                    Expanded(
+                      child: Text(
+                        "RECORDED DATA",
+                        style: textTheme.headlineSmall!.copyWith(
+                              color: scheme.error,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: CBSpace.x3),
+                Text(
+                  _recap.spiciestMoment ?? "NONE RECORDED",
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodyMedium!
+                      .copyWith(height: 1.5, fontStyle: FontStyle.italic),
+                ),
+              ],
             ),
           ),
         ],

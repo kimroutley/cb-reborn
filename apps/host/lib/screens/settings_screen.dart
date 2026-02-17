@@ -71,13 +71,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final notifier = ref.read(hostSettingsProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
 
-    return CBPrismScaffold(
-      title: 'Settings',
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('SETTINGS'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: const [SimulationModeBadgeAction()],
+      ),
       drawer: const CustomDrawer(),
-      actions: const [SimulationModeBadgeAction()],
-      body: SingleChildScrollView(
-        padding: CBInsets.screen,
-        child: Column(
+      body: CBNeonBackground(
+        child: SingleChildScrollView(
+          padding: CBInsets.screen,
+          child: Column(
           children: [
             _buildSectionHeader(context, 'Audio'),
             _buildAudioSettings(context, settings, notifier, scheme),
@@ -96,8 +101,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
@@ -112,11 +118,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     HostSettingsNotifier notifier,
     ColorScheme scheme,
   ) {
-    return CBGlassTile(
-      title: 'Audio',
-      accentColor: scheme.secondary,
-      isPrismatic: true,
-      content: Column(
+    return CBPanel(
+      borderColor: scheme.secondary.withValues(alpha: 0.4),
+      child: Column(
         children: [
           _buildSlider(
             context,
@@ -143,11 +147,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     HostSettingsNotifier notifier,
     ColorScheme scheme,
   ) {
-    return CBGlassTile(
-      title: 'AI Narrator',
-      accentColor: scheme.tertiary,
-      isPrismatic: true,
-      content: Column(
+    return CBPanel(
+      borderColor: scheme.tertiary.withValues(alpha: 0.4),
+      child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -188,10 +190,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           style: CBTypography.micro.copyWith(color: scheme.tertiary),
         ),
         const SizedBox(height: 8),
-        CBGlassTile(
-          title: 'Host Personality',
-          accentColor: scheme.tertiary,
-          content: InkWell(
+        CBPanel(
+          borderColor: scheme.tertiary.withValues(alpha: 0.4),
+          child: InkWell(
             onTap: () => _showPersonalityPicker(context, settings, notifier),
             child: Row(
               children: [
@@ -305,11 +306,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     HostSettingsNotifier notifier,
     ColorScheme scheme,
   ) {
-    return CBGlassTile(
-      title: 'Display',
-      accentColor: scheme.primary,
-      isPrismatic: true,
-      content: Column(
+    return CBPanel(
+      borderColor: scheme.primary.withValues(alpha: 0.4),
+      child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -328,11 +327,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildDataSettings(BuildContext context, ColorScheme scheme) {
-    return CBGlassTile(
-      title: 'Game Data',
-      accentColor: scheme.error,
-      isPrismatic: true,
-      content: Column(
+    return CBPanel(
+      borderColor: scheme.error.withValues(alpha: 0.4),
+      child: Column(
         children: [
           _buildActionRow(
             context,

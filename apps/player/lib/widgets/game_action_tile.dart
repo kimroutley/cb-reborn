@@ -1,4 +1,4 @@
-import 'package:cb_models/cb_models.dart' hide PlayerSnapshot, BulletinEntry;
+import 'package:cb_models/cb_models.dart' hide PlayerSnapshot;
 import 'package:cb_player/player_bridge.dart';
 import 'package:cb_player/player_bridge_actions.dart';
 import 'package:cb_player/screens/player_selection_screen.dart';
@@ -29,9 +29,12 @@ class GameActionTile extends StatefulWidget {
 
 class _GameActionTileState extends State<GameActionTile> {
   void _handleActionTap() {
+    final isMultiSelect =
+        widget.step.actionType == ScriptActionType.selectTwoPlayers.name;
+
     if (widget.step.isVote ||
         widget.step.actionType == ScriptActionType.selectPlayer.name ||
-        widget.step.actionType == ScriptActionType.selectTwoPlayers.name) {
+        isMultiSelect) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -46,7 +49,12 @@ class _GameActionTileState extends State<GameActionTile> {
                 widget.bridge
                     .sendAction(stepId: widget.step.id, targetId: targetId);
               }
-              Navigator.pop(context);
+
+              // Only pop if it's not a multi-select or if we just sent the combined result
+              // (Depending on how onPlayerSelected is implemented for multi-select)
+              if (!isMultiSelect || targetId.contains(',')) {
+                Navigator.pop(context);
+              }
             },
           ),
         ),
@@ -66,7 +74,13 @@ class _GameActionTileState extends State<GameActionTile> {
                   widget.step.title.toUpperCase(),
                   style: textTheme.headlineSmall!.copyWith(
                     color: widget.roleColor,
-                    shadows: CBColors.textGlow(widget.roleColor),
+                    shadows: [
+                      BoxShadow(
+                        color: widget.roleColor.withValues(alpha: 0.5),
+                        blurRadius: 24,
+                        spreadRadius: 12,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -115,17 +129,33 @@ class _GameActionTileState extends State<GameActionTile> {
     final textTheme = Theme.of(context).textTheme;
 
     return CBGlassTile(
-      isPrismatic: true, // Use Shimmer/Biorefraction theme
-      title: title,
-      subtitle: widget.step.instructionText.isNotEmpty
-          ? widget.step.instructionText
-          : "INPUT REQUIRED",
-      accentColor: widget.roleColor,
-      isCritical: widget.step.isVote,
-      icon: Icon(icon, color: scheme.onSurface, size: 20),
+      borderColor: widget.roleColor,
       onTap: _handleActionTap,
-      content: Column(
+      child: Column(
         children: [
+          Text(
+            title,
+            style: textTheme.headlineSmall!.copyWith(
+              color: widget.roleColor,
+              shadows: [
+                BoxShadow(
+                  color: widget.roleColor.withValues(alpha: 0.5),
+                  blurRadius: 24,
+                  spreadRadius: 12,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.step.instructionText.isNotEmpty
+                ? widget.step.instructionText
+                : "INPUT REQUIRED",
+            style: textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          Icon(icon, color: scheme.onSurface, size: 20),
+          const SizedBox(height: 16),
           Text(
             "WAKE UP, ${widget.player.name.toUpperCase()}. THE CLUB IS WAITING.",
             textAlign: TextAlign.center,

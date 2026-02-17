@@ -1,6 +1,7 @@
 import 'package:cb_player/player_bridge.dart';
 import 'package:cb_theme/cb_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// A "Hold to Reveal" role identity header for secure, dramatic role checking.
 class BiometricIdentityHeader extends StatefulWidget {
@@ -48,7 +49,7 @@ class _BiometricIdentityHeaderState extends State<BiometricIdentityHeader>
   void _handleLongPressStart(LongPressStartDetails details) {
     if (!_isRevealed) {
       _revealController.forward();
-      HapticService.selection();
+      HapticFeedback.selectionClick();
     }
   }
 
@@ -57,7 +58,7 @@ class _BiometricIdentityHeaderState extends State<BiometricIdentityHeader>
       _revealController.reverse();
     } else {
       setState(() => _isRevealed = true);
-      HapticService.heavy();
+      HapticFeedback.heavyImpact();
     }
   }
 
@@ -134,7 +135,7 @@ class _BiometricIdentityHeaderState extends State<BiometricIdentityHeader>
                     Text(
                       "HOLD TO SCAN BIOMETRICS",
                       style: textTheme.labelSmall!.copyWith(
-                        color: scheme.onSurface.withValues(alpha: 0.3),
+                        color: scheme.onSurface.withAlpha(77),
                         fontSize: 8,
                         letterSpacing: 1.0,
                       ),

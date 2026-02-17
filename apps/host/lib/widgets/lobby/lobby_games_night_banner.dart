@@ -13,49 +13,51 @@ class LobbyGamesNightBanner extends ConsumerWidget {
     final theme = Theme.of(context);
     final session = ref.watch(gamesNightProvider);
     if (session == null || !session.isActive) {
-      return CBMessageBubble(
-        variant: CBMessageVariant.narrative,
-        senderName: "PROMOTER",
-        accentColor: theme.colorScheme.tertiary,
-        content:
-            "Hosting a full session? Start a Games Night to track multiple rounds and get a recap.",
-        avatar: CBRoleAvatar(
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CBMessageBubble(
+            sender: "PROMOTER",
+            message:
+                "Hosting a full session? Start a Games Night to track multiple rounds and get a recap.",
             color: theme.colorScheme.tertiary,
-            size: 32,
-            pulsing: true), // Migrated from CBColors.matrixGreen
-        actions: [
-          CBCompactPlayerChip(
-            name: "START GAMES NIGHT",
-            color: theme
-                .colorScheme.tertiary, // Migrated from CBColors.matrixGreen
-            onTap: () async {
-              final name = await showStartSessionDialog(context);
-              if (name == null || name.trim().isEmpty) return;
+            avatarAsset: 'assets/roles/promoter.png',
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: CBCompactPlayerChip(
+              name: "START GAMES NIGHT",
+              color: theme.colorScheme.tertiary,
+              onTap: () async {
+                final name = await showStartSessionDialog(context);
+                if (name == null || name.trim().isEmpty) return;
 
-              await ref
-                  .read(gamesNightProvider.notifier)
-                  .startSession(name.trim());
+                await ref
+                    .read(gamesNightProvider.notifier)
+                    .startSession(name.trim());
 
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Games Night started.'),
-                  backgroundColor: theme.colorScheme
-                      .tertiary, // Migrated from CBColors.matrixGreen
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Games Night started.'),
+                    backgroundColor: theme.colorScheme.tertiary,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+            ),
           ),
         ],
       );
     }
 
     return CBMessageBubble(
-      variant: CBMessageVariant.result,
-      content:
+      isSystemMessage: true,
+      sender: 'System',
+      message:
           "GAMES NIGHT ACTIVE: ${session.sessionName} (GAME #${session.gameIds.length + 1})",
-      accentColor: theme.colorScheme.tertiary,
+      color: theme.colorScheme.tertiary,
     );
   }
 }

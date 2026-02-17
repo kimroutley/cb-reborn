@@ -60,8 +60,7 @@ class DirectorCommands extends ConsumerWidget {
   }
 
   void _flashRandomRumour(BuildContext context, WidgetRef ref) {
-    final alivePlayers =
-        gameState.players.where((p) => p.isAlive).toList();
+    final alivePlayers = gameState.players.where((p) => p.isAlive).toList();
     if (alivePlayers.isEmpty) return;
 
     final target = alivePlayers[Random().nextInt(alivePlayers.length)];
@@ -93,8 +92,7 @@ class DirectorCommands extends ConsumerWidget {
                   color: scheme.primary,
                   letterSpacing: 1.6,
                   fontWeight: FontWeight.bold,
-                  shadows:
-                      CBColors.textGlow(scheme.primary, intensity: 0.6),
+                  shadows: CBColors.textGlow(scheme.primary, intensity: 0.6),
                 ),
           ),
           const SizedBox(height: 16),

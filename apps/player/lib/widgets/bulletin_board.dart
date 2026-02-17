@@ -76,15 +76,11 @@ class _CBBulletinBoardState extends State<CBBulletinBoard> {
             role != null ? CBColors.fromHex(role.colorHex) : scheme.primary;
 
         return CBMessageBubble(
-          variant: entry.type == 'system'
-              ? CBMessageVariant.system
-              : CBMessageVariant.narrative,
-          content: entry.content,
-          senderName: role?.name ?? entry.title,
-          accentColor: color,
-          avatar: role != null
-              ? CBRoleAvatar(assetPath: role.assetPath, color: color, size: 32)
-              : null,
+          sender: role?.name ?? entry.title,
+          message: entry.content,
+          isSystemMessage: entry.type == 'system',
+          color: color,
+          avatarAsset: role?.assetPath,
         );
       },
     );

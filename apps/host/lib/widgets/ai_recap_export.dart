@@ -85,13 +85,26 @@ class _RecapOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CBGlassTile(
-      title: label,
-      icon: Icon(icon, color: color, size: 18),
-      accentColor: color,
-      isPrismatic: true,
-      onTap: () => Navigator.of(context).pop(style),
-      content: const SizedBox.shrink(),
+    return CBPanel(
+      borderColor: color.withValues(alpha: 0.4),
+      child: InkWell(
+        onTap: () => Navigator.of(context).pop(style),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: CBSpace.x3),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

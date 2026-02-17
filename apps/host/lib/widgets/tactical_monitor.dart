@@ -60,15 +60,17 @@ class _TacticalMonitorState extends State<TacticalMonitor>
     return AnimatedBuilder(
       animation: _glowAnimation,
       builder: (context, child) {
-        return CBGlassTile(
-          title: "WIN PREDICTIONS",
-          icon: Icon(Icons.analytics,
-              color: scheme.primary.withValues(alpha: _glowAnimation.value),
-              size: 20),
-          accentColor: scheme.primary,
-          isPrismatic: true,
-          content: Column(
+        return CBPanel(
+          borderColor: scheme.primary.withValues(alpha: 0.4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              CBSectionHeader(
+                title: "WIN PREDICTIONS",
+                icon: Icons.analytics,
+                color: scheme.primary.withValues(alpha: _glowAnimation.value),
+              ),
+              const SizedBox(height: CBSpace.x4),
               _buildOddsBar("CLUB STAFF", staffProb, scheme.secondary),
               const SizedBox(height: 16),
               _buildOddsBar("PARTY ANIMALS", paProb, scheme.tertiary),
@@ -209,23 +211,31 @@ class _TacticalMonitorState extends State<TacticalMonitor>
     final scheme = Theme.of(context).colorScheme;
     final alive = widget.gameState.players.where((p) => p.isAlive).length;
 
-    return CBGlassTile(
-      title: "LIVE INTEL",
-      icon: Icon(Icons.security, color: scheme.tertiary, size: 20),
-      accentColor: scheme.tertiary,
-      isPrismatic: true,
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return CBPanel(
+      borderColor: scheme.tertiary.withValues(alpha: 0.4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildIntelStat("ALIVE", "$alive", scheme.tertiary),
-          _buildIntelStat(
-              "DAY", "${widget.gameState.dayCount}", scheme.primary),
-          _buildIntelStat(
-              "STABILITY",
-              alive == 0
-                  ? "0%"
-                  : "${(alive / widget.gameState.players.length * 100).round()}%",
-              scheme.secondary),
+          CBSectionHeader(
+            title: "LIVE INTEL",
+            icon: Icons.security,
+            color: scheme.tertiary,
+          ),
+          const SizedBox(height: CBSpace.x4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildIntelStat("ALIVE", "$alive", scheme.tertiary),
+              _buildIntelStat(
+                  "DAY", "${widget.gameState.dayCount}", scheme.primary),
+              _buildIntelStat(
+                  "STABILITY",
+                  alive == 0
+                      ? "0%"
+                      : "${(alive / widget.gameState.players.length * 100).round()}%",
+                  scheme.secondary),
+            ],
+          ),
         ],
       ),
     );

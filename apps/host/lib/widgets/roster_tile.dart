@@ -156,11 +156,11 @@ class RosterTile extends ConsumerWidget {
                       Text(
                         'FORCE ELIMINATE',
                         style: textTheme.headlineSmall?.copyWith(
-                          color: CBColors.alertOrange,
+                          color: theme.colorScheme.error,
                           letterSpacing: 1.6,
                           fontWeight: FontWeight.bold,
                           shadows: CBColors.textGlow(
-                            CBColors.alertOrange,
+                            theme.colorScheme.error,
                             intensity: 0.6,
                           ),
                         ),
@@ -188,7 +188,7 @@ class RosterTile extends ConsumerWidget {
                           CBPrimaryButton(
                             fullWidth: false,
                             label: 'ELIMINATE',
-                            backgroundColor: CBColors.alertOrange,
+                            backgroundColor: theme.colorScheme.error,
                             onPressed: () {
                               ref
                                   .read(gameProvider.notifier)
@@ -202,8 +202,8 @@ class RosterTile extends ConsumerWidget {
                   ),
                 );
               },
-              child: const Icon(Icons.dangerous,
-                  size: 18, color: CBColors.alertOrange),
+                child: Icon(Icons.dangerous,
+                  size: 18, color: theme.colorScheme.error),
             ),
           ],
         ],

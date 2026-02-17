@@ -11,17 +11,18 @@ class GodModeControls extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
     final alivePlayers =
         gameState.players.where((p) => p.isAlive).toList();
 
     return CBPanel(
-      borderColor: CBColors.radiantPink.withValues(alpha: 0.7),
+      borderColor: scheme.secondary.withValues(alpha: 0.7),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CBSectionHeader(
             title: 'God Mode Controls',
-            color: CBColors.radiantPink,
+            color: scheme.secondary,
             icon: Icons.flash_on,
           ),
           const SizedBox(height: 8),

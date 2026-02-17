@@ -21,7 +21,12 @@ class LobbyPlayerList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final gameState = ref.watch(gameProvider);
+    final session = ref.watch(sessionProvider);
     final controller = ref.read(gameProvider.notifier);
+    final connectedHumans = gameState.players.where((p) => !p.isBot).length;
+    final confirmedHumans = session.roleConfirmedPlayerIds
+        .where((id) => gameState.players.any((p) => p.id == id && !p.isBot))
+        .length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -34,7 +39,7 @@ class LobbyPlayerList extends ConsumerWidget {
               child: CBSectionHeader(
                 title: gameState.players.isEmpty
                     ? "WAITING FOR PATRONS..."
-                    : "ROSTER ACTIVE: ${gameState.players.length} PATRONS",
+                    : "ROSTER ACTIVE: ${gameState.players.length}/${Game.maxPlayers} PATRONS",
                 color: theme.colorScheme.tertiary,
               ),
             ),
@@ -57,6 +62,18 @@ class LobbyPlayerList extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+
+        const SizedBox(height: 16),
+
+        CBMessageBubble(
+          isSystemMessage: true,
+          sender: 'System',
+          message:
+              'SETUP STATUS: $confirmedHumans/$connectedHumans ROLE CONFIRMED',
+          color: confirmedHumans >= connectedHumans && connectedHumans > 0
+              ? theme.colorScheme.tertiary
+              : theme.colorScheme.secondary,
         ),
 
         const SizedBox(height: 16),
@@ -96,63 +113,66 @@ class LobbyPlayerList extends ConsumerWidget {
             delay: Duration(milliseconds: 24 * idx.clamp(0, 10)),
             child: Padding(
               padding: const EdgeInsets.only(bottom: CBSpace.x3),
-              child: CBMessageBubble(
-                variant: CBMessageVariant.narrative,
-                senderName: "SECURITY",
-                content: player.isBot
-                    ? "${player.name.toUpperCase()} (BOT) HAS BEEN ACTIVATED."
-                    : "${descriptor.toUpperCase()} HAS ENTERED THE CLUB.",
-                accentColor: theme.colorScheme
-                    .tertiary, // Migrated from CBColors.matrixGreen
-                avatar: CBRoleAvatar(
-                  color: theme.colorScheme
-                      .tertiary, // Migrated from CBColors.matrixGreen
-                  size: 32,
-                  breathing: true,
-                  // assetPath: player.isBot ? 'assets/roles/bot_avatar.png' : null, // Future polish
-                ),
-                actions: [
-                  CBCompactPlayerChip(
-                    name: "EDIT",
-                    color: theme.colorScheme.primary,
-                    onTap: () async {
-                      final renamed = await _showRenamePlayerDialog(
-                        context,
-                        initialName: player.name,
-                      );
-                      if (renamed == null || renamed.trim().isEmpty) {
-                        return;
-                      }
-                      controller.updatePlayerName(player.id, renamed.trim());
-                    },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CBMessageBubble(
+                    sender: "SECURITY",
+                    message: player.isBot
+                        ? "${player.name.toUpperCase()} (BOT) HAS BEEN ACTIVATED."
+                        : "${descriptor.toUpperCase()} HAS ENTERED THE CLUB.",
+                    color: theme.colorScheme.tertiary,
+                    avatarAsset: player.isBot
+                        ? 'assets/roles/bot_avatar.png'
+                        : 'assets/roles/security.png',
                   ),
-                  if (gameState.players.length > 1)
-                    CBCompactPlayerChip(
-                      name: "MERGE",
-                      color: theme.colorScheme.secondary,
-                      onTap: () async {
-                        final targetId = await _showMergePlayerDialog(
-                          context,
-                          players: gameState.players,
-                          sourcePlayer: player,
-                        );
-                        if (targetId == null) {
-                          return;
-                        }
-                        controller.mergePlayers(
-                          sourceId: player.id,
-                          targetId: targetId,
-                        );
-                      },
-                    ),
-                  CBCompactPlayerChip(
-                    name: "REJECT",
-                    color: theme
-                        .colorScheme.error, // Migrated from CBColors.dead
-                    onTap: () {
-                      HapticService.heavy();
-                      controller.removePlayer(player.id);
-                    },
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      CBCompactPlayerChip(
+                        name: "EDIT",
+                        color: theme.colorScheme.primary,
+                        onTap: () async {
+                          final renamed = await _showRenamePlayerDialog(
+                            context,
+                            initialName: player.name,
+                          );
+                          if (renamed == null || renamed.trim().isEmpty) {
+                            return;
+                          }
+                          controller.updatePlayerName(player.id, renamed.trim());
+                        },
+                      ),
+                      if (gameState.players.length > 1)
+                        CBCompactPlayerChip(
+                          name: "MERGE",
+                          color: theme.colorScheme.secondary,
+                          onTap: () async {
+                            final targetId = await _showMergePlayerDialog(
+                              context,
+                              players: gameState.players,
+                              sourcePlayer: player,
+                            );
+                            if (targetId == null) {
+                              return;
+                            }
+                            controller.mergePlayers(
+                              sourceId: player.id,
+                              targetId: targetId,
+                            );
+                          },
+                        ),
+                      CBCompactPlayerChip(
+                        name: "REJECT",
+                        color: theme.colorScheme.error,
+                        onTap: () {
+                          HapticService.heavy();
+                          controller.removePlayer(player.id);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

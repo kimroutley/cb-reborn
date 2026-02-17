@@ -4,6 +4,7 @@ import 'package:cb_theme/cb_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../host_destinations.dart';
 import '../host_settings.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/game_bottom_controls.dart';
@@ -21,11 +22,10 @@ class GameScreen extends ConsumerStatefulWidget {
 
 class _GameScreenState extends ConsumerState<GameScreen>
     with SingleTickerProviderStateMixin {
-  String? _firstPickId; // For two-player selection
   final ScrollController _scrollController = ScrollController();
   int _lastFeedLength = 0;
   late TabController _tabController;
-  bool _isGeneratingAiNarration = false;
+  final bool _isGeneratingAiNarration = false;
 
   @override
   void initState() {
@@ -66,7 +66,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
     final gameState = ref.watch(gameProvider);
     final hostSettings = ref.watch(hostSettingsProvider);
     final controller = ref.read(gameProvider.notifier);
@@ -74,86 +73,66 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final step = gameState.currentStep;
 
     if (step == null && gameState.feedEvents.isEmpty) {
-      return CBPrismScaffold(
-        title: 'GAME CONTROL',
-        drawer: const CustomDrawer(),
-        actions: const [SimulationModeBadgeAction()],
-        body: Center(
-          child: Text('NO SCRIPT', style: textTheme.labelMedium!),
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('GAME CONTROL'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          actions: const [SimulationModeBadgeAction()],
+        ),
+        drawer: const CustomDrawer(currentDestination: HostDestination.game),
+        body: CBNeonBackground(
+          child: Center(
+            child: Text('NO SCRIPT', style: textTheme.labelMedium!),
+          ),
         ),
       );
     }
 
-    return CBPrismScaffold(
-      title: 'GAME CONTROL',
-      drawer: const CustomDrawer(),
-      showAppBar: true,
-      actions: [
-        const SimulationModeBadgeAction(),
-        IconButton(
-          tooltip: hostSettings.geminiNarrationEnabled
-              ? 'Gemini narration is ON'
-              : 'Gemini narration is OFF',
-          icon: Icon(
-            hostSettings.geminiNarrationEnabled
-                ? Icons.auto_awesome_rounded
-                : Icons.auto_awesome_outlined,
-            color: hostSettings.geminiNarrationEnabled
-                ? scheme.tertiary
-                : scheme.onSurfaceVariant,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('GAME CONTROL'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          const SimulationModeBadgeAction(),
+          IconButton(
+            tooltip: hostSettings.geminiNarrationEnabled
+                ? 'Gemini narration is ON'
+                : 'Gemini narration is OFF',
+            icon: Icon(
+              hostSettings.geminiNarrationEnabled
+                  ? Icons.auto_awesome_rounded
+                  : Icons.auto_awesome_outlined,
+            ),
+            onPressed: () {
+              hostSettingsNotifier.toggleGeminiNarration();
+            },
           ),
-          onPressed: () {
-            final nextValue = !hostSettings.geminiNarrationEnabled;
-            hostSettingsNotifier.setGeminiNarrationEnabled(nextValue);
-            showThemedSnackBar(
-              context,
-              nextValue
-                  ? 'Gemini narration enabled (AI variation).'
-                  : 'Gemini narration disabled (standard script).',
-              accentColor: nextValue ? scheme.tertiary : scheme.secondary,
-            );
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.history_rounded),
-          onPressed: () {
-            _tabController.animateTo(1);
-            // Scroll to logs in dashboard
-          },
-        ),
-      ],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: scheme.primary.withValues(alpha: 0.14)),
-          ),
-        ),
-        child: TabBar(
+        ],
+        bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(
-                text: 'FEED',
-                icon: Icon(Icons.chat_bubble_outline_rounded, size: 20)),
-            Tab(
-                text: 'DASHBOARD',
-                icon: Icon(Icons.dashboard_outlined, size: 20)),
+            Tab(text: 'FEED', icon: Icon(Icons.dynamic_feed_rounded)),
+            Tab(text: 'DASHBOARD', icon: Icon(Icons.dashboard_rounded)),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildGameFeed(
-            context,
-            gameState,
-            step,
-            controller,
-            hostSettings.geminiNarrationEnabled,
-          ),
-          DashboardView(
-            gameState: gameState,
-          ),
-        ],
+      drawer: const CustomDrawer(currentDestination: HostDestination.game),
+      body: CBNeonBackground(
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildGameFeed(
+              context,
+              gameState,
+              step,
+              controller,
+              hostSettings.geminiNarrationEnabled,
+            ),
+            DashboardView(gameState: gameState),
+          ],
+        ),
       ),
     );
   }
@@ -167,51 +146,33 @@ class _GameScreenState extends ConsumerState<GameScreen>
   ) {
     return Column(
       children: [
-        NarrationModeBadge(geminiNarrationEnabled: geminiNarrationEnabled),
-        // ── SCROLLABLE CHAT FEED ──
-        GameFeedList(
-          scrollController: _scrollController,
-          gameState: gameState,
-          step: step,
-          controller: controller,
-          firstPickId: _firstPickId,
-          onFirstPickChanged: (id) => setState(() => _firstPickId = id),
+        Expanded(
+          child: GameFeedList(
+            scrollController: _scrollController,
+            gameState: gameState,
+            step: step,
+            controller: controller,
+          ),
         ),
-
-        // ── BOTTOM CONTROLS ──
+        if (_isGeneratingAiNarration)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: NarrationModeBadge(
+              geminiNarrationEnabled: geminiNarrationEnabled,
+            ),
+          ),
         GameBottomControls(
           step: step,
+          gameState: gameState,
           controller: controller,
-          firstPickId: _firstPickId,
-          onConfirm: () => setState(() => _firstPickId = null),
-          onContinue: () => _handleContinuePressed(
-            controller,
-            geminiNarrationEnabled,
-          ),
+          onConfirm: () {
+            controller.advancePhase();
+          },
+          onContinue: () async {
+            controller.advancePhase();
+          },
         ),
       ],
     );
   }
-
-  Future<void> _handleContinuePressed(
-    Game controller,
-    bool geminiNarrationEnabled,
-  ) async {
-    if (_isGeneratingAiNarration) {
-      return;
-    }
-
-    if (!geminiNarrationEnabled) {
-      controller.advancePhase();
-      return;
-    }
-
-    setState(() => _isGeneratingAiNarration = true);
-    await controller.prepareCurrentStepNarrationOverrideWithAi();
-    if (!mounted) return;
-    setState(() => _isGeneratingAiNarration = false);
-
-    controller.advancePhase();
-  }
-
 }

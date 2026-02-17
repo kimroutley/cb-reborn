@@ -38,29 +38,37 @@ class GodModePanel extends ConsumerWidget {
 
   Widget _buildDirectorCommands(BuildContext context, HostBridge hostBridge) {
     final scheme = Theme.of(context).colorScheme;
-    return CBGlassTile(
-      title: "DIRECTOR COMMANDS",
-      icon: Icon(Icons.flash_on, color: scheme.secondary, size: 20),
-      accentColor: scheme.secondary,
-      isPrismatic: true,
-      content: Wrap(
-        spacing: CBSpace.x3,
-        runSpacing: CBSpace.x3,
+    return CBPanel(
+      borderColor: scheme.secondary.withValues(alpha: 0.4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildCmdButton(context, "NEON FLICKER", Icons.lightbulb_outline, () {
-            hostBridge.broadcast(GameMessage.effect(GodModeEffect.flicker));
-          }),
-          _buildCmdButton(context, "SYSTEM GLITCH", Icons.settings_ethernet,
-              () {
-            hostBridge.broadcast(GameMessage.effect(GodModeEffect.glitch));
-          }),
-          _buildCmdButton(context, "RANDOM RUMOUR", Icons.record_voice_over,
-              () {
-            // Logic for injecting random rumour - already implemented in DashboardView
-          }),
-          _buildCmdButton(context, "VOICE OF GOD", Icons.volume_up, () {
-            _showVoiceOfGodDialog(context, hostBridge);
-          }),
+          CBSectionHeader(
+            title: "DIRECTOR COMMANDS",
+            icon: Icons.flash_on,
+            color: scheme.secondary,
+          ),
+          const SizedBox(height: CBSpace.x4),
+          Wrap(
+            spacing: CBSpace.x3,
+            runSpacing: CBSpace.x3,
+            children: [
+              _buildCmdButton(context, "NEON FLICKER", Icons.lightbulb_outline, () {
+                hostBridge.broadcast(GameMessage.effect(GodModeEffect.flicker));
+              }),
+              _buildCmdButton(context, "SYSTEM GLITCH", Icons.settings_ethernet,
+                  () {
+                hostBridge.broadcast(GameMessage.effect(GodModeEffect.glitch));
+              }),
+              _buildCmdButton(context, "RANDOM RUMOUR", Icons.record_voice_over,
+                  () {
+                // Logic for injecting random rumour - already implemented in DashboardView
+              }),
+              _buildCmdButton(context, "VOICE OF GOD", Icons.volume_up, () {
+                _showVoiceOfGodDialog(context, hostBridge);
+              }),
+            ],
+          ),
         ],
       ),
     );
@@ -104,36 +112,70 @@ class GodModePanel extends ConsumerWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: CBSpace.x3),
-      child: CBGlassTile(
-        title: player.name,
-        subtitle: player.role.name,
-        accentColor: player.isAlive ? roleColor : scheme.error,
-        isPrismatic: true,
-        onTap: () => _showTacticalMenu(context, player),
-        content: Row(
-          children: [
-            if (!player.isAlive) CBBadge(text: "DEAD", color: scheme.error),
-            if (player.isSinBinned)
-              Padding(
-                padding: const EdgeInsets.only(left: CBSpace.x2),
-                child: CBBadge(text: "SIN BINNED", color: scheme.secondary),
+      child: CBPanel(
+        borderColor: (player.isAlive ? roleColor : scheme.error).withValues(alpha: 0.4),
+        child: InkWell(
+          onTap: () => _showTacticalMenu(context, player),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          player.name,
+                          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                                color: player.isAlive ? roleColor : scheme.error,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          player.role.name,
+                          style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                                color: (player.isAlive ? roleColor : scheme.error)
+                                    .withValues(alpha: 0.7),
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            if (player.isShadowBanned)
-              Padding(
-                padding: const EdgeInsets.only(left: CBSpace.x2),
-                child: CBBadge(text: "SHADOW BANNED", color: scheme.tertiary),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  if (!player.isAlive)
+                    CBBadge(text: "DEAD", color: scheme.error),
+                  if (player.isSinBinned)
+                    Padding(
+                      padding: const EdgeInsets.only(left: CBSpace.x2),
+                      child:
+                          CBBadge(text: "SIN BINNED", color: scheme.secondary),
+                    ),
+                  if (player.isShadowBanned)
+                    Padding(
+                      padding: const EdgeInsets.only(left: CBSpace.x2),
+                      child: CBBadge(
+                          text: "SHADOW BANNED", color: scheme.tertiary),
+                    ),
+                  if (player.isMuted)
+                    Padding(
+                      padding: const EdgeInsets.only(left: CBSpace.x2),
+                      child: CBBadge(text: "MUTED", color: scheme.primary),
+                    ),
+                  const Spacer(),
+                  Text("TAP FOR TACTICAL MENU",
+                      style: CBTypography.nano.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.6),
+                      )),
+                ],
               ),
-            if (player.isMuted)
-              Padding(
-                padding: const EdgeInsets.only(left: CBSpace.x2),
-                child: CBBadge(text: "MUTED", color: scheme.primary),
-              ),
-            const Spacer(),
-            Text("TAP FOR TACTICAL MENU",
-                style: CBTypography.nano.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.6),
-                )),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -188,8 +230,8 @@ class GodModePanel extends ConsumerWidget {
                       player.isAlive ? "KILL" : "REVIVE",
                       player.isAlive ? Icons.close : Icons.favorite,
                       player.isAlive
-                          ? CBColors.alertOrange
-                          : CBColors.matrixGreen,
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.tertiary,
                       () {
                         if (player.isAlive) {
                           controller.forceKillPlayer(player.id);

@@ -49,48 +49,55 @@ class _GamesNightScreenState extends ConsumerState<GamesNightScreen> {
     final activeSession = ref.watch(gamesNightProvider);
     final scheme = Theme.of(context).colorScheme;
 
-    return CBPrismScaffold(
-      title: 'GAMES NIGHT',
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('GAMES NIGHT'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: const [SimulationModeBadgeAction()],
+      ),
       drawer: const CustomDrawer(),
-      actions: const [SimulationModeBadgeAction()],
-      body: _isLoading
-          ? const Center(child: CBBreathingSpinner())
-          : RefreshIndicator(
-              onRefresh: _loadData,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                children: [
-                  CBSectionHeader(
-                    title: 'ACTIVE SESSION',
-                    color:
-                        scheme.tertiary, // Migrated from CBColors.matrixGreen
-                  ),
-                  const SizedBox(height: 12),
-                  _buildActiveSessionPanel(context, activeSession, scheme),
-                  const SizedBox(height: 28),
-                  CBSectionHeader(
-                    title: 'RECENT SESSIONS',
-                    color: scheme.primary, // Migrated from CBColors.neonBlue
-                  ),
-                  const SizedBox(height: 12),
-                  if (_sessions.isEmpty)
-                    CBPanel(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        'No sessions yet. Start a Games Night to begin tracking rounds.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurface.withValues(alpha: 0.75)),
-                      ),
-                    )
-                  else
-                    ..._sessions.map((s) =>
-                        _buildSessionDismissibleTile(context, s, scheme)),
-                  const SizedBox(height: 120),
-                ],
+      body: CBNeonBackground(
+        child: _isLoading
+            ? const Center(child: CBBreathingSpinner())
+            : RefreshIndicator(
+                onRefresh: _loadData,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 24, horizontal: 20),
+                  children: [
+                    CBSectionHeader(
+                      title: 'ACTIVE SESSION',
+                      color:
+                          scheme.tertiary, // Migrated from CBColors.matrixGreen
+                    ),
+                    const SizedBox(height: 12),
+                    _buildActiveSessionPanel(context, activeSession, scheme),
+                    const SizedBox(height: 28),
+                    CBSectionHeader(
+                      title: 'RECENT SESSIONS',
+                      color: scheme.primary, // Migrated from CBColors.neonBlue
+                    ),
+                    const SizedBox(height: 12),
+                    if (_sessions.isEmpty)
+                      CBPanel(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          'No sessions yet. Start a Games Night to begin tracking rounds.',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color:
+                                  scheme.onSurface.withValues(alpha: 0.75)),
+                        ),
+                      )
+                    else
+                      ..._sessions.map((s) =>
+                          _buildSessionDismissibleTile(context, s, scheme)),
+                    const SizedBox(height: 120),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 
@@ -154,16 +161,18 @@ class _GamesNightScreenState extends ConsumerState<GamesNightScreen> {
         children: [
           Row(
             children: [
-              CBBadge(
+              if (session.isActive)
+                CBBadge(
                   text: 'ACTIVE',
-                  color: scheme.tertiary), // Migrated from CBColors.matrixGreen
+                  color: scheme.tertiary),
+              if (!session.isActive)
+                Icon(Icons.check_circle, color: scheme.primary, size: 18),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   session.sessionName,
                   style: textTheme.headlineSmall?.copyWith(
-                    color:
-                        scheme.tertiary, // Migrated from CBColors.matrixGreen
+                    color: scheme.tertiary,
                     letterSpacing: 0.4,
                   ),
                 ),
@@ -254,73 +263,89 @@ class _GamesNightScreenState extends ConsumerState<GamesNightScreen> {
   }
 
   Widget _buildSessionDismissibleTile(
-      BuildContext context, GamesNightRecord session, ColorScheme scheme) {
+    BuildContext context,
+    GamesNightRecord session,
+    ColorScheme scheme,
+  ) {
     final textTheme = Theme.of(context).textTheme;
-    final isActive = session.isActive;
-    final accent = isActive
-        ? scheme.tertiary
-        : scheme
-            .primary; // Migrated from CBColors.matrixGreen and CBColors.neonBlue
-    final started = DateFormat('MMM dd, yyyy').format(session.startedAt);
-    final ended = session.endedAt == null
-        ? null
-        : DateFormat('MMM dd, yyyy').format(session.endedAt!);
-    final dateLine = ended == null ? 'STARTED $started' : '$started → $ended';
+    final games = _gamesForSession(session);
+    final date = DateFormat.yMMMd().format(session.startedAt);
 
     return Dismissible(
       key: ValueKey(session.id),
       direction: DismissDirection.endToStart,
-      confirmDismiss: (_) => _confirmDeleteSession(
-          context, session, scheme.error), // Pass scheme.error
-      onDismissed: (_) async {
-        try {
-          await PersistenceService.instance.deleteSession(session.id);
-          await ref.read(gamesNightProvider.notifier).refreshSession();
-          await _loadData();
-        } catch (_) {
-          if (!context.mounted) return;
-          showThemedSnackBar(
-            context,
-            'Failed to delete session.',
-            accentColor: scheme.error, // Migrated from CBColors.dead
-            duration: const Duration(seconds: 2),
-          );
-          await _loadData();
-        }
-      },
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        color:
-            scheme.error.withValues(alpha: 0.8), // Migrated from CBColors.dead
-        child: Icon(Icons.delete_forever, color: scheme.onSurface),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: scheme.error.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child:
+            Icon(Icons.delete_forever, color: scheme.error.withValues(alpha: 0.7)),
       ),
-      child: CBGlassTile(
-        title: session.sessionName,
-        subtitle: dateLine,
-        accentColor: accent,
-        isPrismatic: true,
-        isCritical: false,
-        isResolved: !isActive,
-        icon: isActive
-            ? CBBadge(
-                text: 'ACTIVE',
-                color: scheme.tertiary) // Migrated from CBColors.matrixGreen
-            : null,
-        content: Row(
+      confirmDismiss: (direction) async {
+        return await showConfirmationDialog(
+          context,
+          title: 'Delete Session?',
+          content:
+              'Are you sure you want to delete "${session.sessionName}"? This cannot be undone.',
+          confirmLabel: 'DELETE',
+          confirmColor: scheme.error,
+        );
+      },
+      onDismissed: (direction) async {
+        await PersistenceService.instance.deleteSession(session.id);
+        await _loadData();
+        if (context.mounted) {
+          showThemedSnackBar(
+              context, 'Session "${session.sessionName}" deleted.');
+        }
+      },
+      child: CBPanel(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '${session.gameIds.length} game${session.gameIds.length == 1 ? '' : 's'}',
-              style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.75),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              '${session.playerNames.length} player${session.playerNames.length == 1 ? '' : 's'}',
-              style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.65),
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        session.sessionName,
+                        style: textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${session.gameIds.length} games • $date',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurface.withValues(alpha: 0.6),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                CBPrimaryButton(
+                  label: 'RECAP',
+                  icon: Icons.insights_rounded,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => GamesNightRecapScreen(
+                          session: session,
+                          games: games,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -329,16 +354,7 @@ class _GamesNightScreenState extends ConsumerState<GamesNightScreen> {
   }
 
   List<GameRecord> _gamesForSession(GamesNightRecord session) {
-    if (session.gameIds.isEmpty || _records.isEmpty) return const [];
-    final byId = <String, GameRecord>{
-      for (final r in _records) r.id: r,
-    };
-    final games = <GameRecord>[];
-    for (final id in session.gameIds) {
-      final record = byId[id];
-      if (record != null) games.add(record);
-    }
-    return games;
+    return _records.where((r) => session.gameIds.contains(r.id)).toList();
   }
 
   Future<bool?> _confirmEndSession(BuildContext context, Color color) {
@@ -379,68 +395,6 @@ class _GamesNightScreenState extends ConsumerState<GamesNightScreen> {
               const SizedBox(width: 12),
               CBPrimaryButton(
                 label: 'END',
-                backgroundColor: color, // Passed color
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<bool?> _confirmDeleteSession(
-    BuildContext context,
-    GamesNightRecord session,
-    Color color,
-  ) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return showThemedDialog<bool>(
-      context: context,
-      accentColor: color, // Passed color
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'DELETE SESSION',
-            style: theme.textTheme.headlineSmall!.copyWith(
-              color: color, // Passed color
-              letterSpacing: 1.6,
-              fontWeight: FontWeight.bold,
-              shadows: CBColors.textGlow(color, intensity: 0.55),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Delete “${session.sessionName}”? This cannot be undone.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurface.withValues(alpha: 0.75),
-              height: 1.3,
-            ),
-          ),
-          if (session.isActive) ...[
-            const SizedBox(height: 10),
-            Text(
-              'This is the ACTIVE session. Deleting it will remove the session wrapper for the current Games Night.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.6),
-                height: 1.3,
-              ),
-            ),
-          ],
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              CBGhostButton(
-                label: 'CANCEL',
-                onPressed: () => Navigator.of(context).pop(false),
-              ),
-              const SizedBox(width: 12),
-              CBPrimaryButton(
-                label: 'DELETE',
                 backgroundColor: color, // Passed color
                 onPressed: () => Navigator.of(context).pop(true),
               ),

@@ -17,7 +17,7 @@ class CBRotaryDial extends StatefulWidget {
     this.minValue = 0,
     this.maxValue = 100,
     this.label = '',
-    this.color = CBColors.radiantTurquoise,
+    this.color = CBColors.electricCyan,
   });
 
   @override

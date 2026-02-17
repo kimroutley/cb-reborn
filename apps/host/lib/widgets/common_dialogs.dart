@@ -71,3 +71,54 @@ Future<String?> showStartSessionDialog(BuildContext context) async {
     ),
   );
 }
+
+Future<bool?> showConfirmationDialog(
+  BuildContext context, {
+  required String title,
+  required String content,
+  String confirmLabel = 'OK',
+  String cancelLabel = 'CANCEL',
+  Color? confirmColor,
+}) {
+  final scheme = Theme.of(context).colorScheme;
+  return showThemedDialog<bool>(
+    context: context,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: CBTypography.headlineSmall.copyWith(
+            color: confirmColor ?? scheme.secondary,
+            letterSpacing: 1.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          content,
+          style: CBTypography.body.copyWith(
+            color: scheme.onSurface.withValues(alpha: 0.7),
+          ),
+        ),
+        const SizedBox(height: 32),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            CBGhostButton(
+              label: cancelLabel,
+              onPressed: () => Navigator.pop(context, false),
+            ),
+            const SizedBox(width: 12),
+            CBPrimaryButton(
+              label: confirmLabel,
+              backgroundColor: confirmColor,
+              onPressed: () => Navigator.pop(context, true),
+            ),
+          ],
+        )
+      ],
+    ),
+  );
+}

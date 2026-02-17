@@ -41,28 +41,39 @@ class RoleRevealCard extends StatelessWidget {
 
     final accent = player.isAlive ? roleColor : scheme.error;
 
-    return CBGlassTile(
-      title: player.roleName,
-      subtitle: player.alliance.toString().toUpperCase(),
-      accentColor: accent,
-      isPrismatic: true,
-      icon: CBRoleAvatar(
-        assetPath: 'assets/roles/${player.roleId}.png',
-        size: 56,
-        color: accent,
-        breathing: player.isAlive,
-      ),
-      content: Column(
+    return CBPanel(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CBRoleAvatar(
+                assetPath: 'assets/roles/${player.roleId}.png',
+                size: 56,
+                color: accent,
+                breathing: player.isAlive,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            player.roleName,
+            style: textTheme.headlineSmall,
+          ),
+          Text(
+            player.alliance.toString().toUpperCase(),
+            style: textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          Row(
             children: [
               CBBadge(text: 'ID: ${player.id.toUpperCase()}', color: roleColor),
-              const SizedBox(width: CBSpace.x2),
+              const SizedBox(width: 8),
               CBBadge(text: statusText, color: statusColor),
             ],
           ),
-          const SizedBox(height: CBSpace.x4),
+          const SizedBox(height: 16),
           Text(
             player.roleDescription,
             style: textTheme.bodySmall!.copyWith(

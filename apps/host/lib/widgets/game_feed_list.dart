@@ -10,8 +10,6 @@ class GameFeedList extends StatelessWidget {
   final GameState gameState;
   final ScriptStep? step;
   final Game controller;
-  final String? firstPickId;
-  final ValueChanged<String?> onFirstPickChanged;
 
   const GameFeedList({
     super.key,
@@ -19,8 +17,6 @@ class GameFeedList extends StatelessWidget {
     required this.gameState,
     required this.step,
     required this.controller,
-    required this.firstPickId,
-    required this.onFirstPickChanged,
   });
 
   @override
@@ -55,8 +51,12 @@ class GameFeedList extends StatelessWidget {
   int _liveWidgetCount(ScriptStep step) {
     if (step.actionType == ScriptActionType.phaseTransition) return 1;
     if (step.actionType == ScriptActionType.info) return 1;
-    if (step.actionType == ScriptActionType.selectPlayer) {
+    if (step.actionType == ScriptActionType.selectPlayer ||
+        step.actionType == ScriptActionType.selectTwoPlayers) {
       return 2; // Title + Grid
+    }
+    if (step.actionType == ScriptActionType.binaryChoice) {
+      return 2; // Title + Binary options
     }
     return 0;
   }
@@ -68,35 +68,82 @@ class GameFeedList extends StatelessWidget {
       case ScriptActionType.phaseTransition:
         return CBPhaseInterrupt(
           title: step.title,
-          accentColor: scheme.primary,
+          color: scheme.primary,
           icon: Icons.shield,
-          onDismiss: () {},
         );
       case ScriptActionType.info:
         return CBMessageBubble(
-          variant: CBMessageVariant.system,
-          content: step.title,
-          accentColor: scheme.secondary,
+          isSystemMessage: true,
+          sender: 'System',
+          message: step.title,
+          color: scheme.secondary,
         );
       case ScriptActionType.selectPlayer:
+      case ScriptActionType.selectTwoPlayers:
         if (index == 0) {
           return CBMessageBubble(
-            variant: CBMessageVariant.system,
-            content: step.title,
-            accentColor: scheme.primary,
+            isSystemMessage: true,
+            sender: 'System',
+            message: step.title,
+            color: scheme.primary,
           );
         }
         return _buildPlayerSelectionGrid(step, gameState, controller);
+      case ScriptActionType.binaryChoice:
+        if (index == 0) {
+          return CBMessageBubble(
+            isSystemMessage: true,
+            sender: 'System',
+            message: step.title,
+            color: scheme.tertiary,
+          );
+        }
+        return _buildBinaryChoice(step, controller);
       default:
         return const SizedBox.shrink();
     }
   }
 
+  Widget _buildBinaryChoice(ScriptStep step, Game controller) {
+    // Assuming binary choices are like "Option A | Option B"
+    final options = step.instructionText.split('|');
+    final left = options.isNotEmpty ? options[0].trim() : 'YES';
+    final right = options.length > 1 ? options[1].trim() : 'NO';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: CBPrimaryButton(
+              label: left,
+              onPressed: () {
+                controller.handleInteraction(stepId: step.id, targetId: left);
+                controller.advancePhase();
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: CBPrimaryButton(
+              label: right,
+              onPressed: () {
+                controller.handleInteraction(stepId: step.id, targetId: right);
+                controller.advancePhase();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPlayerSelectionGrid(
       ScriptStep step, GameState gameState, Game controller) {
     final eligiblePlayers = gameState.players.where((p) => p.isAlive).toList();
-    final maxSelections =
-        step.actionType == ScriptActionType.selectTwoPlayers ? 2 : 1;
+    final isMulti = step.actionType == ScriptActionType.selectTwoPlayers;
+
+    final currentPicks = gameState.actionLog[step.id]?.split(',').where((s) => s.isNotEmpty).toList() ?? [];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -104,20 +151,30 @@ class GameFeedList extends StatelessWidget {
         spacing: 8,
         runSpacing: 8,
         children: eligiblePlayers.map((p) {
-          final isSelected = firstPickId == p.id;
+          final isSelected = currentPicks.contains(p.id);
           return CBCompactPlayerChip(
             name: p.name,
             color: RoleColorExtension(p.role).color,
             isSelected: isSelected,
             onTap: () {
-              if (maxSelections == 1) {
-                controller.handleInteraction(stepId: step.id, targetId: p.id);
+              if (!isMulti) {
+                controller.handleInteraction(
+                  stepId: step.id,
+                  targetId: isSelected ? null : p.id,
+                );
               } else {
+                final newPicks = List<String>.from(currentPicks);
                 if (isSelected) {
-                  onFirstPickChanged(null);
+                  newPicks.remove(p.id);
                 } else {
-                  onFirstPickChanged(p.id);
+                  if (newPicks.length < 2) {
+                    newPicks.add(p.id);
+                  }
                 }
+                controller.handleInteraction(
+                  stepId: step.id,
+                  targetId: newPicks.isEmpty ? null : newPicks.join(','),
+                );
               }
             },
           );
@@ -148,39 +205,23 @@ class GameFeedList extends StatelessWidget {
     );
 
     final role = player.role;
+    final color = RoleColorExtension(role).color;
+
+    if (event.type == FeedEventType.result) {
+      return CBMessageBubble(
+        sender: 'SYSTEM',
+        message: event.content,
+        color: color,
+        isSystemMessage: true,
+      );
+    }
 
     return CBMessageBubble(
-      variant: event.type.toMessageVariant(),
-      playerHeader: CBPlayerStatusTile(
-        playerName: player.name,
-        roleName: role.name,
-        assetPath: role.assetPath,
-        roleColor: RoleColorExtension(role).color,
-        isAlive: player.isAlive,
-        statusEffects: player.statusEffects,
-      ),
-      content: event.content,
-      accentColor: RoleColorExtension(role).color,
-      isClustered: isClustered,
+      sender: player.name,
+      message: event.content,
+      avatarAsset: role.assetPath,
+      color: color,
+      isSender: event.type == FeedEventType.action,
     );
-  }
-}
-
-extension on FeedEventType {
-  CBMessageVariant toMessageVariant() {
-    switch (this) {
-      case FeedEventType.narrative:
-        return CBMessageVariant.narrative;
-      case FeedEventType.directive:
-        return CBMessageVariant.system;
-      case FeedEventType.action:
-        return CBMessageVariant.system;
-      case FeedEventType.system:
-        return CBMessageVariant.system;
-      case FeedEventType.result:
-        return CBMessageVariant.result;
-      case FeedEventType.timer:
-        return CBMessageVariant.system;
-    }
   }
 }

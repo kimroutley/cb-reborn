@@ -245,213 +245,401 @@ class _SaveLoadScreenState extends ConsumerState<SaveLoadScreen> {
     }
   }
 
-  Color _winnerColor(Team winner, ColorScheme scheme) {
-    switch (winner) {
-      case Team.clubStaff:
-        return scheme.secondary; // Migrated from CBColors.hotPink
-      case Team.partyAnimals:
-        return scheme.primary; // Migrated from CBColors.electricCyan
-      case Team.neutral:
-        return scheme
-            .surfaceContainerHighest; // Migrated from CBColors.purple to a neutral theme color
-      case Team.unknown:
-        return scheme.onSurfaceVariant; // Migrated from CBColors.coolGrey
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final slots = _slotIds;
 
-    return CBPrismScaffold(
-      title: 'SAVE / LOAD',
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('SAVE & LOAD'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: const [SimulationModeBadgeAction()],
+      ),
       drawer: const CustomDrawer(),
-      actions: const [SimulationModeBadgeAction()],
-      body: _isLoading
-          ? const Center(child: CBBreathingSpinner(size: 42))
-          : RefreshIndicator(
-              onRefresh: _refresh,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-                children: [
-                  CBSectionHeader(
-                    title: 'SAVE SLOTS',
-                    icon: Icons.shield_outlined,
-                    color:
-                        scheme.primary, // Migrated from CBColors.electricCyan
-                  ),
-                  const SizedBox(height: 12),
-                  ..._slotIds.map((slotId) {
-                    final result =
-                        _slotResults[slotId] ?? ActiveGameLoadResult.none();
-                    final savedAt = _slotSavedAts[slotId];
-                    final slotLabel = _slotLabel(slotId);
-
-                    if (!result.hasAnyData) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: CBGlassTile(
-                          title: slotLabel,
-                          subtitle:
-                              'Empty slot. Save the current game state here for manual restore.',
-                          accentColor: scheme.outline,
-                          isPrismatic: true,
-                          icon: Icon(
-                            Icons.save_outlined,
-                            color: scheme.onSurfaceVariant,
-                          ),
-                          content: Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              FilledButton.icon(
-                                onPressed: () =>
-                                    _saveCurrentGame(scheme, slotId),
-                                icon: const Icon(Icons.save_rounded),
-                                label: const Text('SAVE HERE'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
-                    if (result.data == null) {
-                      final subtitle = result.failure ==
-                              ActiveGameLoadFailure.partialSnapshot
-                          ? 'Slot data is incomplete (missing game/session pair).'
-                          : 'Slot data is corrupted and cannot be decoded.';
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: CBGlassTile(
-                          title: '$slotLabel • UNREADABLE',
-                          subtitle: subtitle,
-                          accentColor: scheme.error,
-                          isPrismatic: true,
-                          icon: Icon(
-                            Icons.warning_amber_rounded,
-                            color: scheme.error,
-                          ),
-                          content: Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: () => _clearGameSlot(scheme, slotId),
-                                icon: const Icon(Icons.delete_outline),
-                                label: const Text('CLEAR'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
-                    final game = result.data!.$1;
-                    final savedAtText = savedAt == null
-                        ? ''
-                        : '\nSaved: ${_formatDate(savedAt)}';
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: CBGlassTile(
-                        title: '$slotLabel • READY',
-                        subtitle:
-                            'Players: ${game.players.length} • Day ${game.dayCount} • ${game.phase.name.toUpperCase()}$savedAtText',
-                        accentColor: scheme.primary,
-                        isPrismatic: true,
-                        icon:
-                            Icon(Icons.restore_rounded, color: scheme.primary),
-                        content: Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: [
-                            FilledButton.icon(
-                              onPressed: () => _loadGameSlot(scheme, slotId),
-                              icon: const Icon(Icons.play_arrow_rounded),
-                              label: const Text('LOAD'),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: () => _saveCurrentGame(scheme, slotId),
-                              icon: const Icon(Icons.save_rounded),
-                              label: const Text('OVERWRITE'),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: () => _clearGameSlot(scheme, slotId),
-                              icon: const Icon(Icons.delete_outline),
-                              label: const Text('CLEAR'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 12),
-                  CBPrimaryButton(
-                    label: 'LOAD TEST SANDBOX',
-                    icon: Icons.science_rounded,
-                    backgroundColor:
-                        scheme.tertiary, // Migrated from CBColors.matrixGreen
-                    onPressed: () => _loadTestSandbox(scheme),
-                  ),
-                  const SizedBox(height: 28),
-                  CBSectionHeader(
-                    title: 'ARCHIVED GAMES (${_records.length})',
-                    icon: Icons.history_rounded,
-                    color: scheme.secondary, // Migrated from CBColors.hotPink
-                  ),
-                  const SizedBox(height: 12),
-                  if (_records.isEmpty)
-                    CBPanel(
-                      borderColor: scheme
-                          .outlineVariant, // Migrated from CBColors.coolGrey
-                      child: Text(
-                        'No archived game records found. Finished games are archived automatically when a winner is declared.',
-                      ),
-                    )
-                  else
-                    ..._records.map(
-                      (record) {
-                        final winnerColor = _winnerColor(record.winner, scheme);
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: CBGlassTile(
-                            title: _winnerLabel(record.winner),
-                            subtitle:
-                                '${_formatDate(record.endedAt)} • ${record.playerCount} players • Day ${record.dayCount}',
-                            accentColor: winnerColor,
-                            isPrismatic: true,
-                            icon: Icon(Icons.flag_rounded, color: winnerColor),
-                            content: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Roles in play: ${record.rolesInPlay.take(6).join(', ')}${record.rolesInPlay.length > 6 ? '…' : ''}',
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: scheme
-                                        .onSurfaceVariant, // Migrated from CBColors.textDim
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: OutlinedButton.icon(
-                                    onPressed: () =>
-                                        _deleteRecord(record, scheme),
-                                    icon: const Icon(
-                                        Icons.delete_forever_outlined),
-                                    label: const Text('DELETE RECORD'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+      body: CBNeonBackground(
+        child: _isLoading
+            ? const Center(child: CBBreathingSpinner())
+            : RefreshIndicator(
+                onRefresh: _refresh,
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    _buildSandboxPanel(scheme, textTheme),
+                    const SizedBox(height: 24),
+                    CBSectionHeader(
+                      title: 'SAVE SLOTS',
+                      icon: Icons.save_alt,
+                      color: scheme.primary,
                     ),
+                    const SizedBox(height: 12),
+                    ...slots.map(
+                      (id) => _buildSaveSlotTile(
+                        context: context,
+                        slotId: id,
+                        scheme: scheme,
+                        textTheme: textTheme,
+                        result: _slotResults[id] ?? ActiveGameLoadResult.none(),
+                        savedAt: _slotSavedAts[id],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    CBSectionHeader(
+                      title: 'PAST GAME RECORDS',
+                      icon: Icons.history,
+                      color: scheme.secondary,
+                    ),
+                    const SizedBox(height: 12),
+                    if (_records.isEmpty)
+                      CBPanel(
+                        borderColor: scheme.secondary.withValues(alpha: 0.4),
+                        child: Text(
+                          'No completed games found in the archive.',
+                          style: textTheme.bodyMedium
+                              ?.copyWith(color: scheme.onSurface),
+                        ),
+                      )
+                    else
+                      ..._records.map(
+                        (r) => _buildRecordTile(
+                          context,
+                          r,
+                          scheme,
+                          textTheme,
+                        ),
+                      ),
+                    const SizedBox(height: 120),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildSandboxPanel(ColorScheme scheme, TextTheme textTheme) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return CBPanel(
+      borderColor: scheme.tertiary.withValues(alpha: 0.55),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'LOAD TEST SANDBOX',
+            style: textTheme.headlineSmall
+                ?.copyWith(color: scheme.tertiary, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'This will load a test sandbox game with a simulated roster.',
+            style: textTheme.bodyMedium
+                ?.copyWith(color: scheme.onSurface, height: 1.3),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              CBPrimaryButton(
+                label: 'LOAD SANDBOX',
+                backgroundColor: scheme.tertiary,
+                onPressed: () => _loadTestSandbox(scheme),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSaveSlotTile({
+    required BuildContext context,
+    required String slotId,
+    required ColorScheme scheme,
+    required TextTheme textTheme,
+    required ActiveGameLoadResult result,
+    DateTime? savedAt,
+  }) {
+    final slotLabel = _slotLabel(slotId);
+
+    if (!result.hasAnyData) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: CBPanel(
+          borderColor: scheme.outline.withValues(alpha: 0.4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.save_outlined,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: CBSpace.x3),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          slotLabel,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall!
+                              .copyWith(
+                                color: scheme.outline,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Empty slot. Save the current game state here for manual restore.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall!
+                              .copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () =>
+                        _saveCurrentGame(scheme, slotId),
+                    icon: const Icon(Icons.save_rounded),
+                    label: const Text('SAVE HERE'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (result.data == null) {
+      final subtitle = result.failure ==
+          ActiveGameLoadFailure.partialSnapshot
+      ? 'Slot data is incomplete (missing game/session pair).'
+      : 'Slot data is corrupted and cannot be decoded.';
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: CBPanel(
+          borderColor: scheme.error.withValues(alpha: 0.4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: scheme.error,
+                  ),
+                  const SizedBox(width: CBSpace.x3),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$slotLabel • UNREADABLE',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall!
+                              .copyWith(
+                                color: scheme.error,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          subtitle,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall!
+                              .copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () =>
+                        _clearGameSlot(scheme, slotId),
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('CLEAR'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final game = result.data!.$1;
+    final savedAtText = savedAt == null
+        ? ''
+        : '\nSaved: ${_formatDate(savedAt)}';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: CBPanel(
+        borderColor: result.hasAnyData
+            ? scheme.primary.withValues(alpha: 0.55)
+            : scheme.onSurface.withValues(alpha: 0.2),
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.restore_rounded,
+                    color: scheme.primary),
+                const SizedBox(width: CBSpace.x3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$slotLabel • READY',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall!
+                            .copyWith(
+                              color: scheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Players: ${game.players.length} • Day ${game.dayCount} • ${game.phase.name.toUpperCase()}$savedAtText',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall!
+                            .copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  onPressed: () =>
+                      _loadGameSlot(scheme, slotId),
+                  icon:
+                      const Icon(Icons.play_arrow_rounded),
+                  label: const Text('LOAD'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      _saveCurrentGame(scheme, slotId),
+                  icon: const Icon(Icons.save_rounded),
+                  label: const Text('OVERWRITE'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      _clearGameSlot(scheme, slotId),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('CLEAR'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecordTile(
+    BuildContext context,
+    GameRecord record,
+    ColorScheme scheme,
+    TextTheme textTheme,
+  ) {
+    final winner = record.winner;
+    final color = winner == Team.clubStaff
+        ? scheme.primary
+        : (winner == Team.partyAnimals ? scheme.secondary : scheme.tertiary);
+
+    return CBPanel(
+      borderColor: color.withValues(alpha: 0.55),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.flag_rounded, color: color),
+              const SizedBox(width: CBSpace.x3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _winnerLabel(record.winner),
+                      style: textTheme.headlineSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${_formatDate(record.endedAt)} • ${record.playerCount} players • Day ${record.dayCount}',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Roles in play: ${record.rolesInPlay.take(6).join(', ')}${record.rolesInPlay.length > 6 ? '…' : ''}',
+            style: textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: () => _deleteRecord(record, scheme),
+              icon: const Icon(Icons.delete_forever_outlined),
+              label: const Text('DELETE RECORD'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

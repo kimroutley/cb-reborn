@@ -2,6 +2,7 @@ import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_host/main.dart';
 import 'package:cb_host/host_bridge.dart';
 import 'package:firebase_core/firebase_core.dart';
+// ignore: depend_on_referenced_packages
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

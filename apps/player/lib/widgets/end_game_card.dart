@@ -1,7 +1,31 @@
 import 'package:cb_theme/cb_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:cb_models/cb_models.dart';
 
-import '../player_bridge.dart';
+bool isPlayerVictory({
+  required String? winner,
+  required PlayerSnapshot? player,
+}) {
+  if (player == null || winner == null) return false;
+
+  final isStaff = player.isClubStaff;
+  final isAnimals = player.isPartyAnimal;
+  final winnerStaff = winner == 'clubStaff';
+  final winnerAnimals = winner == 'partyAnimals';
+
+  if ((isStaff && winnerStaff) || (isAnimals && winnerAnimals)) {
+    return true;
+  }
+
+  // Club Manager co-wins with the winning team as long as they survive,
+  // except during neutral solo wins.
+  final isClubManager = player.roleId == RoleIds.clubManager;
+  if (isClubManager && player.isAlive && winner != 'neutral') {
+    return true;
+  }
+
+  return false;
+}
 
 class EndGameCard extends StatelessWidget {
   final String? winner;
@@ -22,11 +46,9 @@ class EndGameCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     // Determine victory status
-    final isStaff = player?.isClubStaff ?? false;
-    final isAnimals = player?.isPartyAnimal ?? false;
+    final isVictory = isPlayerVictory(winner: winner, player: player);
     final winnerStaff = winner == 'clubStaff';
     final winnerAnimals = winner == 'partyAnimals';
-    final isVictory = (isStaff && winnerStaff) || (isAnimals && winnerAnimals);
 
     final resultText = isVictory ? 'VICTORY' : 'DEFEAT';
     final resultColor = isVictory ? scheme.primary : scheme.secondary;

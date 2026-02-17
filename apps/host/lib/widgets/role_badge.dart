@@ -13,7 +13,8 @@ class RoleBadge extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    Color badgeColor = CBColors.electricCyan;
+    final theme = Theme.of(context);
+    Color badgeColor = theme.colorScheme.primary;
     if (role!.colorHex.isNotEmpty) {
       final hex = role!.colorHex.replaceAll('#', '');
       badgeColor = Color(int.parse('FF$hex', radix: 16));

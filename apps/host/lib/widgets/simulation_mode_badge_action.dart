@@ -8,6 +8,7 @@ class SimulationModeBadgeAction extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
     final gameState = ref.watch(gameProvider);
     final isSimulationSandbox = gameState.gameHistory.any(
       (entry) => entry.startsWith('[TEST] Sandbox game loaded.'),
@@ -23,14 +24,14 @@ class SimulationModeBadgeAction extends ConsumerWidget {
         margin: const EdgeInsets.only(right: 6),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: CBColors.matrixGreen.withValues(alpha: 0.14),
+          color: scheme.tertiary.withValues(alpha: 0.14),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: CBColors.matrixGreen.withValues(alpha: 0.6),
+            color: scheme.tertiary.withValues(alpha: 0.6),
           ),
           boxShadow: [
             BoxShadow(
-              color: CBColors.matrixGreen.withValues(alpha: 0.18),
+              color: scheme.tertiary.withValues(alpha: 0.18),
               blurRadius: 8,
               spreadRadius: 0.4,
             ),
@@ -47,7 +48,7 @@ class SimulationModeBadgeAction extends ConsumerWidget {
             Text(
               'SIMULATION MODE',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: CBColors.matrixGreen,
+                color: scheme.tertiary,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.9,
               ),

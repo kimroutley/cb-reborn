@@ -102,31 +102,38 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
 
-    return CBPrismScaffold(
-      title: 'Hall of Fame',
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Hall of Fame'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: const [SimulationModeBadgeAction()],
+      ),
       drawer: const CustomDrawer(),
-      actions: const [SimulationModeBadgeAction()],
-      body: _isLoading
-          ? const Center(child: CBBreathingSpinner())
-          : _stats.isEmpty
-              ? Center(
-                  child: Text(
-                    'No game records found.',
-                    textAlign: TextAlign.center,
-                    style: textTheme.headlineMedium,
+      body: CBNeonBackground(
+        child: _isLoading
+            ? const Center(child: CBBreathingSpinner())
+            : _stats.isEmpty
+                ? Center(
+                    child: Text(
+                      'No game records found.',
+                      textAlign: TextAlign.center,
+                      style: textTheme.headlineMedium,
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.only(top: 16, bottom: 32),
+                    itemCount: _stats.length,
+                    itemBuilder: (context, index) {
+                      return _buildProfileCard(_stats[index], index, scheme);
+                    },
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(top: 16, bottom: 32),
-                  itemCount: _stats.length,
-                  itemBuilder: (context, index) {
-                    return _buildProfileCard(_stats[index], index, scheme);
-                  },
-                ),
+      ),
     );
   }
 
   Widget _buildProfileCard(PlayerStat stat, int index, ColorScheme scheme) {
+    final textTheme = Theme.of(context).textTheme;
     Color rankColor;
     IconData? rankIcon;
 
@@ -147,19 +154,31 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
         rankColor = scheme.primary.withValues(alpha: 0.55);
     }
 
-    return CBGlassTile(
-      title: '#${index + 1} ${stat.playerName}',
-      accentColor: rankColor,
-      isCritical: index < 3,
-      isPrismatic: true,
-      icon: rankIcon != null
-          ? Icon(rankIcon, color: rankColor, shadows: [
-              BoxShadow(color: rankColor, blurRadius: 10, spreadRadius: 1)
-            ])
-          : null,
-      content: Column(
+    return CBPanel(
+      borderColor: rankColor.withValues(alpha: 0.4),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              if (rankIcon != null) ...[
+                Icon(rankIcon, color: rankColor, shadows: [
+                  BoxShadow(color: rankColor, blurRadius: 10, spreadRadius: 1)
+                ]),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Text(
+                  '#${index + 1} ${stat.playerName}',
+                  style: textTheme.headlineSmall!.copyWith(
+                        color: rankColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           _buildStatRow(
             'Win Rate',
@@ -185,16 +204,18 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: textTheme.bodyLarge!.copyWith(
-                  color: scheme
-                      .onSurfaceVariant)), // Migrated from CBColors.textDim
-          Text(value,
-              style: textTheme.bodyLarge!.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: valueColor ??
-                      scheme.onSurface // Migrated from CBColors.textBright
-                  )),
+          Text(
+            label,
+            style: textTheme.bodyMedium!
+                .copyWith(color: scheme.onSurface.withValues(alpha: 0.6)),
+          ),
+          Text(
+            value,
+            style: textTheme.bodyMedium!.copyWith(
+              color: valueColor ?? scheme.onSurface,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
