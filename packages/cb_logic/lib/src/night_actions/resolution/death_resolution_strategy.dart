@@ -3,6 +3,8 @@ import '../night_resolution_context.dart';
 import 'death_handler.dart';
 import 'second_wind_handler.dart';
 import 'seasoned_drinker_handler.dart';
+import 'ally_cat_handler.dart';
+import 'minor_protection_handler.dart';
 import 'medic_revive_handler.dart';
 import 'clinger_bond_handler.dart';
 import 'creep_inheritance_handler.dart';
@@ -20,6 +22,8 @@ class DeathResolutionStrategy implements NightActionStrategy {
               MedicReviveHandler(),
               SecondWindHandler(),
               SeasonedDrinkerHandler(),
+              AllyCatHandler(),
+              MinorProtectionHandler(),
               ClingerBondHandler(),
               CreepInheritanceHandler(),
               DefaultDeathHandler(),

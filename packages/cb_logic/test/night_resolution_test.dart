@@ -50,6 +50,31 @@ void main() {
       expect(result.report.any((s) => s.contains('butchered')), true);
     });
 
+    test('Wallflower witnesses Dealer target', () {
+      final dealer =
+          _player('Dealer', _role(RoleIds.dealer, alliance: Team.clubStaff));
+      final wallflower = _player('Wallflower', _role(RoleIds.wallflower));
+      final victim = _player('Victim', _role(RoleIds.partyAnimal));
+      final players = [dealer, wallflower, victim];
+
+      final log = {
+        'dealer_act_${dealer.id}_1': victim.id,
+      };
+
+      final result = GameResolutionLogic.resolveNightActions(
+        players,
+        log,
+        1,
+        {},
+      );
+
+      expect(
+        result.privateMessages[wallflower.id]!
+            .any((m) => m.contains('witnessed Dealer target Victim')),
+        true,
+      );
+    });
+
     test('Medic protects target', () {
       final dealer = _player('Dealer', _role(RoleIds.dealer, alliance: Team.clubStaff));
       final medic = _player('Medic', _role(RoleIds.medic)).copyWith(medicChoice: 'PROTECT_DAILY');
@@ -167,6 +192,52 @@ void main() {
 
       expect(result.privateMessages[bouncer.id]!.first, contains('STAFF'));
       expect(result.report.any((s) => s.contains('Bouncer checked Dealer')), true);
+    });
+
+    test('Bouncer checking Minor marks identity as checked', () {
+      final bouncer = _player('Bouncer', _role(RoleIds.bouncer));
+      final minor = _player('Minor', _role(RoleIds.minor));
+      final players = [bouncer, minor];
+
+      final log = {
+        'bouncer_act_${bouncer.id}_1': minor.id,
+      };
+
+      final result = GameResolutionLogic.resolveNightActions(
+        players,
+        log,
+        1,
+        {},
+      );
+
+      final updatedMinor = result.players.firstWhere((p) => p.id == minor.id);
+      expect(updatedMinor.minorHasBeenIDd, true);
+    });
+
+    test('Ally Cat witnesses Bouncer check result', () {
+      final bouncer = _player('Bouncer', _role(RoleIds.bouncer));
+      final allyCat =
+          _player('AllyCat', _role(RoleIds.allyCat)).copyWith(lives: 9);
+      final dealer =
+          _player('Dealer', _role(RoleIds.dealer, alliance: Team.clubStaff));
+      final players = [bouncer, allyCat, dealer];
+
+      final log = {
+        'bouncer_act_${bouncer.id}_1': dealer.id,
+      };
+
+      final result = GameResolutionLogic.resolveNightActions(
+        players,
+        log,
+        1,
+        {},
+      );
+
+      expect(
+        result.privateMessages[allyCat.id]!
+            .any((m) => m.contains('witnessed Bouncer check Dealer: STAFF')),
+        true,
+      );
     });
 
     test('Club Manager reveals role and marks target as sighted', () {
@@ -313,6 +384,100 @@ void main() {
 
        final updatedSD = result.players.firstWhere((p) => p.id == sd.id);
        expect(updatedSD.isAlive, false);
+    });
+
+    test('Ally Cat loses a life and survives murder when lives > 1', () {
+      final dealer =
+          _player('Dealer', _role(RoleIds.dealer, alliance: Team.clubStaff));
+      final allyCat =
+          _player('AllyCat', _role(RoleIds.allyCat)).copyWith(lives: 9);
+      final players = [dealer, allyCat];
+
+      final log = {
+        'dealer_act_${dealer.id}_1': allyCat.id,
+      };
+
+      final result = GameResolutionLogic.resolveNightActions(
+        players,
+        log,
+        1,
+        {},
+      );
+
+      final updatedAllyCat =
+          result.players.firstWhere((p) => p.id == allyCat.id);
+      expect(updatedAllyCat.isAlive, true);
+      expect(updatedAllyCat.lives, 8);
+      expect(result.report.any((s) => s.contains('Ally Cat AllyCat lost a life')), true);
+    });
+
+    test('Ally Cat dies when murder occurs at 1 life', () {
+      final dealer =
+          _player('Dealer', _role(RoleIds.dealer, alliance: Team.clubStaff));
+      final allyCat =
+          _player('AllyCat', _role(RoleIds.allyCat)).copyWith(lives: 1);
+      final players = [dealer, allyCat];
+
+      final log = {
+        'dealer_act_${dealer.id}_1': allyCat.id,
+      };
+
+      final result = GameResolutionLogic.resolveNightActions(
+        players,
+        log,
+        1,
+        {},
+      );
+
+      final updatedAllyCat =
+          result.players.firstWhere((p) => p.id == allyCat.id);
+      expect(updatedAllyCat.isAlive, false);
+      expect(updatedAllyCat.deathReason, 'murder');
+    });
+
+    test('Minor survives Dealer murder before being ID checked', () {
+      final dealer =
+          _player('Dealer', _role(RoleIds.dealer, alliance: Team.clubStaff));
+      final minor = _player('Minor', _role(RoleIds.minor));
+      final players = [dealer, minor];
+
+      final log = {
+        'dealer_act_${dealer.id}_1': minor.id,
+      };
+
+      final result = GameResolutionLogic.resolveNightActions(
+        players,
+        log,
+        1,
+        {},
+      );
+
+      final updatedMinor = result.players.firstWhere((p) => p.id == minor.id);
+      expect(updatedMinor.isAlive, true);
+      expect(result.report.any((s) => s.contains('identity shield held')), true);
+    });
+
+    test('Minor dies to Dealer murder after being ID checked', () {
+      final dealer =
+          _player('Dealer', _role(RoleIds.dealer, alliance: Team.clubStaff));
+      final minor =
+          _player('Minor', _role(RoleIds.minor)).copyWith(minorHasBeenIDd: true);
+      final players = [dealer, minor];
+
+      final log = {
+        'dealer_act_${dealer.id}_1': minor.id,
+      };
+
+      final result = GameResolutionLogic.resolveNightActions(
+        players,
+        log,
+        1,
+        {},
+      );
+
+      final updatedMinor = result.players.firstWhere((p) => p.id == minor.id);
+      expect(updatedMinor.isAlive, false);
+      expect(updatedMinor.deathReason, 'murder');
     });
 
     test('Clinger is freed as Attack Dog when partner is murdered by Dealer', () {

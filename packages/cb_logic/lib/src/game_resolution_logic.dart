@@ -96,12 +96,15 @@ class GameResolutionLogic {
       if (!role.canRepeat) remainingRoles.remove(role);
     }
 
-    // 4. Special Initialization for Seasoned Drinker
+    // 4. Special Initialization for multi-life roles
     final actualStaffCount =
         assigned.where((p) => p.alliance == Team.clubStaff).length;
     assigned = assigned.map((p) {
       if (p.role.id == RoleIds.seasonedDrinker) {
         return p.copyWith(lives: actualStaffCount);
+      }
+      if (p.role.id == RoleIds.allyCat) {
+        return p.copyWith(lives: 9);
       }
       return p;
     }).toList();

@@ -26,8 +26,23 @@ class BouncerAction implements NightActionStrategy {
       final target = context.getPlayer(targetId);
       final isStaff = target.alliance == Team.clubStaff;
 
+      if (target.role.id == RoleIds.minor && !target.minorHasBeenIDd) {
+        context.updatePlayer(target.copyWith(minorHasBeenIDd: true));
+      }
+
       final msg = '${target.name} is ${isStaff ? "STAFF" : "PARTY ANIMAL"}.';
       context.addPrivateMessage(bouncer.id, msg);
+
+      final allyCats = context.players.where(
+        (p) => p.isAlive && p.role.id == RoleIds.allyCat,
+      );
+      for (final allyCat in allyCats) {
+        context.addPrivateMessage(
+          allyCat.id,
+          'You witnessed Bouncer check ${target.name}: ${isStaff ? "STAFF" : "PARTY ANIMAL"}.',
+        );
+      }
+
       context.addReport('Bouncer checked ${target.name}.');
     }
   }

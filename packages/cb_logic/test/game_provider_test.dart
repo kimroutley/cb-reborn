@@ -72,6 +72,17 @@ void main() {
       expect(state.players.length, 1);
       expect(state.players[0].name, 'Bob');
     });
+
+    test('assignRole sets Ally Cat lives to 9', () {
+      game.addPlayer('Ally');
+      final allyId = container.read(gameProvider).players.first.id;
+
+      game.assignRole(allyId, RoleIds.allyCat);
+
+      final updated = container.read(gameProvider).players.first;
+      expect(updated.role.id, RoleIds.allyCat);
+      expect(updated.lives, 9);
+    });
   });
 
   group('Game Start', () {

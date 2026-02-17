@@ -1396,7 +1396,13 @@ class Game extends _$Game {
       players: state.players
           .map(
             (p) => p.id == playerId
-                ? p.copyWith(role: role, alliance: role.alliance)
+                ? p.copyWith(
+                    role: role,
+                    alliance: role.alliance,
+                    lives: role.id == RoleIds.allyCat
+                        ? 9
+                        : p.lives,
+                  )
                 : p,
           )
           .toList(),
