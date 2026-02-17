@@ -24,7 +24,7 @@ class CBPhaseInterrupt extends StatelessWidget {
     final accentColor = color ?? scheme.primary;
 
     return Container(
-      color: scheme.background.withValues(alpha: 0.8),
+      color: scheme.surface.withValues(alpha: 0.8),
       child: Center(
         child: CBFadeSlide(
           duration: const Duration(milliseconds: 800),

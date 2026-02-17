@@ -240,7 +240,7 @@ class _CBGuideScreenState extends State<CBGuideScreen>
 
         return AlertDialog(
           contentPadding: EdgeInsets.zero,
-          content: Container(
+          content: SizedBox(
             width: double.maxFinite,
             child: Stack(
               children: [
