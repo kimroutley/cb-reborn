@@ -125,7 +125,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<String> _resolveJoinIdentity() async {
     final authState = ref.read(authProvider);
-    final user = authState.user ?? FirebaseAuth.instance.currentUser;
+    User? user;
+    try {
+      user = authState.user ?? FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      user = authState.user;
+    }
     if (user == null) {
       return 'Player';
     }
