@@ -1,6 +1,5 @@
-import 'package:cb_theme/src/colors.dart';
-import 'package:cb_theme/src/haptic_service.dart';
 import 'package:flutter/material.dart';
+import '../../cb_theme.dart';
 
 /// Full-width primary action button. Inherits all styling from the central theme.
 class CBPrimaryButton extends StatelessWidget {
@@ -67,12 +66,16 @@ class CBGhostButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final Color? color; // Retained for accent customization
+  final bool fullWidth;
+  final IconData? icon;
 
   const CBGhostButton({
     super.key,
     required this.label,
     this.onPressed,
     this.color,
+    this.fullWidth = true,
+    this.icon,
   });
 
   @override
@@ -80,7 +83,7 @@ class CBGhostButton extends StatelessWidget {
     final theme = Theme.of(context);
     final buttonColor = color ?? theme.colorScheme.primary;
 
-    return OutlinedButton(
+    final button = OutlinedButton(
       style: OutlinedButton.styleFrom(
         side: BorderSide(color: buttonColor, width: 2),
         foregroundColor: buttonColor,
@@ -91,9 +94,70 @@ class CBGhostButton extends StatelessWidget {
               onPressed!();
             }
           : null,
-      child: Text(
-        label.toUpperCase(),
-        style: Theme.of(context).textTheme.labelLarge,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 18),
+            const SizedBox(width: 8),
+          ],
+          Text(
+            label.toUpperCase(),
+            style: theme.textTheme.labelLarge,
+          ),
+        ],
+      ),
+    );
+
+    if (!fullWidth) return button;
+
+    return SizedBox(width: double.infinity, child: button);
+  }
+}
+
+class CBTextButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final Color? color;
+  final IconData? icon;
+
+  const CBTextButton({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.color,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final buttonColor = color ?? theme.colorScheme.primary;
+
+    return TextButton(
+      style: TextButton.styleFrom(
+        foregroundColor: buttonColor,
+      ),
+      onPressed: onPressed != null
+          ? () {
+              HapticService.light();
+              onPressed!();
+            }
+          : null,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 18),
+            const SizedBox(width: 8),
+          ],
+          Text(
+            label.toUpperCase(),
+            style: theme.textTheme.labelLarge,
+          ),
+        ],
       ),
     );
   }

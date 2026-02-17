@@ -1,5 +1,5 @@
-import 'package:cb_theme/src/haptic_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Neon-styled slider wrapper (thin track + clean thumb + subtle overlay).
 class CBSlider extends StatelessWidget {
@@ -42,10 +42,11 @@ class CBSlider extends StatelessWidget {
         divisions: divisions,
         onChanged: onChanged,
         onChangeEnd: (v) {
-          HapticService.light();
+          HapticFeedback.lightImpact();
           onChangeEnd?.call(v);
         },
       ),
     );
   }
 }
+

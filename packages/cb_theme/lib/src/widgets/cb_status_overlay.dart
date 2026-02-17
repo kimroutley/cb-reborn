@@ -1,5 +1,3 @@
-import 'package:cb_theme/src/colors.dart';
-import 'package:cb_theme/src/layout.dart';
 import 'package:flutter/material.dart';
 
 /// Status overlay card (ELIMINATED, SILENCED, etc.).
@@ -24,24 +22,29 @@ class CBStatusOverlay extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(CBSpace.x8),
-      margin: const EdgeInsets.symmetric(vertical: CBSpace.x4),
+      padding: const EdgeInsets.all(32),
+      margin: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(CBRadius.md),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accentColor, width: 2),
-        boxShadow: CBColors.boxGlow(accentColor, intensity: 0.3),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.3),
+            blurRadius: 12,
+          )
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 64, color: accentColor),
-          const SizedBox(height: CBSpace.x4),
+          const SizedBox(height: 16),
           Text(
             label.toUpperCase(),
             style: theme.textTheme.displaySmall!.copyWith(color: accentColor),
           ),
-          const SizedBox(height: CBSpace.x3),
+          const SizedBox(height: 12),
           Text(
             detail,
             textAlign: TextAlign.center,
@@ -52,3 +55,4 @@ class CBStatusOverlay extends StatelessWidget {
     );
   }
 }
+

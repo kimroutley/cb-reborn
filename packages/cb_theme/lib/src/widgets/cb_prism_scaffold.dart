@@ -1,6 +1,4 @@
-import 'package:cb_theme/src/theme_data.dart';
 import 'package:flutter/material.dart';
-
 import 'cb_neon_background.dart';
 
 /// CBPrismScaffold: Neon-themed scaffold with glowing effects
@@ -14,7 +12,7 @@ class CBPrismScaffold extends StatelessWidget {
   final bool useSafeArea;
   final List<Widget>? actions;
   final Widget? drawer;
-  final String backgroundAsset;
+  final String? backgroundAsset;
   final bool showBackgroundRadiance;
 
   const CBPrismScaffold({
@@ -28,7 +26,7 @@ class CBPrismScaffold extends StatelessWidget {
     this.useSafeArea = true,
     this.actions,
     this.drawer,
-    this.backgroundAsset = CBTheme.globalBackgroundAsset,
+    this.backgroundAsset,
     this.showBackgroundRadiance = false,
   });
 
@@ -58,3 +56,4 @@ class CBPrismScaffold extends StatelessWidget {
     );
   }
 }
+

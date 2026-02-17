@@ -1,10 +1,7 @@
 import 'dart:async';
 
-import 'package:cb_theme/src/colors.dart';
-import 'package:cb_theme/src/haptic_service.dart';
-import 'package:cb_theme/src/layout.dart';
-import 'package:cb_theme/src/typography.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Countdown timer widget for timed phases.
 class CBCountdownTimer extends StatefulWidget {
@@ -40,11 +37,11 @@ class _CBCountdownTimerState extends State<CBCountdownTimer> {
       if (mounted) {
         setState(() => _remaining = seconds);
         if (_remaining <= 5) {
-          HapticService.light();
+          HapticFeedback.lightImpact();
         }
       }
       if (seconds == 0) {
-        HapticService.heavy();
+        HapticFeedback.heavyImpact();
         widget.onComplete?.call();
       }
     });
@@ -59,25 +56,30 @@ class _CBCountdownTimerState extends State<CBCountdownTimer> {
         '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     final isCritical = _remaining <= 30;
     final displayColor = widget.color ??
-        (isCritical ? CBColors.warning : theme.colorScheme.primary);
+        (isCritical ? theme.colorScheme.error : theme.colorScheme.primary);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(CBSpace.x8),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(CBRadius.md),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: displayColor, width: 2),
-        boxShadow: CBColors.boxGlow(displayColor, intensity: 0.3),
+        boxShadow: [
+          BoxShadow(
+            color: displayColor.withValues(alpha: 0.3),
+            blurRadius: 12,
+          )
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             timeStr,
-            style: CBTypography.timer.copyWith(color: displayColor),
+            style: theme.textTheme.displayLarge?.copyWith(color: displayColor),
           ),
-          const SizedBox(height: CBSpace.x2),
+          const SizedBox(height: 8),
           Text(
             (isCritical ? 'TIME RUNNING OUT' : 'TIME REMAINING').toUpperCase(),
             style: theme.textTheme.labelMedium!.copyWith(color: displayColor),

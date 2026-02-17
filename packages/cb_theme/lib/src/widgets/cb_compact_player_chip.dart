@@ -1,4 +1,3 @@
-import 'package:cb_theme/src/colors.dart';
 import 'package:flutter/material.dart';
 
 /// A compact player chip for inline selection in chat action bubbles.
@@ -45,7 +44,12 @@ class CBCompactPlayerChip extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: borderClr, width: 1.5),
               boxShadow: isSelected
-                  ? CBColors.boxGlow(accentColor, intensity: 0.2)
+                  ? [
+                      BoxShadow(
+                        color: accentColor.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                      )
+                    ]
                   : null,
             ),
             child: Row(
@@ -56,7 +60,7 @@ class CBCompactPlayerChip extends StatelessWidget {
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(
-                    color: CBColors.offBlack,
+                    color: theme.colorScheme.surface,
                     shape: BoxShape.circle,
                     border: Border.all(color: accentColor, width: 1),
                   ),

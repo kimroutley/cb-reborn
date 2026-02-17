@@ -1,4 +1,3 @@
-import 'package:cb_theme/src/colors.dart';
 import 'package:flutter/material.dart';
 
 /// Unified role avatar with glowing border for the chat feed.
@@ -77,8 +76,8 @@ class _CBRoleAvatarState extends State<CBRoleAvatar>
 
         // Apply breathing gradient if enabled
         if (widget.breathing) {
-          effectiveColor =
-              CBColors.roleShimmerColor(baseColor, _controller.value);
+          effectiveColor = Color.lerp(
+              baseColor, theme.colorScheme.secondary, _controller.value)!;
           intensity = 0.5 + (_controller.value * 0.5); // 0.5 -> 1.0 glow
         }
 
@@ -86,11 +85,15 @@ class _CBRoleAvatarState extends State<CBRoleAvatar>
           width: widget.size,
           height: widget.size,
           decoration: BoxDecoration(
-            color: CBColors.offBlack,
+            color: theme.colorScheme.surface,
             shape: BoxShape.circle,
             border: Border.all(color: effectiveColor, width: 2),
-            boxShadow:
-                CBColors.circleGlow(effectiveColor, intensity: intensity),
+            boxShadow: [
+              BoxShadow(
+                color: effectiveColor.withValues(alpha: intensity * 0.5),
+                blurRadius: widget.size * 0.2,
+              ),
+            ],
           ),
           child: ClipOval(
             child: widget.assetPath != null

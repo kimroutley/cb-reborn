@@ -1,8 +1,7 @@
 import 'dart:ui';
 
-import 'package:cb_theme/src/colors.dart';
-import 'package:cb_theme/src/layout.dart';
 import 'package:flutter/material.dart';
+
 
 /// A glowing panel for grouping related content.
 class CBPanel extends StatelessWidget {
@@ -17,7 +16,7 @@ class CBPanel extends StatelessWidget {
     required this.child,
     this.borderColor,
     this.borderWidth = 1,
-    this.padding = const EdgeInsets.all(CBSpace.x4),
+    this.padding = const EdgeInsets.all(16),
     this.margin = EdgeInsets.zero,
   });
 
@@ -26,7 +25,7 @@ class CBPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final color = borderColor ?? theme.colorScheme.primary;
-    final panelRadius = BorderRadius.circular(CBRadius.md);
+    final panelRadius = BorderRadius.circular(16);
 
     return Container(
       width: double.infinity,
@@ -46,7 +45,7 @@ class CBPanel extends StatelessWidget {
                   scheme.onSurface.withValues(alpha: 0.06),
                   scheme.primary.withValues(alpha: 0.11),
                   scheme.secondary.withValues(alpha: 0.09),
-                  CBColors.transparent,
+                  Colors.transparent,
                 ],
                 stops: const [0.0, 0.22, 0.56, 1.0],
               ),
@@ -54,8 +53,14 @@ class CBPanel extends StatelessWidget {
               border: Border.all(
                   color: color.withValues(alpha: 0.54), width: borderWidth),
               boxShadow: [
-                ...CBColors.boxGlow(scheme.primary, intensity: 0.1),
-                ...CBColors.boxGlow(scheme.secondary, intensity: 0.08),
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.1),
+                  blurRadius: 12,
+                ),
+                BoxShadow(
+                  color: scheme.secondary.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                ),
               ],
             ),
             child: Padding(
@@ -68,3 +73,4 @@ class CBPanel extends StatelessWidget {
     );
   }
 }
+

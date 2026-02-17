@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../colors.dart';
 
+
 /// A linear progress indicator with a breathing neon gradient effect.
 class CBBreathingBar extends StatefulWidget {
   final double width;
@@ -37,6 +38,7 @@ class _CBBreathingBarState extends State<CBBreathingBar>
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -46,10 +48,10 @@ class _CBBreathingBarState extends State<CBBreathingBar>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.height / 2),
             gradient: LinearGradient(
-              colors: const [
-                CBColors.radiantPink,
-                CBColors.radiantTurquoise,
-                CBColors.radiantPink,
+              colors: [
+                scheme.primary,
+                scheme.secondary,
+                scheme.primary,
               ],
               begin: Alignment(-1.0 - _controller.value, 0.0),
               end: Alignment(1.0 + _controller.value, 0.0),
@@ -58,8 +60,8 @@ class _CBBreathingBarState extends State<CBBreathingBar>
             boxShadow: [
               BoxShadow(
                 color: Color.lerp(
-                  CBColors.radiantPink,
-                  CBColors.radiantTurquoise,
+                  scheme.primary,
+                  scheme.secondary,
                   _controller.value,
                 )!
                     .withValues(alpha: 0.5),
@@ -224,6 +226,65 @@ class _CBTypingIndicatorState extends State<CBTypingIndicator>
           ),
         );
       }),
+    );
+  }
+}
+
+/// A subtle, breathing loader animation.
+class CBBreathingLoader extends StatefulWidget {
+  final Color? color;
+  final double size;
+
+  const CBBreathingLoader({super.key, this.color, this.size = 48.0});
+
+  @override
+  State<CBBreathingLoader> createState() => _CBBreathingLoaderState();
+}
+
+class _CBBreathingLoaderState extends State<CBBreathingLoader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = widget.color ?? theme.colorScheme.primary;
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Container(
+          width: widget.size,
+          height: widget.size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: CBColors.circleGlow(
+              color,
+              intensity: 0.5 + (_controller.value * 0.5),
+            ),
+          ),
+          child: Icon(
+            Icons.favorite,
+            color: color,
+            size: widget.size * 0.5,
+          ),
+        );
+      },
     );
   }
 }

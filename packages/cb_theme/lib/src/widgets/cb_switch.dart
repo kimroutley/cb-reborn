@@ -1,5 +1,5 @@
-import 'package:cb_theme/src/haptic_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Neon-styled switch with consistent track/thumb treatment + haptics.
 class CBSwitch extends StatelessWidget {
@@ -24,7 +24,7 @@ class CBSwitch extends StatelessWidget {
       onChanged: onChanged == null
           ? null
           : (v) {
-              HapticService.selection();
+              HapticFeedback.selectionClick();
               onChanged!(v);
             },
       thumbColor: WidgetStateProperty.resolveWith((states) {
@@ -46,3 +46,4 @@ class CBSwitch extends StatelessWidget {
     );
   }
 }
+

@@ -1,306 +1,102 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../cb_theme.dart';
 
-/// Visual variants for message bubbles in the feed.
-enum CBMessageVariant {
-  /// Standard role narration.
-  narrative,
+import 'package:cb_theme/src/widgets/cb_role_avatar.dart';
 
-  /// Host-only directive (maroon background).
-  directive,
-
-  /// Centered system text.
-  system,
-
-  /// Outcome result summary.
-  result,
-}
-
-/// A high-fidelity, polished M3 message bubble with "Legacy Synthwave" glow.
-class CBMessageBubble extends StatefulWidget {
-  final String content;
-  final String? senderName;
-  final Widget? avatar;
-  final CBPlayerStatusTile? playerHeader;
-
-  /// The accent color for the border and glow.
-  /// If null, uses [Theme.of(context).colorScheme.primary].
-  final Color? accentColor;
-
-  final CBMessageVariant variant;
-  final List<Widget>? actions;
-  final bool isClustered;
-  final bool isResolved;
+/// A chat bubble for displaying messages in the game feed.
+class CBMessageBubble extends StatelessWidget {
+  final String sender;
+  final String message;
+  final String? avatarAsset;
+  final Color? color;
+  final bool isSystemMessage;
+  final bool isSender;
 
   const CBMessageBubble({
     super.key,
-    required this.content,
-    this.senderName,
-    this.avatar,
-    this.playerHeader,
-    this.accentColor,
-    this.variant = CBMessageVariant.narrative,
-    this.actions,
-    this.isClustered = false,
-    this.isResolved = false,
+    required this.sender,
+    required this.message,
+    this.avatarAsset,
+    this.color,
+    this.isSystemMessage = false,
+    this.isSender = false,
   });
 
   @override
-  State<CBMessageBubble> createState() => _CBMessageBubbleState();
-}
-
-class _CBMessageBubbleState extends State<CBMessageBubble>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _glowController;
-  late Animation<double> _glowAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _glowController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-    _glowAnimation =
-        Tween<double>(begin: 0.1, end: 0.4).animate(_glowController);
-  }
-
-  @override
-  void dispose() {
-    _glowController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (widget.variant == CBMessageVariant.system &&
-        widget.content.startsWith('STIM:')) {
-      return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final accentColor = color ?? scheme.primary;
+
+    if (isSystemMessage) {
+      return Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: accentColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+        ),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodySmall?.copyWith(color: accentColor),
+        ),
+      );
     }
 
-    return switch (widget.variant) {
-      CBMessageVariant.system => _buildSystemBubble(context),
-      CBMessageVariant.directive => _buildDirectiveBubble(context),
-      CBMessageVariant.result => _buildResultBubble(context),
-      _ => _buildNarrativeBubble(context),
-    };
-  }
-
-  Widget _buildSystemBubble(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = widget.accentColor ?? theme.colorScheme.primary;
-
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
+        mainAxisAlignment:
+            isSender ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: _buildDivider(color: color)),
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                widget.content.toUpperCase(),
-                textAlign: TextAlign.center,
-                softWrap: true,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall!.copyWith(
-                  color: color,
-                  letterSpacing: 3.0,
-                  fontWeight: FontWeight.w800,
-                  shadows: CBColors.textGlow(color, intensity: 0.5),
-                ),
-              ),
+          if (!isSender) ...[
+            CBRoleAvatar(
+              assetPath: avatarAsset,
+              color: color,
+              size: 32,
             ),
-          ),
-          Expanded(child: _buildDivider(color: color)),
-        ],
-      ),
-    );
-  }
-
-  // Modified: No gradient, just a solid line
-  Widget _buildDivider({required Color color}) {
-    return Container(
-      height: 1,
-      color: color.withValues(alpha: 0.4),
-    );
-  }
-
-  Widget _buildDirectiveBubble(BuildContext context) {
-    final theme = Theme.of(context);
-    final neonRed = theme.colorScheme.error;
-    final maroon =
-        Color.alphaBlend(neonRed.withValues(alpha: 0.14), CBColors.voidBlack);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: maroon,
-              border:
-                  Border.all(color: neonRed.withValues(alpha: 0.5), width: 1),
-              boxShadow: CBColors.boxGlow(neonRed, intensity: 0.2),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.security, size: 14, color: neonRed),
-                    const SizedBox(width: 8),
-                    Text(
-                      'HOST DIRECTIVE',
-                      style: theme.textTheme.labelSmall!.copyWith(
-                        color: neonRed.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  widget.content,
-                  style: theme.textTheme.bodyMedium!.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildResultBubble(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = widget.accentColor ?? theme.colorScheme.primary;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 32),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.check_circle_outline, size: 14, color: color),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              widget.content,
-              style: theme.textTheme.labelSmall!.copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNarrativeBubble(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = widget.accentColor ?? theme.colorScheme.primary;
-    final hasHeader = widget.playerHeader != null;
-    final hasSender =
-        !hasHeader && (widget.senderName != null || widget.avatar != null);
-
-    return AnimatedBuilder(
-      animation: _glowAnimation,
-      builder: (context, child) {
-        return Container(
-          margin: EdgeInsets.symmetric(
-            vertical: widget.isClustered ? 2 : 8,
-            horizontal: 12,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: CBColors.boxGlow(color, intensity: _glowAnimation.value),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                decoration: CBColors.glassmorphism(
-                  color: color,
-                  borderColor: color,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (hasHeader)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                        child: widget.playerHeader!,
-                      )
-                    else if (hasSender)
-                      _buildSenderHeader(context, color),
-                    Padding(
-                      padding: (hasHeader || hasSender)
-                          ? const EdgeInsets.fromLTRB(16, 4, 16, 16)
-                          : const EdgeInsets.all(16),
-                      child: Text(
-                        widget.content,
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    ),
-                    if (widget.actions != null &&
-                        widget.actions!.isNotEmpty) ...[
-                      const Divider(height: 1, thickness: 0.5),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: widget.actions!,
-                        ),
-                      ),
-                    ]
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSenderHeader(BuildContext context, Color color) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Row(
-        children: [
-          if (widget.avatar != null) ...[
-            widget.avatar!,
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
           ],
-          if (widget.senderName != null)
-            Text(
-              widget.senderName!.toUpperCase(),
-              style: theme.textTheme.labelSmall!.copyWith(
-                color: color,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
-                shadows: CBColors.textGlow(color, intensity: 0.6),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSender
+                    ? accentColor.withValues(alpha: 0.2)
+                    : scheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: isSender ? 0.5 : 0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    sender.toUpperCase(),
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: accentColor, letterSpacing: 1.1),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
               ),
             ),
+          ),
+          if (isSender) ...[
+            const SizedBox(width: 8),
+            CBRoleAvatar(
+              assetPath: avatarAsset,
+              color: color,
+              size: 32,
+            ),
+          ],
         ],
       ),
     );

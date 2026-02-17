@@ -1,5 +1,3 @@
-import 'package:cb_theme/src/haptic_service.dart';
-import 'package:cb_theme/src/typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -12,6 +10,7 @@ class CBTextField extends StatelessWidget {
   final bool autofocus;
   final int? maxLines;
   final int? minLines;
+  final int? maxLength;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final FocusNode? focusNode;
@@ -35,6 +34,7 @@ class CBTextField extends StatelessWidget {
     this.autofocus = false,
     this.maxLines = 1,
     this.minLines,
+    this.maxLength,
     this.keyboardType,
     this.textInputAction,
     this.focusNode,
@@ -63,6 +63,7 @@ class CBTextField extends StatelessWidget {
       autofocus: autofocus,
       maxLines: maxLines,
       minLines: minLines,
+      maxLength: maxLength,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       focusNode: focusNode,
@@ -70,7 +71,7 @@ class CBTextField extends StatelessWidget {
       readOnly: readOnly,
       onChanged: (val) {
         if (hapticOnChange && val.isNotEmpty) {
-          HapticService.selection();
+          HapticFeedback.selectionClick();
         }
         onChanged?.call(val);
       },
@@ -78,10 +79,19 @@ class CBTextField extends StatelessWidget {
       textCapitalization: textCapitalization,
       textAlign: textAlign,
       style: textStyle ??
-          (monospace ? CBTypography.code : theme.textTheme.bodyLarge!),
-      inputFormatters: inputFormatters,
+          (monospace
+              ? theme.textTheme.bodyLarge!
+                  .copyWith(fontFamily: 'monospace')
+              : theme.textTheme.bodyLarge!),
+      inputFormatters: [
+        ...?inputFormatters,
+        // Safety net: if no explicit limit is set via maxLength,
+        // apply a generous default limit to prevent memory exhaustion attacks.
+        if (maxLength == null) LengthLimitingTextInputFormatter(8192),
+      ],
       cursorColor: theme.colorScheme.primary,
       decoration: effectiveDecoration,
     );
   }
 }
+

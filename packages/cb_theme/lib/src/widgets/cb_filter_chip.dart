@@ -1,6 +1,5 @@
-import 'package:cb_theme/src/colors.dart';
-import 'package:cb_theme/src/haptic_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// A lightweight, neon-friendly filter chip (no avatar) for small toggles.
 class CBFilterChip extends StatelessWidget {
@@ -39,7 +38,7 @@ class CBFilterChip extends StatelessWidget {
       type: MaterialType.transparency,
       child: InkWell(
         onTap: () {
-          HapticService.selection();
+          HapticFeedback.selectionClick();
           onSelected();
         },
         borderRadius: BorderRadius.circular(999),
@@ -53,8 +52,14 @@ class CBFilterChip extends StatelessWidget {
             color: bg,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: border, width: 1.5),
-            boxShadow:
-                selected ? CBColors.boxGlow(accent, intensity: 0.18) : null,
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.18),
+                      blurRadius: 8,
+                    )
+                  ]
+                : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -78,3 +83,4 @@ class CBFilterChip extends StatelessWidget {
     );
   }
 }
+

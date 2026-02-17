@@ -1,6 +1,4 @@
-import 'package:cb_theme/src/colors.dart';
 import 'package:flutter/material.dart';
-
 import 'cb_badge.dart';
 import 'cb_role_avatar.dart';
 
@@ -53,7 +51,12 @@ class CBPlayerStatusTile extends StatelessWidget {
                   style: theme.textTheme.bodyMedium!.copyWith(
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1,
-                    shadows: CBColors.textGlow(accentColor, intensity: 0.4),
+                    shadows: [
+                      Shadow(
+                        color: accentColor.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                      )
+                    ],
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -69,14 +72,14 @@ class CBPlayerStatusTile extends StatelessWidget {
           ),
 
           // Status chips
-          if (!isAlive) CBBadge(text: 'DEAD', color: CBColors.dead),
+          if (!isAlive) CBBadge(text: 'DEAD', color: theme.colorScheme.error),
           if (isAlive && statusEffects.isNotEmpty)
             ...statusEffects.map(
               (effect) => Padding(
                 padding: const EdgeInsets.only(left: 4),
                 child: CBBadge(
                   text: effect.toUpperCase(),
-                  color: _statusColor(effect),
+                  color: _statusColor(context, effect),
                 ),
               ),
             ),
@@ -85,17 +88,18 @@ class CBPlayerStatusTile extends StatelessWidget {
     );
   }
 
-  Color _statusColor(String effect) {
+  Color _statusColor(BuildContext context, String effect) {
+    final scheme = Theme.of(context).colorScheme;
     return switch (effect.toLowerCase()) {
-      'protected' => CBColors.fromHex('#FF0000'), // Medic (red)
-      'silenced' => CBColors.fromHex('#00C853'), // Roofi (green)
-      'id checked' => CBColors.fromHex('#4169E1'), // Bouncer (royal blue)
-      'sighted' => CBColors.fromHex('#483C32'), // Club Manager (dark brown)
-      'alibi' => CBColors.fromHex('#808000'), // Silver Fox (olive)
-      'sent home' => CBColors.fromHex('#32CD32'), // Sober (lime green)
-      'clinging' => CBColors.fromHex('#FFFF00'), // Clinger (yellow)
-      'paralysed' || 'paralyzed' => CBColors.purple,
-      _ => CBColors.dead,
+      'protected' => scheme.error, // Medic (red)
+      'silenced' => Colors.green, // Roofi (green)
+      'id checked' => Colors.blue, // Bouncer (royal blue)
+      'sighted' => Colors.brown, // Club Manager (dark brown)
+      'alibi' => scheme.secondary, // Silver Fox
+      'sent home' => Colors.lightGreen, // Sober (lime green)
+      'clinging' => Colors.yellow, // Clinger (yellow)
+      'paralysed' || 'paralyzed' => Colors.purple,
+      _ => scheme.error,
     };
   }
 }

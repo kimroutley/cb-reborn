@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cb_theme/src/layout.dart';
 import 'package:flutter/material.dart';
 
 /// Simple "enter" animation: fade + slight slide. Useful for lists and sheets.
@@ -14,9 +13,9 @@ class CBFadeSlide extends StatefulWidget {
   const CBFadeSlide({
     super.key,
     required this.child,
-    this.duration = CBMotion.micro,
+    this.duration = const Duration(milliseconds: 300),
     this.delay = Duration.zero,
-    this.curve = CBMotion.emphasizedCurve,
+    this.curve = Curves.easeOut,
     this.beginOffset = const Offset(0, 0.06),
   });
 
@@ -62,3 +61,4 @@ class _CBFadeSlideState extends State<CBFadeSlide> {
     );
   }
 }
+

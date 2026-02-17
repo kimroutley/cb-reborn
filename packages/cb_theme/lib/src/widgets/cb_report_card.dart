@@ -1,5 +1,3 @@
-import 'package:cb_theme/src/colors.dart';
-import 'package:cb_theme/src/layout.dart';
 import 'package:flutter/material.dart';
 
 /// Report card showing a list of events or results.
@@ -22,12 +20,17 @@ class CBReportCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(CBSpace.x4),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(CBRadius.md),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accentColor, width: 1),
-        boxShadow: CBColors.boxGlow(accentColor, intensity: 0.2),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.2),
+            blurRadius: 8,
+          )
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,13 +40,18 @@ class CBReportCard extends StatelessWidget {
             title.toUpperCase(),
             style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                   color: accentColor,
-                  shadows: CBColors.textGlow(accentColor, intensity: 0.4),
+                  shadows: [
+                    Shadow(
+                      color: accentColor.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                    )
+                  ],
                 ),
           ),
-          const SizedBox(height: CBSpace.x4),
+          const SizedBox(height: 16),
           ...lines.map(
             (line) => Padding(
-              padding: const EdgeInsets.only(bottom: CBSpace.x3),
+              padding: const EdgeInsets.only(bottom: 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -65,3 +73,4 @@ class CBReportCard extends StatelessWidget {
     );
   }
 }
+

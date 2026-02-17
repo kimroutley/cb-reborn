@@ -1,6 +1,5 @@
-import 'package:cb_theme/src/layout.dart';
-import 'package:cb_theme/src/typography.dart';
 import 'package:flutter/material.dart';
+
 
 /// Compact label chip (e.g., role badge, status tag).
 class CBBadge extends StatelessWidget {
@@ -19,15 +18,16 @@ class CBBadge extends StatelessWidget {
     final badgeColor = color ?? theme.colorScheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: CBSpace.x3, vertical: CBSpace.x1),
+          horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(CBRadius.xs),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: badgeColor.withValues(alpha: 0.5)),
       ),
       child: Text(
         text.toUpperCase(),
-        style: CBTypography.micro.copyWith(color: badgeColor),
+        style: theme.textTheme.labelSmall?.copyWith(color: badgeColor),
       ),
     );
   }
 }
+
