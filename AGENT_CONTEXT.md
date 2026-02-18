@@ -231,3 +231,23 @@ an app restart.
 
 3. **Respect the Architecture**: Do not bypass `RoleIds` or direct Firestore calls outside the Bridges.
 4. **Update This Doc**: If you discover a new pattern or fix a critical bug, update this file.
+
+
+## 12. Role Awards Rollout (Feb 18, 2026)
+
+Phase 0/1 scaffolding for Role Awards is now in place.
+
+### Implemented foundation
+
+* `packages/cb_models/lib/src/data/role_award_placeholders.dart` provides the canonical `Awards Coming Soon` placeholder registry for all canonical roles.
+* `packages/cb_models/lib/src/persistence/role_awards.dart` defines the shared role-award domain models (`RoleAwardDefinition`, `PlayerRoleAwardProgress`, enums).
+* `packages/cb_models/lib/src/data/role_award_catalog.dart` now provides generated baseline ladders for all canonical roles plus helper lookups (`roleAwardsForRoleId`, `hasFinalizedRoleAwards`, `roleAwardDefinitionById`).
+* `PersistenceService` now supports role-award progress rebuild + query flows (`rebuildRoleAwardProgresses`, by-player/by-role/by-tier, recent unlocks).
+* Host + Player Hall of Fame screens render Role Award cards for every role and show finalized-role coverage + unlock counters.
+
+### Maintenance rules
+
+1. Keep role IDs canonical (`RoleIds` only), never display-name keyed.
+2. If new roles are added to `role_catalog`, update both placeholder and finalized catalog coverage helpers.
+3. Preserve fallback behavior: unresolved roles must display exactly `Awards Coming Soon` until finalized definitions are added.
+4. Prefer adding finalized role ladders in `role_award_catalog.dart` incrementally without changing model contracts.

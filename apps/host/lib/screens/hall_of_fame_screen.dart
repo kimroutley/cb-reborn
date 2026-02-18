@@ -1,4 +1,4 @@
-import 'package:cb_logic/cb_logic.dart';
+﻿import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_models/cb_models.dart';
 import 'package:cb_theme/cb_theme.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +56,8 @@ class HallOfFameScreen extends ConsumerStatefulWidget {
 
 class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
   List<PlayerStat> _stats = [];
+  Map<String, int> _roleUnlockCounts = const {};
+  int _recentUnlockCount = 0;
   bool _isLoading = true;
 
   @override
@@ -90,17 +92,52 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
       }
     }
 
+    await PersistenceService.instance.rebuildRoleAwardProgresses();
+    final allProgress = PersistenceService.instance.loadRoleAwardProgresses();
+    final unlockedCounts = <String, int>{};
+    for (final progress in allProgress) {
+      if (!progress.isUnlocked) {
+        continue;
+      }
+      final definition = roleAwardDefinitionById(progress.awardId);
+      if (definition == null) {
+        continue;
+      }
+      unlockedCounts[definition.roleId] =
+          (unlockedCounts[definition.roleId] ?? 0) + 1;
+    }
+
+    final recentUnlocks =
+        PersistenceService.instance.loadRecentRoleAwardUnlocks(limit: 10);
+
     setState(() {
       _stats = playerStats.values.toList()
-        ..sort((a, b) => b.winPercentage.compareTo(a.winPercentage));
+        ..sort(_comparePlayerStats);
+      _roleUnlockCounts = unlockedCounts;
+      _recentUnlockCount = recentUnlocks.length;
       _isLoading = false;
     });
+  }
+
+  int _comparePlayerStats(PlayerStat a, PlayerStat b) {
+    final winPct = b.winPercentage.compareTo(a.winPercentage);
+    if (winPct != 0) return winPct;
+
+    final wins = b.gamesWon.compareTo(a.gamesWon);
+    if (wins != 0) return wins;
+
+    final played = b.gamesPlayed.compareTo(a.gamesPlayed);
+    if (played != 0) return played;
+
+    return a.playerName.toLowerCase().compareTo(b.playerName.toLowerCase());
   }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final missingPlaceholderRoles = missingRoleAwardPlaceholders();
+    final awardCoverage = const RoleAwardProgressService().buildCoverageSummary();
 
     return Scaffold(
       appBar: AppBar(
@@ -113,21 +150,111 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
       body: CBNeonBackground(
         child: _isLoading
             ? const Center(child: CBBreathingSpinner())
-            : _stats.isEmpty
-                ? Center(
-                    child: Text(
-                      'No game records found.',
-                      textAlign: TextAlign.center,
-                      style: textTheme.headlineMedium,
+            : ListView(
+                padding: const EdgeInsets.only(top: 16, bottom: 32),
+                children: [
+                  if (_stats.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: CBPanel(
+                        child: Text(
+                          'No game records found yet.',
+                          textAlign: TextAlign.center,
+                          style: textTheme.headlineMedium,
+                        ),
+                      ),
+                    )
+                  else
+                    ...List.generate(
+                      _stats.length,
+                      (index) => _buildProfileCard(_stats[index], index, scheme),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(top: 16, bottom: 32),
-                    itemCount: _stats.length,
-                    itemBuilder: (context, index) {
-                      return _buildProfileCard(_stats[index], index, scheme);
-                    },
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      'Role Awards',
+                      style: textTheme.headlineSmall?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Text(
+                      'Role ladders finalized: ${awardCoverage.rolesWithDefinitions}/${awardCoverage.totalRoles} • Recent unlocks: $_recentUnlockCount',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (missingPlaceholderRoles.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      child: CBPanel(
+                        borderColor: scheme.error.withValues(alpha: 0.5),
+                        child: Text(
+                          'Placeholder registry is missing roles: ${missingPlaceholderRoles.join(', ')}',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: scheme.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ...roleCatalog
+                      .map((role) => _buildRoleAwardCard(role, scheme)),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildRoleAwardCard(Role role, ColorScheme scheme) {
+    final textTheme = Theme.of(context).textTheme;
+    final hasFinalized = hasFinalizedRoleAwards(role.id);
+    final roleAwardDefinitions = roleAwardsForRoleId(role.id);
+    final placeholderText =
+        roleAwardPlaceholderRegistry[role.id] ?? awardsComingSoonLabel;
+    final unlockCount = _roleUnlockCounts[role.id] ?? 0;
+    final descriptor = hasFinalized
+      ? '${roleAwardDefinitions.length} awards configured • $unlockCount unlocks'
+        : placeholderText;
+
+    return CBPanel(
+      borderColor: scheme.primary.withValues(alpha: 0.25),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            role.name,
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: scheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            role.type,
+            style: textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            descriptor,
+            style: textTheme.bodyLarge?.copyWith(
+              color: scheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -221,3 +348,4 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
     );
   }
 }
+
