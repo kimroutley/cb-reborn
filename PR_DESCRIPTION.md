@@ -1,74 +1,91 @@
-# 🏆 Role Awards Filters + Player Bootstrap/Auth/About UX Polish
+# 🏆 Role Awards + Profile UX + About Surface Consolidation
 
 ## Summary
 
-This PR ships the follow-up iteration after the role-awards foundation:
+This PR completes the role-awards follow-through and folds in adjacent UX hardening for Profile, About, and Hall-of-Fame access paths across Host + Player.
 
-- adds **Role/Tier filters** to Host + Player Hall of Fame role-award views,
-- introduces **role-specific deterministic unlock profiles** for award ladders,
-- improves Player startup UX with a **neutral auth boot state** and **bootstrap progress meter**,
-- adds shared **About + release notes** surfaces for Host and Player,
-- and finalizes a small awards metadata refactor for cleaner catalog seeding.
+Primary outcomes:
+
+- filterable Role Awards experience in Hall of Fame,
+- deterministic role-specific unlock profiles with icon-source guardrails,
+- improved Player startup/auth loading transitions,
+- upgraded Host/Player Profile forms with stronger validation and save semantics,
+- shared About/release-notes presentation with widget coverage,
+- direct Hall-of-Fame access actions verified by dedicated app tests.
 
 ## What Changed
 
-### 1) Role Awards: filtering + profile-based progression
+### 1) Role Awards progression, filtering, and metadata guards
 
-- Host and Player Hall of Fame now support:
-  - role filter (`All roles` or a specific role),
-  - tier filter (`All tiers`, `Rookie`, `Pro`, `Legend`, `Bonus`),
-  - filtered role counts and filtered unlock counts.
-- Role award cards now reflect current filter state (including a no-match message).
-- `packages/cb_models/lib/src/data/role_award_catalog.dart` now uses per-role unlock profiles (metric + threshold) instead of one global threshold pattern.
-- Rule-driven descriptions are generated from the unlock metric (`gamesPlayed`, `wins`, `survivals`) to remain deterministic and consistent.
+- Host + Player Hall of Fame role-award views now support:
+  - role filter,
+  - tier filter,
+  - filtered count/unlock summaries.
+- Role ladders use role-specific deterministic unlock profiles (`gamesPlayed`, `wins`, `survivals`) instead of one global threshold profile.
+- Added icon-source guardrail helpers in `role_award_catalog`:
+  - known-source validation,
+  - test-failing detection for unknown icon sources.
+- Docs updated to reflect metadata automation and guard expectations.
 
-### 2) Player startup/auth UX hardening
+### 2) Player startup/auth flow polish
 
-- `AuthNotifier` now returns/loading-transitions through a clearer startup sequence when an authenticated user already exists.
-- `PlayerAuthScreen` now has a neutral **boot splash state** (`SYNCING SESSION...`) for `AuthStatus.initial`, avoiding login UI flash.
-- `PlayerBootstrapGate` now tracks bootstrap progress with:
-  - total/completed unit accounting,
-  - visual progress bar + percentage,
-  - incremental asset warmup progress text.
+- `AuthNotifier` startup behavior now transitions through explicit loading for existing authenticated sessions.
+- `PlayerAuthScreen` includes a neutral boot state (`SYNCING SESSION...`) for `AuthStatus.initial`.
+- `PlayerBootstrapGate` adds visible progress (units, percentage, and incremental status updates).
 
-### 3) Shared About + release notes experience
+### 3) Profile workflow hardening (Host + Player + comms)
 
-- Added shared release-notes model + parser:
-  - `packages/cb_models/lib/src/app_release_notes.dart`
-  - `packages/cb_models/lib/src/data/app_recent_builds.json`
-- Added shared themed About content widget:
-  - `packages/cb_theme/lib/src/widgets/cb_about_content.dart`
-- Integrated About screens:
-  - Host `about_screen` now uses shared content + dynamic package/release data.
-  - Player now has an About destination/screen with the same shared content pattern.
+- Added shared form validation utility:
+  - `packages/cb_comms/lib/src/profile_form_validation.dart`
+- Exported validation utility from comms barrels.
+- Profile screens (Host + Player) now include:
+  - richer field validation and sanitization,
+  - dirty-state awareness with save/discard UX,
+  - better focus/input behavior,
+  - profile style/avatar interactions with enabled/disabled semantics while saving.
+- Repository updates in `ProfileRepository` now properly delete optional profile fields when cleared.
 
-### 4) Small awards metadata refactor
+### 4) About/release-notes surface and test coverage
 
-- Simplified icon metadata seeding path in role-award catalog:
-  - removed unused optional seed-level icon author/attribution/url fields,
-  - normalized source URL usage,
-  - kept attribution behavior deterministic for license-driven paths.
+- Shared About content widget now uses expandable updates presentation.
+- Added widget test coverage for `CBAboutContent` behavior and update list constraints.
+
+### 5) Hall-of-Fame entry-point access tests
+
+- Added app-level tests verifying Hall-of-Fame navigation entry points:
+  - Host Home quick action -> Hall of Fame destination
+  - Player Stats action -> Hall of Fame destination
 
 ## Commits Included
 
 - `d7bd7d7` feat(awards): add role/tier filters and role-specific unlock profiles
 - `64ee509` feat(player): improve bootstrap/auth loading and add shared about release notes
 - `7880314` refactor(awards): simplify icon metadata seed handling
+- `2cef390` feat(profile): harden form validation and refresh host/player profile UX
+- `8553e0c` feat(theme): make about updates expandable and add widget coverage
+- `ffc379b` feat(awards): add icon-source guardrails and update rollout docs
 
 ## Validation
 
-- `apps/player`: `flutter analyze .` → **No issues found**
-- `apps/host`: `flutter analyze .` → **No issues found**
-- `apps/player` tests:
-  - `test/onboarding_loading_states_test.dart` ✅
-  - `test/player_home_shell_navigation_test.dart` ✅
-- `packages/cb_models` tests:
-  - `test/role_award_catalog_test.dart` ✅
-  - `test/app_release_notes_test.dart` ✅
+- Analyze
+  - `apps/player`: `flutter analyze .` -> **No issues found**
+  - `apps/host`: `flutter analyze .` -> **No issues found**
+
+- Focused tests
+  - `apps/player/test/onboarding_loading_states_test.dart` ✅
+  - `apps/player/test/player_home_shell_navigation_test.dart` ✅
+  - `apps/host/test/hall_of_fame_access_test.dart` ✅
+  - `apps/player/test/hall_of_fame_access_test.dart` ✅
+  - `packages/cb_models/test/role_award_catalog_test.dart` ✅
+  - `packages/cb_models/test/app_release_notes_test.dart` ✅
+  - `packages/cb_comms/test/profile_form_validation_test.dart` ✅
+  - `packages/cb_theme/test/widgets/cb_about_content_test.dart` ✅
 
 ## Why This Matters
 
-- Gives Host/Player operators practical ways to inspect award progression by role and difficulty tier.
-- Makes award progression more expressive without sacrificing deterministic replay/rebuild behavior.
-- Removes startup/auth jank in Player by replacing transient UI flashes with explicit loading intent.
-- Centralizes About/release-note rendering in shared packages, reducing future drift between Host and Player.
+- Improves visibility and control over award progression while preserving deterministic computation.
+- Adds safety rails to prevent icon metadata drift as the catalog evolves.
+- Reduces startup/auth visual churn for players.
+- Strengthens profile data integrity and UX consistency across Host/Player.
+- Consolidates About/release-note rendering and testing in shared layers.
+
