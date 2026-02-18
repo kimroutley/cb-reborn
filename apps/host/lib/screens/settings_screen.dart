@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../auth/auth_provider.dart';
+import '../auth/host_auth_screen.dart';
 import '../host_settings.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/personality_picker_modal.dart';
@@ -83,27 +85,113 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: SingleChildScrollView(
           padding: CBInsets.screen,
           child: Column(
-          children: [
-            _buildSectionHeader(context, 'Audio'),
-            _buildAudioSettings(context, settings, notifier, scheme),
-            const SizedBox(height: 24),
-            _buildSectionHeader(context, 'AI & Narration'),
-            _buildNarrationSettings(context, settings, notifier, scheme),
-            const SizedBox(height: 24),
-            _buildSectionHeader(context, 'Display'),
-            _buildDisplaySettings(context, settings, notifier, scheme),
-            const SizedBox(height: 24),
-            _buildSectionHeader(context, 'Game Data'),
-            _buildDataSettings(context, scheme),
-            const SizedBox(height: 24),
-            _buildAboutSection(scheme, _packageInfo),
-            const SizedBox(height: 40),
-          ],
+            children: [
+              _buildSectionHeader(context, 'Audio'),
+              _buildAudioSettings(context, settings, notifier, scheme),
+              const SizedBox(height: 24),
+              _buildSectionHeader(context, 'AI & Narration'),
+              _buildNarrationSettings(context, settings, notifier, scheme),
+              const SizedBox(height: 24),
+              _buildSectionHeader(context, 'Display'),
+              _buildDisplaySettings(context, settings, notifier, scheme),
+              const SizedBox(height: 24),
+              _buildSectionHeader(context, 'Cloud Access'),
+              _buildCloudAccessSettings(context, scheme),
+              const SizedBox(height: 24),
+              _buildSectionHeader(context, 'Game Data'),
+              _buildDataSettings(context, scheme),
+              const SizedBox(height: 24),
+              _buildAboutSection(scheme, _packageInfo),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _buildCloudAccessSettings(BuildContext context, ColorScheme scheme) {
+    final authState = ref.watch(authProvider);
+    final isAuthenticated = authState.status == AuthStatus.authenticated;
+    final isLoading = authState.status == AuthStatus.loading;
+    final userIdentity = authState.user?.email?.trim().isNotEmpty == true
+        ? authState.user!.email!.trim()
+        : (authState.user?.displayName?.trim().isNotEmpty == true
+            ? authState.user!.displayName!.trim()
+            : 'host');
+
+    final statusText = isAuthenticated
+        ? 'Signed in as $userIdentity'
+        : isLoading
+            ? 'Checking cloud access...'
+            : 'Offline mode active. Sign in only when you need cloud hosting.';
+
+    return CBPanel(
+      borderColor: scheme.tertiary.withValues(alpha: 0.4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            statusText,
+            style: CBTypography.body.copyWith(
+              color: isAuthenticated
+                  ? scheme.tertiary
+                  : scheme.onSurface.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: isAuthenticated
+                ? CBGhostButton(
+                    label: 'SIGN OUT OF CLOUD',
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            await ref.read(authProvider.notifier).signOut();
+                            if (!context.mounted) return;
+                            showThemedSnackBar(
+                              context,
+                              'Signed out of cloud access.',
+                              accentColor: scheme.tertiary,
+                            );
+                          },
+                  )
+                : CBPrimaryButton(
+                    label: 'SIGN IN FOR CLOUD HOSTING',
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const HostAuthScreen(),
+                              ),
+                            );
+
+                            if (!context.mounted) return;
+
+                            final refreshedState = ref.read(authProvider);
+                            if (refreshedState.status ==
+                                AuthStatus.authenticated) {
+                              showThemedSnackBar(
+                                context,
+                                'Cloud hosting access enabled.',
+                                accentColor: scheme.tertiary,
+                              );
+                            } else {
+                              showThemedSnackBar(
+                                context,
+                                'Cloud sign-in not completed. Staying offline.',
+                                accentColor: scheme.error,
+                              );
+                            }
+                          },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(

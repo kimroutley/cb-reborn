@@ -7,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'auth/host_auth_screen.dart';
-import 'auth/auth_provider.dart';
 import 'widgets/effects_overlay.dart';
 import 'screens/host_home_shell.dart';
 
@@ -41,7 +39,6 @@ class HostApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(hostSettingsProvider);
-    final authState = ref.watch(authProvider);
 
     return FutureBuilder<Color>(
       future: _seedFuture,
@@ -67,9 +64,7 @@ class HostApp extends ConsumerWidget {
             title: 'Club Blackout Host',
             theme: CBTheme.buildTheme(scheme),
             home: EffectsOverlay(
-              child: authState.status == AuthStatus.authenticated
-                  ? const HostHomeShell()
-                  : const HostAuthScreen(),
+              child: const HostHomeShell(),
             ),
             debugShowCheckedModeBanner: false,
           );

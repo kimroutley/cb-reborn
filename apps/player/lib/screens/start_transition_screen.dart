@@ -24,7 +24,7 @@ class StartTransitionScreen extends StatelessWidget {
                   const CBBreathingLoader(size: 62),
                   const SizedBox(height: 20),
                   Text(
-                    'SYNCING INTO THE CLUB... ',
+                    'SYNCING INTO THE CLUB...',
                     textAlign: TextAlign.center,
                     style: textTheme.titleLarge?.copyWith(
                       color: scheme.primary,
@@ -35,9 +35,28 @@ class StartTransitionScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Final checks underway. Hold tight while your seat is prepared.',
+                    'Final checks underway. Lights up, sound check, then you are in.',
                     textAlign: TextAlign.center,
                     style: textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 18),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      minHeight: 6,
+                      backgroundColor: scheme.surfaceContainerHighest
+                          .withValues(alpha: 0.45),
+                      valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Club vibes loading...',
+                    textAlign: TextAlign.center,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.65),
+                      letterSpacing: 1.1,
+                    ),
                   ),
                 ],
               ),

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:cb_host/auth/auth_provider.dart';
+import 'package:cb_host/auth/host_auth_screen.dart';
 import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_models/cb_models.dart';
 import 'package:cb_theme/cb_theme.dart';
@@ -26,6 +28,19 @@ class LobbyConfigTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final authState = ref.watch(authProvider);
+    final isCloudReady = authState.status == AuthStatus.authenticated;
+    final isCloudChecking = authState.status == AuthStatus.loading;
+    final badgeLabel = isCloudChecking
+        ? 'CLOUD: CHECKING...'
+        : isCloudReady
+            ? 'CLOUD: SIGNED IN'
+            : 'CLOUD: SIGN-IN REQUIRED';
+    final badgeColor = isCloudChecking
+        ? scheme.secondary
+        : isCloudReady
+            ? scheme.tertiary
+            : scheme.error;
     final session = ref.watch(sessionProvider);
     final sessionController = ref.read(sessionProvider.notifier);
     final requiredConfirmations =
@@ -59,9 +74,38 @@ class LobbyConfigTile extends ConsumerWidget {
                 final newMode = gameState.syncMode == SyncMode.local
                     ? SyncMode.cloud
                     : SyncMode.local;
-                unawaited(_setSyncMode(ref, controller, newMode));
+                unawaited(_setSyncMode(context, ref, controller, newMode));
               }),
             ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: badgeColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: badgeColor.withValues(alpha: 0.35)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.cloud_done_rounded,
+                  size: 14,
+                  color: badgeColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  badgeLabel,
+                  style: CBTypography.labelSmall.copyWith(
+                    fontSize: 8,
+                    color: badgeColor,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -149,21 +193,68 @@ class LobbyConfigTile extends ConsumerWidget {
   }
 
   Future<void> _setSyncMode(
+    BuildContext context,
     WidgetRef ref,
     Game controller,
     SyncMode newMode,
   ) async {
+    final scheme = Theme.of(context).colorScheme;
+
+    if (newMode == SyncMode.cloud) {
+      var authState = ref.read(authProvider);
+      if (authState.status != AuthStatus.authenticated) {
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const HostAuthScreen()),
+        );
+
+        if (!context.mounted) return;
+
+        authState = ref.read(authProvider);
+        if (authState.status != AuthStatus.authenticated) {
+          showThemedSnackBar(
+            context,
+            'Cloud sync mode requires sign-in.',
+            accentColor: scheme.error,
+          );
+          return;
+        }
+      }
+    }
+
     controller.setSyncMode(newMode);
     final localBridge = ref.read(hostBridgeProvider);
     final cloudBridge = ref.read(cloudHostBridgeProvider);
 
-    await syncHostBridgesForMode(
-      mode: newMode,
-      stopLocal: localBridge.stop,
-      startLocal: localBridge.start,
-      stopCloud: cloudBridge.stop,
-      startCloud: cloudBridge.start,
-    );
+    try {
+      await syncHostBridgesForMode(
+        mode: newMode,
+        stopLocal: localBridge.stop,
+        startLocal: localBridge.start,
+        stopCloud: cloudBridge.stop,
+        startCloud: cloudBridge.start,
+      );
+    } catch (_) {
+      controller.setSyncMode(SyncMode.local);
+
+      try {
+        await syncHostBridgesForMode(
+          mode: SyncMode.local,
+          stopLocal: localBridge.stop,
+          startLocal: localBridge.start,
+          stopCloud: cloudBridge.stop,
+          startCloud: cloudBridge.start,
+        );
+      } catch (_) {
+        // Keep app stable even if fallback bridge recovery encounters issues.
+      }
+
+      if (!context.mounted) return;
+      showThemedSnackBar(
+        context,
+        'Unable to switch sync mode. Reverted to local mode.',
+        accentColor: scheme.error,
+      );
+    }
   }
 
   Widget _buildConfigOption(BuildContext context, String label, String value,
