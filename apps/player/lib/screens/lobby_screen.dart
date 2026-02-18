@@ -1,4 +1,5 @@
 import 'package:cb_player/auth/auth_provider.dart';
+import 'package:cb_comms/cb_comms_player.dart';
 import 'package:cb_theme/cb_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -41,14 +42,24 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
     setState(() => _savingName = true);
     try {
-      await FirebaseFirestore.instance
-          .collection('user_profiles')
-          .doc(user.uid)
-          .set({
-        'username': candidate,
-        'usernameLower': candidate.toLowerCase(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      final repository =
+          ProfileRepository(firestore: FirebaseFirestore.instance);
+      final isAvailable = await repository.isUsernameAvailable(
+        candidate,
+        excludingUid: user.uid,
+      );
+
+      if (!isAvailable) {
+        _showSnack('Username is already taken.');
+        return;
+      }
+
+      await repository.upsertBasicProfile(
+        uid: user.uid,
+        username: candidate,
+        email: user.email,
+        isHost: false,
+      );
 
       try {
         await user.updateDisplayName(candidate);
@@ -83,7 +94,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     if (awaitingStartConfirmation) {
       return (
         title: 'READY TO JOIN',
-        detail: 'Host started the game. Confirming your entry now.',
+        detail: 'Host started the game. Confirm your join now.',
       );
     }
 
@@ -97,8 +108,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
     if (phase == 'setup') {
       return (
-        title: 'WAITING FOR HOST TO ASSIGN ROLE',
-        detail: 'Role cards are being finalized. Stand by.',
+        title: 'WAITING FOR HOST TO ASSIGN YOU A ROLE',
+        detail: 'Role cards are being assigned. Stay ready.',
       );
     }
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cb_comms/cb_comms.dart';
 import 'package:app_links/app_links.dart';
 import 'package:cb_theme/cb_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -184,42 +185,29 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
       return;
     }
 
-    final usernameLower = username.toLowerCase();
     setState(() {
       _isSavingUsername = true;
       _error = null;
     });
 
     try {
-      final existing = await FirebaseFirestore.instance
-          .collection('user_profiles')
-          .where('usernameLower', isEqualTo: usernameLower)
-          .limit(1)
-          .get();
+      final repository = ProfileRepository(firestore: FirebaseFirestore.instance);
+      final isAvailable = await repository.isUsernameAvailable(
+        username,
+        excludingUid: user.uid,
+      );
 
-      if (existing.docs.isNotEmpty && existing.docs.first.id != user.uid) {
+      if (!isAvailable) {
         setState(() => _error = 'Username is already taken.');
         return;
       }
 
-      final now = FieldValue.serverTimestamp();
-      await FirebaseFirestore.instance
-          .collection('user_profiles')
-          .doc(user.uid)
-          .set(
-        {
-          'uid': user.uid,
-          'username': username,
-          'usernameLower': usernameLower,
-          'email': user.email,
-          'emailLower': user.email?.toLowerCase(),
-          'emailMasked': _maskEmail(user.email),
-          'updatedAt': now,
-          'createdAt': now,
-          'isHost': true,
-          'preferredStyle': _selectedStyle?.name,
-        },
-        SetOptions(merge: true),
+      await repository.upsertBasicProfile(
+        uid: user.uid,
+        username: username,
+        email: user.email,
+        isHost: true,
+        preferredStyle: _selectedStyle?.name,
       );
     } finally {
       if (mounted) {
@@ -228,19 +216,6 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
         });
       }
     }
-  }
-
-  String _maskEmail(String? value) {
-    if (value == null || value.isEmpty || !value.contains('@')) {
-      return 'unknown@email';
-    }
-    final parts = value.split('@');
-    final name = parts.first;
-    final domain = parts.last;
-    if (name.length <= 2) {
-      return '**@$domain';
-    }
-    return '${name[0]}***${name[name.length - 1]}@$domain';
   }
 
   Future<void> _signOut() async {

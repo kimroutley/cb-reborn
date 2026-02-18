@@ -1,4 +1,5 @@
 import 'package:cb_theme/cb_theme.dart';
+import 'package:cb_comms/cb_comms_player.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -163,40 +164,28 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
       return;
     }
 
-    final usernameLower = username.toLowerCase();
     setState(() {
       _isSavingUsername = true;
       _error = null;
     });
 
     try {
-      final existing = await FirebaseFirestore.instance
-          .collection('user_profiles')
-          .where('usernameLower', isEqualTo: usernameLower)
-          .limit(1)
-          .get();
+      final repository = ProfileRepository(firestore: FirebaseFirestore.instance);
+      final isAvailable = await repository.isUsernameAvailable(
+        username,
+        excludingUid: user.uid,
+      );
 
-      if (existing.docs.isNotEmpty && existing.docs.first.id != user.uid) {
+      if (!isAvailable) {
         setState(() => _error = 'Username is already taken.');
         return;
       }
 
-      final now = FieldValue.serverTimestamp();
-      await FirebaseFirestore.instance
-          .collection('user_profiles')
-          .doc(user.uid)
-          .set(
-        {
-          'uid': user.uid,
-          'username': username,
-          'usernameLower': usernameLower,
-          'email': user.email,
-          'emailLower': user.email?.toLowerCase(),
-          'emailMasked': _maskEmail(user.email),
-          'updatedAt': now,
-          'createdAt': now,
-        },
-        SetOptions(merge: true),
+      await repository.upsertBasicProfile(
+        uid: user.uid,
+        username: username,
+        email: user.email,
+        isHost: false,
       );
     } finally {
       if (mounted) {
@@ -205,19 +194,6 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
         });
       }
     }
-  }
-
-  String _maskEmail(String? value) {
-    if (value == null || value.isEmpty || !value.contains('@')) {
-      return 'unknown@email';
-    }
-    final parts = value.split('@');
-    final name = parts.first;
-    final domain = parts.last;
-    if (name.length <= 2) {
-      return '**@$domain';
-    }
-    return '${name[0]}***${name[name.length - 1]}@$domain';
   }
 
   Future<void> _signOut() async {
@@ -369,7 +345,7 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text('Welcome ${_maskEmail(user.email)}',
+                            Text('Welcome ${ProfileRepository.maskEmail(user.email)}',
                               style: Theme.of(context).textTheme.headlineMedium),
                           const SizedBox(height: 8),
                           Text(
