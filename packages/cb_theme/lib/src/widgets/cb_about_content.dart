@@ -119,17 +119,38 @@ class CBAboutContent extends StatelessWidget {
                   'No recent updates available.',
                   style: textTheme.bodyMedium?.copyWith(color: CBColors.textDim),
                 )
-              : Column(
-                  children: [
-                    for (var i = 0; i < visibleBuilds.length; i++) ...[
-                      _BuildUpdateTile(update: visibleBuilds[i]),
-                      if (i < visibleBuilds.length - 1)
-                        Divider(
-                          color: scheme.outlineVariant.withValues(alpha: 0.35),
-                          height: CBSpace.x6,
-                        ),
+              : Theme(
+                  data: Theme.of(context).copyWith(
+                    dividerColor: Colors.transparent,
+                  ),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: EdgeInsets.zero,
+                    title: Text(
+                      'View latest updates',
+                      style: textTheme.titleSmall?.copyWith(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Showing the ${visibleBuilds.length} most recent builds',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: CBColors.textDim,
+                      ),
+                    ),
+                    children: [
+                      const SizedBox(height: CBSpace.x2),
+                      for (var i = 0; i < visibleBuilds.length; i++) ...[
+                        _BuildUpdateTile(update: visibleBuilds[i]),
+                        if (i < visibleBuilds.length - 1)
+                          Divider(
+                            color: scheme.outlineVariant.withValues(alpha: 0.35),
+                            height: CBSpace.x6,
+                          ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
         ),
       ],
