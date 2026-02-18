@@ -91,16 +91,15 @@ _ResolvedIconMetadata _iconMetadataForSeed(_RoleAwardSeed seed) {
   final sourceUrl = _iconSourceUrls[normalizedSource];
 
   final requiresAttribution = normalizedLicense.toLowerCase().contains('cc by');
-  final iconAuthor = requiresAttribution ? (seed.iconAuthor ?? 'Unknown') : null;
+  final iconAuthor = requiresAttribution ? 'Unknown' : null;
   final attributionText = requiresAttribution
-      ? (seed.attributionText ??
-          'Icon by ${iconAuthor!} via $normalizedSource ($normalizedLicense)')
+      ? 'Icon by ${iconAuthor!} via $normalizedSource ($normalizedLicense)'
       : null;
 
   return _ResolvedIconMetadata(
     iconAuthor: iconAuthor,
     attributionText: attributionText,
-    iconUrl: seed.iconUrl ?? sourceUrl,
+    iconUrl: sourceUrl,
   );
 }
 
@@ -398,9 +397,6 @@ class _RoleAwardSeed {
     required this.iconKey,
     required this.iconSource,
     required this.iconLicense,
-    this.iconAuthor,
-    this.attributionText,
-    this.iconUrl,
   });
 
   final RoleAwardTier tier;
@@ -408,9 +404,6 @@ class _RoleAwardSeed {
   final String iconKey;
   final String iconSource;
   final String iconLicense;
-  final String? iconAuthor;
-  final String? attributionText;
-  final String? iconUrl;
 }
 
 class _ResolvedIconMetadata {
