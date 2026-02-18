@@ -4,32 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../host_destinations.dart';
-import '../widgets/custom_drawer.dart';
-import '../widgets/simulation_mode_badge_action.dart';
-import 'privacy_policy_screen.dart';
-
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
-  Future<_HostAboutData> _loadAboutData() async {
+  Future<_PlayerAboutData> _loadAboutData() async {
     final packageInfo = await PackageInfo.fromPlatform();
     final releases = await AppReleaseNotes.loadRecentBuildUpdates();
-    return _HostAboutData(packageInfo: packageInfo, releases: releases);
+    return _PlayerAboutData(packageInfo: packageInfo, releases: releases);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('ABOUT'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: const [SimulationModeBadgeAction()],
-      ),
-      drawer: const CustomDrawer(currentDestination: HostDestination.about),
-      body: CBNeonBackground(
-        child: FutureBuilder<_HostAboutData>(
+    return CBNeonBackground(
+      child: SafeArea(
+        child: FutureBuilder<_PlayerAboutData>(
           future: _loadAboutData(),
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
@@ -48,20 +36,13 @@ class AboutScreen extends StatelessWidget {
 
             return CBAboutContent(
               appHeading: 'CLUB BLACKOUT: REBORN',
-              appSubtitle: 'HOST CONTROL APP',
+              appSubtitle: 'PLAYER COMPANION APP',
               versionLabel: versionLabel,
               releaseDateLabel: releaseDate,
               creditsLabel: 'Kim, Val, Lilo, Stitch and Mushu Kyrian',
               copyrightLabel:
                   '© ${DateTime.now().year} Kyrian Co. All rights reserved.',
               recentBuilds: releases,
-              onPrivacyTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const PrivacyPolicyScreen(),
-                  ),
-                );
-              },
             );
           },
         ),
@@ -70,8 +51,8 @@ class AboutScreen extends StatelessWidget {
   }
 }
 
-class _HostAboutData {
-  const _HostAboutData({required this.packageInfo, required this.releases});
+class _PlayerAboutData {
+  const _PlayerAboutData({required this.packageInfo, required this.releases});
 
   final PackageInfo packageInfo;
   final List<AppBuildUpdate> releases;

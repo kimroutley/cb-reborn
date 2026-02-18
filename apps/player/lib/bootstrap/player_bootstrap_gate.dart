@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cb_logic/cb_logic.dart';
 import 'package:cb_models/cb_models.dart';
 import 'package:cb_player/cloud_player_bridge.dart';
@@ -32,6 +34,8 @@ class PlayerBootstrapGate extends ConsumerStatefulWidget {
 class _PlayerBootstrapGateState extends ConsumerState<PlayerBootstrapGate> {
   bool _ready = false;
   String _status = 'INITIALIZING CLUB SYSTEMS...';
+  int _totalUnits = 1;
+  int _completedUnits = 0;
 
   @override
   void initState() {
@@ -40,20 +44,24 @@ class _PlayerBootstrapGateState extends ConsumerState<PlayerBootstrapGate> {
   }
 
   Future<void> _runBootstrap() async {
+    _initializeProgress();
+
     await _setStatus('PREPARING OFFLINE VAULT...');
     if (!widget.skipPersistenceInit) {
       await _initPersistence();
+      _advanceProgress();
     }
 
     await _setStatus('CONFIGURING CLOUD CACHE...');
     if (!widget.skipFirestoreCacheConfig) {
       await _configureFirestoreCache();
+      _advanceProgress();
     }
 
     await _setStatus('RESTORING LAST SESSION...');
     await _restoreCachedSession();
+    _advanceProgress();
 
-    await _setStatus('WARMING VISUAL ASSETS...');
     if (!widget.skipAssetWarmup) {
       await _warmCriticalAssets();
     }
@@ -61,8 +69,37 @@ class _PlayerBootstrapGateState extends ConsumerState<PlayerBootstrapGate> {
     if (!mounted) {
       return;
     }
+    await _setStatus('BOOTSTRAP COMPLETE');
     setState(() => _ready = true);
   }
+
+  void _initializeProgress() {
+    var total = 1; // session restore always runs
+    if (!widget.skipPersistenceInit) {
+      total += 1;
+    }
+    if (!widget.skipFirestoreCacheConfig) {
+      total += 1;
+    }
+    if (!widget.skipAssetWarmup) {
+      total += _criticalAssetCount;
+    }
+    _totalUnits = math.max(1, total);
+    _completedUnits = 0;
+  }
+
+  int get _criticalAssetCount => 1 + roleCatalog.length;
+
+  void _advanceProgress([int units = 1]) {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _completedUnits = math.min(_totalUnits, _completedUnits + units);
+    });
+  }
+
+  double get _progress => (_completedUnits / _totalUnits).clamp(0.0, 1.0);
 
   Future<void> _setStatus(String status) async {
     if (!mounted) {
@@ -130,19 +167,25 @@ class _PlayerBootstrapGateState extends ConsumerState<PlayerBootstrapGate> {
       return;
     }
 
-    final context = this.context;
     final imageProviders = <ImageProvider>[
       const AssetImage(CBTheme.globalBackgroundAsset),
       for (final role in roleCatalog)
         AssetImage('assets/roles/${role.id}.png'),
     ];
 
+    var index = 0;
     for (final provider in imageProviders) {
+      index += 1;
+      await _setStatus('WARMING VISUAL ASSETS... ($index/${imageProviders.length})');
+      if (!mounted) {
+        return;
+      }
       try {
         await precacheImage(provider, context);
       } catch (_) {
         // Continue warming remaining assets.
       }
+      _advanceProgress();
     }
   }
 
@@ -183,6 +226,26 @@ class _PlayerBootstrapGateState extends ConsumerState<PlayerBootstrapGate> {
                       textAlign: TextAlign.center,
                       style: textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurface.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: LinearProgressIndicator(
+                        value: _progress,
+                        minHeight: 8,
+                        backgroundColor: scheme.onSurface.withValues(alpha: 0.15),
+                        valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${(_progress * 100).toStringAsFixed(0)}% · $_completedUnits/$_totalUnits',
+                      textAlign: TextAlign.center,
+                      style: textTheme.labelMedium?.copyWith(
+                        color: scheme.primary.withValues(alpha: 0.95),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
                       ),
                     ),
                   ],
