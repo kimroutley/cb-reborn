@@ -11,7 +11,7 @@ DramaQueenSwapResolution resolveDramaQueenSwaps({
   Map<String, String> dramaQueenSwapChoices = const {},
 }) {
   final lines = <String>[];
-  var updatedPlayers = List<Player>.from(players);
+  var updatedPlayers = [...players];
 
   final exiledDramaQueens = updatedPlayers.where((p) =>
       !p.isAlive &&
@@ -56,12 +56,12 @@ DramaQueenSwapResolution resolveDramaQueenSwaps({
         .where((id) => aliveTargets.any((p) => p.id == id))
         .toList();
 
-    final candidateIds = [
+    final candidateIds = {
       ...selectedSwapIds,
       ...preferredTargets,
       ...votersAgainst,
       ...aliveTargets.map((p) => p.id),
-    ].toSet().toList();
+    }.toList();
 
     if (candidateIds.length < 2) {
       continue;

@@ -26,6 +26,20 @@ Player _player(String name, Role role, {Team? alliance}) => Player(
       alliance: alliance ?? role.alliance,
     );
 
+NightResolution _resolveNight(
+  List<Player> players,
+  Map<String, String> log,
+  {String? gawkedPlayerId}
+) =>
+    GameResolutionLogic.resolveNightActions(
+      GameState(
+        players: players,
+        actionLog: log,
+        dayCount: 1,
+        gawkedPlayerId: gawkedPlayerId,
+      ),
+    );
+
 void main() {
   group('NightResolutionLogic', () {
     test('Dealer kills target', () {
@@ -37,12 +51,7 @@ void main() {
         'dealer_act_${dealer.id}_1': victim.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedVictim = result.players.firstWhere((p) => p.id == victim.id);
       expect(updatedVictim.isAlive, false);
@@ -50,7 +59,7 @@ void main() {
       expect(result.report.any((s) => s.contains('butchered')), true);
     });
 
-    test('Wallflower witnesses Dealer target', () {
+    test('Gawked wallflower is exposed in report', () {
       final dealer =
           _player('Dealer', _role(RoleIds.dealer, alliance: Team.clubStaff));
       final wallflower = _player('Wallflower', _role(RoleIds.wallflower));
@@ -61,16 +70,11 @@ void main() {
         'dealer_act_${dealer.id}_1': victim.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result =
+          _resolveNight(players, log, gawkedPlayerId: wallflower.id);
 
       expect(
-        result.privateMessages[wallflower.id]!
-            .any((m) => m.contains('witnessed Dealer target Victim')),
+        result.report.any((m) => m.contains('caught gawking')),
         true,
       );
     });
@@ -86,12 +90,7 @@ void main() {
         'medic_act_${medic.id}_1': victim.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedVictim = result.players.firstWhere((p) => p.id == victim.id);
       expect(updatedVictim.isAlive, true);
@@ -109,12 +108,7 @@ void main() {
         'sober_act_${sober.id}_1': dealer.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedVictim = result.players.firstWhere((p) => p.id == victim.id);
       expect(updatedVictim.isAlive, true); // Dealer blocked
@@ -132,12 +126,7 @@ void main() {
         'roofi_act_${roofi.id}_1': dealer.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedVictim = result.players.firstWhere((p) => p.id == victim.id);
       expect(updatedVictim.isAlive, true);
@@ -160,12 +149,7 @@ void main() {
         'roofi_act_${roofi.id}_1': dealer1.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedVictim = result.players.firstWhere((p) => p.id == victim.id);
       expect(updatedVictim.isAlive, false); // Not blocked because another dealer exists
@@ -183,12 +167,7 @@ void main() {
         'bouncer_act_${bouncer.id}_1': dealer.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       expect(result.privateMessages[bouncer.id]!.first, contains('STAFF'));
       expect(result.report.any((s) => s.contains('Bouncer checked Dealer')), true);
@@ -203,12 +182,7 @@ void main() {
         'bouncer_act_${bouncer.id}_1': minor.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedMinor = result.players.firstWhere((p) => p.id == minor.id);
       expect(updatedMinor.minorHasBeenIDd, true);
@@ -226,12 +200,7 @@ void main() {
         'bouncer_act_${bouncer.id}_1': dealer.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       expect(
         result.privateMessages[allyCat.id]!
@@ -249,12 +218,7 @@ void main() {
         'club_manager_act_${manager.id}_1': target.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedTarget = result.players.firstWhere((p) => p.id == target.id);
       expect(updatedTarget.sightedByClubManager, true);
@@ -274,12 +238,7 @@ void main() {
         'lightweight_act_${lightweight.id}_1': target.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedLightweight =
           result.players.firstWhere((p) => p.id == lightweight.id);
@@ -309,12 +268,7 @@ void main() {
          'dealer_act_${dealer.id}_1': sw.id,
        };
 
-       final result = GameResolutionLogic.resolveNightActions(
-         players,
-         log,
-         1,
-         {},
-       );
+       final result = _resolveNight(players, log);
 
        final updatedSW = result.players.firstWhere((p) => p.id == sw.id);
        expect(updatedSW.isAlive, true);
@@ -331,12 +285,7 @@ void main() {
          '${RoleIds.messyBitch}_kill_${messy.id}_1': sw.id,
        };
 
-       final result = GameResolutionLogic.resolveNightActions(
-         players,
-         log,
-         1,
-         {},
-       );
+       final result = _resolveNight(players, log);
 
        final updatedSW = result.players.firstWhere((p) => p.id == sw.id);
        expect(updatedSW.isAlive, false);
@@ -353,12 +302,7 @@ void main() {
          'dealer_act_${dealer.id}_1': sd.id,
        };
 
-       final result = GameResolutionLogic.resolveNightActions(
-         players,
-         log,
-         1,
-         {},
-       );
+       final result = _resolveNight(players, log);
 
        final updatedSD = result.players.firstWhere((p) => p.id == sd.id);
        expect(updatedSD.isAlive, true);
@@ -375,12 +319,7 @@ void main() {
          'dealer_act_${dealer.id}_1': sd.id,
        };
 
-       final result = GameResolutionLogic.resolveNightActions(
-         players,
-         log,
-         1,
-         {},
-       );
+       final result = _resolveNight(players, log);
 
        final updatedSD = result.players.firstWhere((p) => p.id == sd.id);
        expect(updatedSD.isAlive, false);
@@ -397,12 +336,7 @@ void main() {
         '${RoleIds.messyBitch}_kill_${messy.id}_1': sd.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedSD = result.players.firstWhere((p) => p.id == sd.id);
       expect(updatedSD.isAlive, false);
@@ -424,12 +358,7 @@ void main() {
         'dealer_act_${dealer.id}_1': allyCat.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedAllyCat =
           result.players.firstWhere((p) => p.id == allyCat.id);
@@ -449,12 +378,7 @@ void main() {
         'dealer_act_${dealer.id}_1': allyCat.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedAllyCat =
           result.players.firstWhere((p) => p.id == allyCat.id);
@@ -472,12 +396,7 @@ void main() {
         'dealer_act_${dealer.id}_1': minor.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedMinor = result.players.firstWhere((p) => p.id == minor.id);
       expect(updatedMinor.isAlive, true);
@@ -495,12 +414,7 @@ void main() {
         'dealer_act_${dealer.id}_1': minor.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedMinor = result.players.firstWhere((p) => p.id == minor.id);
       expect(updatedMinor.isAlive, false);
@@ -520,12 +434,7 @@ void main() {
         'dealer_act_${dealer.id}_1': partner.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedPartner =
           result.players.firstWhere((p) => p.id == partner.id);
@@ -556,12 +465,7 @@ void main() {
         '${RoleIds.messyBitch}_kill_${messy.id}_1': partner.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedPartner =
           result.players.firstWhere((p) => p.id == partner.id);
@@ -590,12 +494,7 @@ void main() {
         'dealer_act_${dealer.id}_1': target.id,
       };
 
-      final result = GameResolutionLogic.resolveNightActions(
-        players,
-        log,
-        1,
-        {},
-      );
+      final result = _resolveNight(players, log);
 
       final updatedTarget =
           result.players.firstWhere((p) => p.id == target.id);
