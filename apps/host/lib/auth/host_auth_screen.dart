@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cb_comms/cb_comms.dart';
 import 'package:cb_theme/cb_theme.dart';
 
 import 'auth_provider.dart';
@@ -414,15 +415,37 @@ class _LinkSentMessage extends ConsumerWidget {
   }
 }
 
-class _ProfileSetupForm extends ConsumerWidget {
+class _ProfileSetupForm extends ConsumerStatefulWidget {
   const _ProfileSetupForm({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ProfileSetupForm> createState() => _ProfileSetupFormState();
+}
+
+class _ProfileSetupFormState extends ConsumerState<_ProfileSetupForm> {
+  late final TextEditingController _publicPlayerIdController;
+  late String _selectedAvatar;
+
+  @override
+  void initState() {
+    super.initState();
+    _publicPlayerIdController = TextEditingController();
+    _selectedAvatar = clubAvatarEmojis.first;
+  }
+
+  @override
+  void dispose() {
+    _publicPlayerIdController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final notifier = ref.read(authProvider.notifier);
     final authState = ref.watch(authProvider);
+    final avatarChoices = clubAvatarEmojis.take(20).toList(growable: false);
 
     return Center(
       child: SingleChildScrollView(
@@ -470,13 +493,47 @@ class _ProfileSetupForm extends ConsumerWidget {
                           color: scheme.secondary),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  CBTextField(
+                    controller: _publicPlayerIdController,
+                    hintText: 'PUBLIC PLAYER ID (OPTIONAL)',
+                    decoration: InputDecoration(
+                      prefixIcon:
+                          Icon(Icons.alternate_email_rounded, color: scheme.secondary),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'CHOOSE AVATAR',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: scheme.secondary,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: avatarChoices.map((emoji) {
+                      final selected = emoji == _selectedAvatar;
+                      return _AvatarEmojiChip(
+                        emoji: emoji,
+                        selected: selected,
+                        onTap: () => setState(() => _selectedAvatar = emoji),
+                      );
+                    }).toList(growable: false),
+                  ),
                   const SizedBox(height: 32),
                   CBPrimaryButton(
                     label: 'UNLOCK OFFICE',
                     backgroundColor: scheme.secondary,
                     onPressed: () {
                       HapticService.heavy();
-                      notifier.saveUsername();
+                      notifier.saveUsername(
+                        publicPlayerId: _publicPlayerIdController.text.trim(),
+                        avatarEmoji: _selectedAvatar,
+                      );
                     },
                   ),
                   const SizedBox(height: 16),
@@ -497,6 +554,46 @@ class _ProfileSetupForm extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AvatarEmojiChip extends StatelessWidget {
+  const _AvatarEmojiChip({
+    required this.emoji,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String emoji;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? scheme.secondary.withValues(alpha: 0.22)
+              : scheme.surface.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected
+                ? scheme.secondary
+                : scheme.outline.withValues(alpha: 0.35),
+          ),
+        ),
+        child: Text(
+          emoji,
+          style: const TextStyle(fontSize: 18),
         ),
       ),
     );

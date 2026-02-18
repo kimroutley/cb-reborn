@@ -145,7 +145,21 @@ class FakeUserRepository extends Fake implements UserRepository {
     required String uid,
     required String username,
     required String? email,
+    String? publicPlayerId,
+    String? avatarEmoji,
   }) async {}
+
+  @override
+  Future<bool> isUsernameAvailable(
+    String username, {
+    String? excludingUid,
+  }) async => true;
+
+  @override
+  Future<bool> isPublicPlayerIdAvailable(
+    String publicPlayerId, {
+    String? excludingUid,
+  }) async => true;
 }
 
 class FakeUserCredential extends Fake implements UserCredential {

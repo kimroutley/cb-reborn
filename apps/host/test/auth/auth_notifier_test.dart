@@ -84,9 +84,23 @@ class FakeUserRepository implements UserRepository {
     required String uid,
     required String username,
     required String? email,
+    String? publicPlayerId,
+    String? avatarEmoji,
   }) async {
     _profiles[uid] = true;
   }
+
+  @override
+  Future<bool> isUsernameAvailable(
+    String username, {
+    String? excludingUid,
+  }) async => true;
+
+  @override
+  Future<bool> isPublicPlayerIdAvailable(
+    String publicPlayerId, {
+    String? excludingUid,
+  }) async => true;
 }
 
 // Fake AppLinks implementation

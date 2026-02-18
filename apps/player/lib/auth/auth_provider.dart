@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cb_comms/cb_comms_player.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -101,7 +102,10 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<void> saveUsername() async {
+  Future<void> saveUsername({
+    String? publicPlayerId,
+    String? avatarEmoji,
+  }) async {
     if (!_ensureFirebaseServices()) {
       state = const AuthState(
         AuthStatus.error,
@@ -112,6 +116,8 @@ class AuthNotifier extends Notifier<AuthState> {
 
     final user = _auth!.currentUser;
     final username = usernameController.text.trim();
+    final trimmedPublicPlayerId = publicPlayerId?.trim();
+    final trimmedAvatarEmoji = avatarEmoji?.trim();
     if (user == null) return;
     if (username.length < 3) {
       state = state.copyWith(
@@ -123,13 +129,47 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
 
     try {
-      final profileRef = _firestore!.collection('user_profiles').doc(user.uid);
-      await profileRef.set({
-        'username': username,
-        'email': user.email,
-        'createdAt': FieldValue.serverTimestamp(),
-        'isHost': false,
-      }, SetOptions(merge: true));
+      final repository = ProfileRepository(firestore: _firestore!);
+      final usernameAvailable = await repository.isUsernameAvailable(
+        username,
+        excludingUid: user.uid,
+      );
+      if (!usernameAvailable) {
+        state = const AuthState(
+          AuthStatus.needsProfile,
+          error: 'Handle already claimed. Choose a different moniker.',
+        ).copyWith(user: user);
+        return;
+      }
+
+      if (trimmedPublicPlayerId != null && trimmedPublicPlayerId.isNotEmpty) {
+        final publicPlayerIdAvailable =
+            await repository.isPublicPlayerIdAvailable(
+          trimmedPublicPlayerId,
+          excludingUid: user.uid,
+        );
+        if (!publicPlayerIdAvailable) {
+          state = const AuthState(
+            AuthStatus.needsProfile,
+            error: 'Public player ID already registered. Try another tag.',
+          ).copyWith(user: user);
+          return;
+        }
+      }
+
+      await repository.upsertBasicProfile(
+        uid: user.uid,
+        username: username,
+        email: user.email,
+        isHost: false,
+        publicPlayerId:
+            (trimmedPublicPlayerId == null || trimmedPublicPlayerId.isEmpty)
+                ? null
+                : trimmedPublicPlayerId,
+        avatarEmoji: (trimmedAvatarEmoji == null || trimmedAvatarEmoji.isEmpty)
+            ? null
+            : trimmedAvatarEmoji,
+      );
       state = AuthState(AuthStatus.authenticated, user: user);
     } catch (e) {
       state = AuthState(AuthStatus.needsProfile,
@@ -138,7 +178,8 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>> _loadProfile(User user) {
-    return _firestore!.collection('user_profiles').doc(user.uid).get();
+    final repository = ProfileRepository(firestore: _firestore!);
+    return repository.getProfile(user.uid);
   }
 
   Future<void> signOut() async {

@@ -45,6 +45,8 @@ enum AuthStatus {
 }
 
 class AuthNotifier extends Notifier<AuthState> {
+  static const Duration _profileLookupTimeout = Duration(seconds: 8);
+
   late final AppLinks _appLinks;
   late final FlutterSecureStorage _storage;
   late final AuthService _authService;
@@ -75,17 +77,7 @@ class AuthNotifier extends Notifier<AuthState> {
       }
 
       state = AuthState(AuthStatus.loading, user: user);
-
-      try {
-        final hasProfile = await _userRepository.hasProfile(user.uid);
-        if (hasProfile) {
-          state = AuthState(AuthStatus.authenticated, user: user);
-        } else {
-          state = AuthState(AuthStatus.needsProfile, user: user);
-        }
-      } catch (_) {
-        state = AuthState(AuthStatus.needsProfile, user: user);
-      }
+      state = await _resolveSignedInState(user);
     });
 
     if (kIsWeb) {
@@ -213,14 +205,7 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       await _storage.delete(key: _pendingEmailKey);
       if (userCredential.user != null) {
-        final hasProfile =
-            await _userRepository.hasProfile(userCredential.user!.uid);
-        if (hasProfile) {
-          state =
-              AuthState(AuthStatus.authenticated, user: userCredential.user);
-        } else {
-          state = AuthState(AuthStatus.needsProfile, user: userCredential.user);
-        }
+        state = await _resolveSignedInState(userCredential.user!);
       }
     } on FirebaseAuthException catch (e) {
       state = AuthState(AuthStatus.error, error: e.message);
@@ -237,9 +222,40 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<void> saveUsername() async {
+  Future<AuthState> _resolveSignedInState(User user) async {
+    try {
+      final hasProfile = await _userRepository
+          .hasProfile(user.uid)
+          .timeout(_profileLookupTimeout);
+      if (hasProfile) {
+        return AuthState(AuthStatus.authenticated, user: user);
+      }
+      return AuthState(AuthStatus.needsProfile, user: user);
+    } on TimeoutException {
+      final hasIdentity = (user.displayName?.trim().isNotEmpty ?? false) ||
+          (user.email?.trim().isNotEmpty ?? false);
+      return AuthState(
+        hasIdentity ? AuthStatus.authenticated : AuthStatus.needsProfile,
+        user: user,
+      );
+    } catch (_) {
+      final hasIdentity = (user.displayName?.trim().isNotEmpty ?? false) ||
+          (user.email?.trim().isNotEmpty ?? false);
+      return AuthState(
+        hasIdentity ? AuthStatus.authenticated : AuthStatus.needsProfile,
+        user: user,
+      );
+    }
+  }
+
+  Future<void> saveUsername({
+    String? publicPlayerId,
+    String? avatarEmoji,
+  }) async {
     final user = _authService.currentUser;
     final username = usernameController.text.trim();
+    final trimmedPublicPlayerId = publicPlayerId?.trim();
+    final trimmedAvatarEmoji = avatarEmoji?.trim();
     if (user == null) return;
     if (username.length < 3) {
       state = state.copyWith(
@@ -251,10 +267,47 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
 
     try {
+      final usernameAvailable = await _userRepository.isUsernameAvailable(
+        username,
+        excludingUid: user.uid,
+      );
+      if (!usernameAvailable) {
+        state = AuthState(
+          AuthStatus.needsProfile,
+          user: user,
+          error: 'That username is already in use. Choose another manager name.',
+        );
+        return;
+      }
+
+      if (trimmedPublicPlayerId != null && trimmedPublicPlayerId.isNotEmpty) {
+        final publicPlayerIdAvailable =
+            await _userRepository.isPublicPlayerIdAvailable(
+          trimmedPublicPlayerId,
+          excludingUid: user.uid,
+        );
+        if (!publicPlayerIdAvailable) {
+          state = AuthState(
+            AuthStatus.needsProfile,
+            user: user,
+            error:
+                'That public player ID is already in use. Pick a different one.',
+          );
+          return;
+        }
+      }
+
       await _userRepository.createProfile(
         uid: user.uid,
         username: username,
         email: user.email,
+        publicPlayerId:
+            (trimmedPublicPlayerId == null || trimmedPublicPlayerId.isEmpty)
+                ? null
+                : trimmedPublicPlayerId,
+        avatarEmoji: (trimmedAvatarEmoji == null || trimmedAvatarEmoji.isEmpty)
+            ? null
+            : trimmedAvatarEmoji,
       );
       state = AuthState(AuthStatus.authenticated, user: user);
     } on FirebaseException catch (e) {
