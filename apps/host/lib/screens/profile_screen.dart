@@ -122,7 +122,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (!discard || !mounted) {
       return;
     }
-    ref.read(hostProfileDirtyProvider.notifier).reset();
+    _discardChanges();
     setState(() => _allowImmediatePop = true);
     Navigator.of(context).maybePop();
   }
