@@ -60,6 +60,29 @@ class _TrackingCloudBridge extends CloudPlayerBridge {
   }
 }
 
+class _FlakyCloudBridge extends CloudPlayerBridge {
+  _FlakyCloudBridge(this.failuresBeforeSuccess);
+
+  int failuresBeforeSuccess;
+  int joinGameCalls = 0;
+
+  @override
+  PlayerGameState build() => const PlayerGameState();
+
+  @override
+  Future<void> joinGame(String joinCode, String playerName) async {
+    joinGameCalls += 1;
+    if (failuresBeforeSuccess > 0) {
+      failuresBeforeSuccess -= 1;
+      throw Exception('Transient cloud failure');
+    }
+    state = state.copyWith(isConnected: true, joinAccepted: true);
+  }
+
+  @override
+  Future<void> disconnect() async {}
+}
+
 class _SeededPendingJoinUrlNotifier extends PendingJoinUrlNotifier {
   _SeededPendingJoinUrlNotifier(this.initial);
 
@@ -85,6 +108,13 @@ Future<void> _pumpFrames(WidgetTester tester) async {
 }
 
 void main() {
+  test('resume retry delay uses capped backoff schedule', () {
+    expect(resumeRetryDelayForAttempt(0), const Duration(seconds: 2));
+    expect(resumeRetryDelayForAttempt(1), const Duration(seconds: 4));
+    expect(resumeRetryDelayForAttempt(3), const Duration(seconds: 12));
+    expect(resumeRetryDelayForAttempt(99), const Duration(seconds: 30));
+  });
+
   testWidgets('pending local autoconnect URL triggers immediate reconnect flow',
       (tester) async {
     final playerBridge = _TrackingPlayerBridge();
@@ -172,5 +202,50 @@ void main() {
     expect(cloudBridge.lastJoinCode, 'NEON-XYZ123');
     expect(playerBridge.disconnectCalls, 1);
     expect(container.read(pendingJoinUrlProvider), isNull);
+  });
+
+  testWidgets('pending cloud autoconnect retries after transient failure',
+      (tester) async {
+    final playerBridge = _TrackingPlayerBridge();
+    final cloudBridge = _FlakyCloudBridge(1);
+    final pendingUrl = Uri(
+      path: '/join',
+      queryParameters: <String, String>{
+        'code': 'NEON-RETRY1',
+        'mode': 'cloud',
+        'autoconnect': '1',
+      },
+    ).toString();
+    final container = ProviderContainer(
+      overrides: [
+        playerBridgeProvider.overrideWith(() => playerBridge),
+        cloudPlayerBridgeProvider.overrideWith(() => cloudBridge),
+        pendingJoinUrlProvider
+            .overrideWith(() => _SeededPendingJoinUrlNotifier(pendingUrl)),
+        authProvider.overrideWith(
+          () => _StubAuthNotifier(const AuthState(AuthStatus.unauthenticated)),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: CBTheme.buildTheme(CBTheme.buildColorScheme(null)),
+          home: const HomeScreen(),
+        ),
+      ),
+    );
+
+    await _pumpFrames(tester);
+    expect(cloudBridge.joinGameCalls, 1);
+
+    await tester.pump(const Duration(seconds: 2));
+    await _pumpFrames(tester);
+
+    expect(cloudBridge.joinGameCalls, 2);
+    expect(container.read(cloudPlayerBridgeProvider).joinAccepted, isTrue);
   });
 }

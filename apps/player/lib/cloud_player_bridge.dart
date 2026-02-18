@@ -125,6 +125,7 @@ class CloudPlayerBridge extends Notifier<PlayerGameState>
       myPlayerId: playerId,
       myPlayerSnapshot: claimedPlayer,
     );
+    _persistSessionCache();
 
     debugPrint('[CloudPlayerBridge] Claimed player $playerId');
   }

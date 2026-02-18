@@ -13,6 +13,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum PlayerSyncMode { local, cloud }
 
+const List<Duration> _resumeRetrySchedule = <Duration>[
+  Duration(seconds: 2),
+  Duration(seconds: 4),
+  Duration(seconds: 8),
+  Duration(seconds: 12),
+  Duration(seconds: 20),
+  Duration(seconds: 30),
+];
+
+@visibleForTesting
+Duration resumeRetryDelayForAttempt(int attempt) {
+  if (attempt <= 0) {
+    return _resumeRetrySchedule.first;
+  }
+  if (attempt >= _resumeRetrySchedule.length) {
+    return _resumeRetrySchedule.last;
+  }
+  return _resumeRetrySchedule[attempt];
+}
+
 @visibleForTesting
 bool shouldAcceptJoinUrlEvent({
   required String incomingUrl,
@@ -46,8 +66,12 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   static const Duration _connectAttemptTimeout = Duration(seconds: 12);
   static const Duration _profileLookupTimeout = Duration(seconds: 5);
+  static const int _maxResumeRetryAttempts = 8;
 
   StreamSubscription<Uri>? _linkSub;
+  Timer? _resumeRetryTimer;
+  bool _resumeAutoReconnectEnabled = false;
+  int _resumeRetryAttempts = 0;
   static const Duration _joinUrlDebounceWindow = Duration(seconds: 2);
   String? _lastHandledJoinUrl;
   DateTime? _lastHandledJoinAt;
@@ -100,6 +124,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void dispose() {
     _linkSub?.cancel();
+    _resumeRetryTimer?.cancel();
     _joinCodeController.dispose();
     _hostIpController.dispose();
     super.dispose();
@@ -146,6 +171,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             (cloudState.isConnected && cloudState.phase != 'lobby');
 
     if (alreadyConnectedOutsideLobby) {
+      _cancelResumeAutoReconnect(resetAttempts: true);
       ref.read(pendingJoinUrlProvider.notifier).setValue(null);
       return;
     }
@@ -153,8 +179,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final shouldAutoConnect = _applyPendingJoinUrl(next);
     ref.read(pendingJoinUrlProvider.notifier).setValue(null);
     if (shouldAutoConnect && !_isConnecting) {
-      Future<void>.microtask(_connect);
+      _enableResumeAutoReconnect();
+      Future<void>.microtask(() => _connect(fromResumeAutoReconnect: true));
     }
+  }
+
+  void _enableResumeAutoReconnect() {
+    _resumeAutoReconnectEnabled = true;
+    _resumeRetryAttempts = 0;
+    _resumeRetryTimer?.cancel();
+    _resumeRetryTimer = null;
+  }
+
+  void _cancelResumeAutoReconnect({required bool resetAttempts}) {
+    _resumeAutoReconnectEnabled = false;
+    _resumeRetryTimer?.cancel();
+    _resumeRetryTimer = null;
+    if (resetAttempts) {
+      _resumeRetryAttempts = 0;
+    }
+  }
+
+  void _scheduleResumeRetry() {
+    if (!_resumeAutoReconnectEnabled || !mounted) {
+      return;
+    }
+    if (_resumeRetryAttempts >= _maxResumeRetryAttempts) {
+      _cancelResumeAutoReconnect(resetAttempts: false);
+      return;
+    }
+
+    final delay = resumeRetryDelayForAttempt(_resumeRetryAttempts);
+    _resumeRetryAttempts += 1;
+    _resumeRetryTimer?.cancel();
+    _resumeRetryTimer = Timer(delay, () {
+      if (!mounted || !_resumeAutoReconnectEnabled || _isConnecting) {
+        return;
+      }
+      unawaited(_connect(fromResumeAutoReconnect: true));
+    });
   }
 
   Future<String> _resolveJoinIdentity() async {
@@ -192,7 +255,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return 'Player';
   }
 
-  Future<void> _connect() async {
+  Future<void> _connectFromButton() async {
+    _cancelResumeAutoReconnect(resetAttempts: true);
+    await _connect();
+  }
+
+  Future<void> _connect({bool fromResumeAutoReconnect = false}) async {
+    var success = false;
+    var retryableFailure = true;
+
     setState(() {
       _connectionError = null;
       _isConnecting = true;
@@ -204,10 +275,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final code = _normalizeJoinCode(_joinCodeController.text);
     _joinCodeController.text = code;
     if (code.length != 11) {
+      retryableFailure = false;
       setState(() {
         _connectionError = 'INVALID CODE FORMAT (XXXX-XXXXXX)';
-        _isConnecting = false;
       });
+      if (mounted) {
+        setState(() {
+          _isConnecting = false;
+        });
+      }
       return;
     }
 
@@ -218,6 +294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (_mode == PlayerSyncMode.local) {
         final host = _hostIpController.text.trim();
         if (host.isEmpty) {
+          retryableFailure = false;
           setState(() {
             _connectionError = 'HOST IP/ADDRESS CANNOT BE EMPTY';
           });
@@ -226,6 +303,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final normalizedHost = host.toLowerCase();
         if (!normalizedHost.startsWith('ws://') &&
             !normalizedHost.startsWith('wss://')) {
+          retryableFailure = false;
           setState(() {
             _connectionError =
                 'LOCAL HOST MUST START WITH WS:// OR WSS:// (E.G. WS://192.168.1.100)';
@@ -254,6 +332,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             .joinGame(code, playerName)
             .timeout(_connectAttemptTimeout);
       }
+      success = true;
     } on TimeoutException {
       setState(() {
         _connectionError =
@@ -264,6 +343,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _connectionError = e.toString();
       });
     } finally {
+      if (success) {
+        _cancelResumeAutoReconnect(resetAttempts: true);
+      } else if (fromResumeAutoReconnect && retryableFailure) {
+        _scheduleResumeRetry();
+      }
       if (mounted) {
         setState(() {
           _isConnecting = false;
@@ -351,7 +435,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               label: _isConnecting
                                   ? 'CONNECTING...'
                                   : 'CONNECT TO HOST',
-                              onPressed: _isConnecting ? null : _connect,
+                              onPressed: _isConnecting ? null : _connectFromButton,
                             ),
                             if (_connectionError != null) ...[
                               const SizedBox(height: 16),

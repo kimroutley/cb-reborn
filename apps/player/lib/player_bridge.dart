@@ -628,6 +628,7 @@ class PlayerBridge extends Notifier<PlayerGameState>
             claimError: null,
             kickedMessage: 'You were removed from the game',
           );
+          _persistSessionCache();
         }
         break;
       case 'join_response':
@@ -645,6 +646,7 @@ class PlayerBridge extends Notifier<PlayerGameState>
             joinError: error ?? 'Join rejected',
           );
         }
+        _persistSessionCache();
         break;
       case 'claim_response':
         final success = msg.payload['success'] as bool? ?? false;
@@ -664,6 +666,7 @@ class PlayerBridge extends Notifier<PlayerGameState>
             claimError: 'Could not claim player',
           );
         }
+        _persistSessionCache();
         break;
       case 'effect':
         final effectType = msg.payload['effectType'] as String;
