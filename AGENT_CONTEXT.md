@@ -1,7 +1,7 @@
 # Club Blackout Reborn: Agent Context & Technical Reference
 
 > **Authoritative Source for AI Agents & Developers**
-> **Last Updated:** February 13, 2026
+> **Last Updated:** February 18, 2026
 
 This document provides the deep technical context required to work on the Club Blackout Reborn monorepo without causing regressions. It supplements the `PROJECT_DEVELOPER_HANDBOOK.md` by focusing on architectural constraints, specific implementation patterns, and "gotchas".
 
@@ -121,12 +121,13 @@ The game logic now uses a **Priority-Based Strategy Pattern** for resolving nigh
 
 ---
 
-## 6. Current Status Checklist (Feb 17, 2026)
+## 6. Current Status Checklist (Feb 18, 2026)
 
 ### Verified (Stable)
 - [x] **Universal Framework**: All roles transitioned to the new priority-based resolution engine.
 - [x] **Stabilization Sweep**: Resolved logic regressions in Medic Revival, Clinger Bonds, and ID parsing for Day 1+ and Night 1+.
 - [x] **Static Analysis**: `apps/host`, `apps/player`, and all `packages/` have 0 analyzer errors.
+- [x] **Package Health**: `packages/cb_logic` and `packages/cb_theme` full analyze + tests pass.
 - [x] **Bot Simulation**: `addBot` and `simulateBotTurns` verified in `cb_logic`.
 - [x] **Auth & Nav**: Streamlined flows and `NavigationDrawer` implemented.
 
@@ -135,7 +136,7 @@ The game logic now uses a **Priority-Based Strategy Pattern** for resolving nigh
 - [ ] **Deep Links**: Verify "Join via URL" robustly handles app cold starts vs warm resumes.
 - [ ] **Host Parity**: Ghost Lounge and Dead Pool integration needs UI polish.
 
-### Automated Validation Completed (Feb 17, 2026)
+### Automated Validation Completed (Feb 18, 2026)
 
 * [x] **Join/Registration Stabilization**: Local + cloud join flow now sends identity-backed registration and avoids false `joinAccepted` resets.
 * [x] **Regression Coverage**: Updated `apps/player/test/player_bridge_test.dart` and `apps/host/test/host_bridge_test.dart` for join/duplicate-join stability.

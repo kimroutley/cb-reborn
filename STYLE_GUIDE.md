@@ -9,7 +9,7 @@
 
 This style guide defines the **"Radiant Neon"** aesthetic — the visual identity of Club Blackout Reborn. The UI must be modern, immersive, and evoke a sense of vibrant, pulsating energy. It's a fusion of neo-noir nightclub darkness with the electrifying glow of a digital realm.
 
--   **Dark-first & Dynamic:** The core is a deep, void-like black, providing the perfect canvas for our neon colors to shine. Surfaces are not just static; they breathe and radiate with subtle animations.
+-   **Dark-first & Dynamic:** The core is a deep, void-like black, providing the perfect canvas for our neon colors to shine. Surfaces are primarily clean and stable, with motion applied where it communicates state.
 -   **Glowing, Breathing Spectrums:** The primary colors are not flat. They are gradients and animated effects of **Neon Pink** and **Turquoise**, creating a living, breathing interface.
 -   **Consistent & Thematic:** All UI elements MUST derive their style from the `cb_theme` package. This ensures a cohesive and immersive experience across both the host and player apps.
 
@@ -59,7 +59,7 @@ The Shimmer introduces a biorefractive quality to the visual language, represent
 The "Radiant Neon" theme comes alive through animated glows and subtle breathing effects. These are not just decorative; they provide feedback and guide the user's attention.
 
 -   **Breathing Glow:** Buttons and interactive elements should have a subtle, slow "breathing" glow effect that intensifies on hover or focus. This is achieved using animated `BoxShadow`s with pulsating blur radius and color opacity.
--   **Radiating Spectrums:** Backgrounds and large surfaces can feature slow-moving, large-scale radial gradients of pink and turquoise, giving the impression of light radiating from an unseen source.
+-   **Radiating Spectrums:** Apply shimmer/radiance to focused components and CTA zones. Avoid screen-wide background radiance by default.
 -   **Neon Borders:** Key containers and focused elements use a 1.5px border colored with the `radiantTurquoise` or `radiantPink` gradient.
 
 ---
@@ -106,6 +106,7 @@ All UI is constructed from the `cb_theme` widget library.
 ### `CBPrismScaffold`
 -   **Purpose:** The primary scaffold wrapper for all screens.
 -   **Style:** Includes `CBNeonBackground`, `extendBodyBehindAppBar`, themed AppBar with transparency.
+-   **Radiance Default:** `showBackgroundRadiance` is `false` by default. Enable it only for deliberate spotlight moments.
 
 ### `CBPanel`
 -   **Purpose:** The primary container for grouping related content.
@@ -130,7 +131,7 @@ When `isPrismatic: true` is set on a `CBGlassTile`, the component enters "The Sh
 
 -   **Visuals:** Instead of the standard glass background, the tile renders a dynamic gradient using `deepSwamp`, `magentaShift`, and `cyanRefract`.
 -   **Animation:** This gradient should slowly shift or rotate, creating an "Oil Slick" effect that implies an unstable, biorefractive surface.
--   **Usage:** Use this for items affected by glitches, anomalies, or rare "Shiny" statuses.
+-   **Usage:** Use this for items affected by glitches, anomalies, or rare "Shiny" statuses. Keep shimmer localized to the widget surface.
 
 ### 5.2 CBRoleIDCard
 

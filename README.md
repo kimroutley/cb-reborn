@@ -13,7 +13,7 @@ The game is designed to feel like you're inside a dark, upscale nightclub with n
 
 ### Key Features
 
-- **🎭 30+ Unique Roles** - From the **Bouncer** and **Medic** to the chaotic **Messy Bitch** and **Drama Queen**.
+- **🎭 22 Unique Roles** - From the **Bouncer** and **Medic** to the chaotic **Messy Bitch** and **Drama Queen**.
 - **🤖 Autonomous Bots** - Host can add bot players to fill the roster. Bots play autonomously (voting, using abilities) via the "Simulate Bots" command, allowing for single-device testing and gameplay simulation.
 - **💬 Chat Feed Interface** - Game events, narration, and actions are presented as a live, interactive chat stream.
 - **⚡ God Mode** - The Host has full control with a **"Nerve Center" Dashboard**: **Sin Bin** (temporarily remove disruptive players), **Shadow Ban** (allow speech while hiding messages), and **Mute** (silence players instantly).
