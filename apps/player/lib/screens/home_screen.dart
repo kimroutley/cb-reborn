@@ -85,6 +85,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref.read(pendingJoinUrlProvider.notifier).setValue(url);
       }
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final pending = ref.read(pendingJoinUrlProvider);
+      if (pending != null) {
+        _handlePendingJoinUrl(pending);
+      }
+    });
   }
 
   @override
@@ -95,13 +105,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
-  void _applyPendingJoinUrl(String url) {
+  bool _applyPendingJoinUrl(String url) {
     final uri = Uri.tryParse(url);
-    if (uri == null) return;
+    if (uri == null) return false;
 
     final code = uri.queryParameters['code'];
     final mode = uri.queryParameters['mode'];
     final host = uri.queryParameters['host'];
+    final autoConnect = uri.queryParameters['autoconnect'] == '1';
 
     if (code != null) {
       _joinCodeController.text = _normalizeJoinCode(code);
@@ -111,18 +122,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       setState(() {
         _mode = PlayerSyncMode.local;
         if (host != null) {
-          _hostIpController.text = Uri.decodeComponent(host);
+          _hostIpController.text = host;
         }
       });
     } else {
       setState(() => _mode = PlayerSyncMode.cloud);
     }
+
+    return autoConnect;
   }
 
   String _normalizeJoinCode(String value) {
     final compact = value.toUpperCase().replaceAll('-', '').trim();
     if (compact.length != 10) return value.toUpperCase();
     return '${compact.substring(0, 4)}-${compact.substring(4)}';
+  }
+
+  void _handlePendingJoinUrl(String next) {
+    final playerState = ref.read(playerBridgeProvider);
+    final cloudState = ref.read(cloudPlayerBridgeProvider);
+    final alreadyConnectedOutsideLobby =
+        (playerState.isConnected && playerState.phase != 'lobby') ||
+            (cloudState.isConnected && cloudState.phase != 'lobby');
+
+    if (alreadyConnectedOutsideLobby) {
+      ref.read(pendingJoinUrlProvider.notifier).setValue(null);
+      return;
+    }
+
+    final shouldAutoConnect = _applyPendingJoinUrl(next);
+    ref.read(pendingJoinUrlProvider.notifier).setValue(null);
+    if (shouldAutoConnect && !_isConnecting) {
+      Future<void>.microtask(_connect);
+    }
   }
 
   Future<String> _resolveJoinIdentity() async {
@@ -249,19 +281,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Listen for pending join URL
     ref.listen<String?>(pendingJoinUrlProvider, (prev, next) {
       if (next != null) {
-        final playerState = ref.read(playerBridgeProvider);
-        final cloudState = ref.read(cloudPlayerBridgeProvider);
-        final alreadyConnectedOutsideLobby =
-            (playerState.isConnected && playerState.phase != 'lobby') ||
-                (cloudState.isConnected && cloudState.phase != 'lobby');
-
-        if (alreadyConnectedOutsideLobby) {
-          ref.read(pendingJoinUrlProvider.notifier).setValue(null);
-          return;
-        }
-
-        _applyPendingJoinUrl(next);
-        ref.read(pendingJoinUrlProvider.notifier).setValue(null);
+        _handlePendingJoinUrl(next);
       }
     });
 

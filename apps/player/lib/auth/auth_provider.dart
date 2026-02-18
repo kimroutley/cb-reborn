@@ -6,6 +6,7 @@ import 'package:cb_comms/cb_comms_player.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../player_session_cache.dart';
 
 @immutable
 class AuthState {
@@ -193,6 +194,7 @@ class AuthNotifier extends Notifier<AuthState> {
       await _googleSignIn?.signOut();
     }
     await _auth!.signOut();
+    await const PlayerSessionCacheRepository().clear();
     state = const AuthState(AuthStatus.unauthenticated);
   }
 

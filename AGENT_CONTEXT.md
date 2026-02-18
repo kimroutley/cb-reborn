@@ -142,6 +142,7 @@ The game logic now uses a **Priority-Based Strategy Pattern** for resolving nigh
 * [x] **Regression Coverage**: Updated `apps/player/test/player_bridge_test.dart` and `apps/host/test/host_bridge_test.dart` for join/duplicate-join stability.
 * [x] **Player Build Health**: `apps/player` full analyze + tests pass after join-flow refactor.
 * [x] **Manual Assignment UX**: Host manual role assignment now supports drag-and-drop in lobby setup sheet.
+* [x] **Player startup cache/resume**: Added bootstrap preload + stale session restore with full `apps/player` analyze/test pass.
 
 ---
 
@@ -185,7 +186,45 @@ To simplify cross-mode development, the Player app uses `activeBridgeProvider`.
 
 ---
 
-## 10. Agent Directives
+## 10. Player Startup Cache & Resume (Feb 18, 2026)
+
+The Player app now restores recent session state before login to reduce
+reconnect friction and avoid re-downloading high-payload gameplay context after
+an app restart.
+
+### Key Components
+
+* **`PlayerBootstrapGate`** (`apps/player/lib/bootstrap/player_bootstrap_gate.dart`):
+  wraps `PlayerAuthScreen` and runs startup initialization before the main UI.
+* **Bootstrap tasks**: initializes local persistence, applies Firestore offline
+  cache settings (mobile), restores cached session state, and pre-caches
+  critical visual assets.
+* **`PlayerSessionCacheRepository`** (`apps/player/lib/player_session_cache.dart`):
+  stores a compact `PlayerGameState` snapshot in `SharedPreferences` with an
+  18-hour TTL.
+* **Bridge persistence**:
+  `PlayerBridge` and `CloudPlayerBridge` persist cache snapshots on join/state
+  updates and clear cache on `leave()`.
+* **Auth cleanup**: player sign-out clears cached session data.
+
+### Resume Flow
+
+1. Bootstrap loads cache and hydrates the matching bridge state (local/cloud).
+2. Bootstrap seeds `pendingJoinUrlProvider` with `autoconnect=1`.
+3. `HomeScreen` consumes pending join URL, applies join parameters, and
+   auto-connects without user re-entry.
+4. Live sync then refreshes state from host/cloud as the source of truth.
+
+### Testing Notes
+
+* Keep cache writes resilient in non-widget unit tests. `SharedPreferences` can
+  be unavailable before Flutter bindings are initialized.
+* Avoid startup timers in bootstrap widgets to prevent `flutter_test` pending
+  timer failures in smoke tests.
+
+---
+
+## 11. Agent Directives
 
 1. **Read Context First**: Before starting any task, verify your understanding against this document.
 2. **Verify, Don't Assume**: After editing code, run `flutter test` in the relevant package.
