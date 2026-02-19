@@ -4,14 +4,14 @@ This brief reflects the **live repository state on 2026-02-19**.
 
 ## Executive summary
 
-- `main` is in a **finalized post-stabilization state** and should be synced to `origin/main` after push.
+- `main` is in a **finalized post-stabilization state** and is synced with `origin/main`.
 - Working tree is **clean** (no uncommitted tracked or untracked project changes).
 - The previously broad in-flight set has been sliced into scoped commits and validated.
 
 ## Current branch state
 
 - Branch: `main`
-- Remote relation: ready to sync (final local docs update pending push)
+- Remote relation: in sync (`origin/main...HEAD = 0/0`)
 - Working tree: clean
 - Latest commit train:
   1. `docs(status): refresh authoritative brief for active in-flight state`
@@ -19,6 +19,7 @@ This brief reflects the **live repository state on 2026-02-19**.
   3. `refactor(core): tune role scripting and award catalog coverage`
   4. `docs(skills): align code-reviewer skill template`
   5. `docs(status): sync brief with post-slice clean state`
+  6. `docs(status): refresh branch-sync note and commit train`
 
 ## Validation snapshot (completed)
 
@@ -36,7 +37,7 @@ This brief reflects the **live repository state on 2026-02-19**.
 
 ## Release posture
 
-Repository is now in a **stabilized release-ready state** pending branch synchronization (`git push`).
+Repository is now in a **stabilized release-ready state** with no pending local divergence.
 
 ## Operator note
 
