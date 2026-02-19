@@ -22,68 +22,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final scheme = theme.colorScheme;
     final stats = PersistenceService.instance.computeStats();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(''),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: const [SimulationModeBadgeAction()],
-      ),
+    return CBPrismScaffold(
+      title: '',
+      actions: const [SimulationModeBadgeAction()],
       drawer: const CustomDrawer(),
-      body: CBNeonBackground(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: CBSpace.x6,
-              vertical: CBSpace.x10,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── LOGO / TITLE AREA ──
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(seconds: 1),
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: Transform.translate(
-                        offset: Offset(0, 20 * (1 - value)),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: Column(
-                    children: [
-                      Text(
-                        'HOST CONTROL',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.labelMedium!.copyWith(
-                          color: scheme.secondary,
-                          shadows: CBColors.textGlow(scheme.secondary),
-                          letterSpacing: 8.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: CBSpace.x4),
-                      ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: [scheme.primary, scheme.secondary],
-                        ).createShader(bounds),
-                        child: Text(
-                          'CLUB\nBLACKOUT',
-                          textAlign: TextAlign.center,
-                          style: CBTypography.heroNumber.copyWith(
-                            color: scheme.onSurface,
-                            height: 0.85,
-                            fontWeight: FontWeight.w900,
-                            shadows: CBColors.textGlow(scheme.primary,
-                                intensity: 1.5),
-                          ),
-                        ),
-                      ),
-                    ],
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: CBSpace.x6,
+            vertical: CBSpace.x10,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+            // ── LOGO / TITLE AREA ──
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(seconds: 1),
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset(0, 20 * (1 - value)),
+                    child: child,
                   ),
                 ),
 
@@ -173,8 +135,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildQuickStatTile(
     BuildContext context,
