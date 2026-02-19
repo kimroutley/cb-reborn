@@ -28,7 +28,8 @@ bool isKnownRoleAwardIconSource(String source) {
 List<String> roleAwardDefinitionsWithUnknownIconSource() {
   return allRoleAwardDefinitions()
       .where(
-        (definition) => !isKnownRoleAwardIconSource(definition.iconSource ?? ''),
+        (definition) =>
+            !isKnownRoleAwardIconSource(definition.iconSource ?? ''),
       )
       .map((definition) => definition.awardId)
       .toList(growable: false);
@@ -68,41 +69,33 @@ List<RoleAwardDefinition> _awardDefinitionsForRole(Role role) {
     return _defaultRoleAwardLadder(role);
   }
 
-  return List<RoleAwardDefinition>.generate(
-    seeds.length,
-    (index) {
-      final seed = seeds[index];
-      final unlockRule = _unlockRuleForRoleAward(
-        role.id,
-        index,
-        seed.tier,
-      );
-      final iconMetadata = _iconMetadataForSeed(seed);
-      return RoleAwardDefinition(
-        awardId:
-            '${role.id}_${seed.tier.name}_${_sanitizeAwardSlug(seed.title)}',
-        roleId: role.id,
-        tier: seed.tier,
-        title: seed.title,
-        description: _descriptionForRule(role, unlockRule),
-        unlockRule: unlockRule,
-        iconKey: seed.iconKey,
-        iconSource: seed.iconSource,
-        iconLicense: seed.iconLicense,
-        iconAuthor: iconMetadata.iconAuthor,
-        attributionText: iconMetadata.attributionText,
-        iconUrl: iconMetadata.iconUrl,
-      );
-    },
-    growable: false,
-  );
+  return List<RoleAwardDefinition>.generate(seeds.length, (index) {
+    final seed = seeds[index];
+    final unlockRule = _unlockRuleForRoleAward(role.id, index, seed.tier);
+    final iconMetadata = _iconMetadataForSeed(seed);
+    return RoleAwardDefinition(
+      awardId: '${role.id}_${seed.tier.name}_${_sanitizeAwardSlug(seed.title)}',
+      roleId: role.id,
+      tier: seed.tier,
+      title: seed.title,
+      description: _descriptionForRule(role, unlockRule),
+      unlockRule: unlockRule,
+      iconKey: seed.iconKey,
+      iconSource: seed.iconSource,
+      iconLicense: seed.iconLicense,
+      iconAuthor: iconMetadata.iconAuthor,
+      attributionText: iconMetadata.attributionText,
+      iconUrl: iconMetadata.iconUrl,
+    );
+  }, growable: false);
 }
 
 _ResolvedIconMetadata _iconMetadataForSeed(_RoleAwardSeed seed) {
   final normalizedSource = seed.iconSource.trim();
   final normalizedLicense = seed.iconLicense.trim();
-  final sourceUrl =
-      isKnownRoleAwardIconSource(normalizedSource) ? _iconSourceUrls[normalizedSource] : null;
+  final sourceUrl = isKnownRoleAwardIconSource(normalizedSource)
+      ? _iconSourceUrls[normalizedSource]
+      : null;
 
   final requiresAttribution = normalizedLicense.toLowerCase().contains('cc by');
   final iconAuthor = requiresAttribution ? 'Unknown' : null;
@@ -125,10 +118,7 @@ Map<String, dynamic> _unlockRuleForRoleAward(
   final profile = _unlockProfilesByRoleId[roleId];
   if (profile != null && index >= 0 && index < profile.length) {
     final rule = profile[index];
-    return <String, dynamic>{
-      'metric': rule.metric,
-      'minimum': rule.minimum,
-    };
+    return <String, dynamic>{'metric': rule.metric, 'minimum': rule.minimum};
   }
   return _defaultUnlockRule(tier, index);
 }
@@ -154,44 +144,25 @@ String _descriptionForRule(Role role, Map<String, dynamic> unlockRule) {
 Map<String, dynamic> _defaultUnlockRule(RoleAwardTier tier, int index) {
   switch (tier) {
     case RoleAwardTier.rookie:
-      return const <String, dynamic>{
-        'metric': 'gamesPlayed',
-        'minimum': 1,
-      };
+      return const <String, dynamic>{'metric': 'gamesPlayed', 'minimum': 1};
     case RoleAwardTier.pro:
-      return const <String, dynamic>{
-        'metric': 'gamesPlayed',
-        'minimum': 3,
-      };
+      return const <String, dynamic>{'metric': 'gamesPlayed', 'minimum': 3};
     case RoleAwardTier.legend:
-      return const <String, dynamic>{
-        'metric': 'wins',
-        'minimum': 1,
-      };
+      return const <String, dynamic>{'metric': 'wins', 'minimum': 1};
     case RoleAwardTier.bonus:
       if (index == 3) {
-        return const <String, dynamic>{
-          'metric': 'gamesPlayed',
-          'minimum': 5,
-        };
+        return const <String, dynamic>{'metric': 'gamesPlayed', 'minimum': 5};
       }
-      return const <String, dynamic>{
-        'metric': 'survivals',
-        'minimum': 3,
-      };
+      return const <String, dynamic>{'metric': 'survivals', 'minimum': 3};
   }
 }
 
 List<RoleAwardDefinition> _defaultRoleAwardLadder(Role role) {
-  final rookieRule =
-      _unlockRuleForRoleAward(role.id, 0, RoleAwardTier.rookie);
+  final rookieRule = _unlockRuleForRoleAward(role.id, 0, RoleAwardTier.rookie);
   final proRule = _unlockRuleForRoleAward(role.id, 1, RoleAwardTier.pro);
-  final legendRule =
-      _unlockRuleForRoleAward(role.id, 2, RoleAwardTier.legend);
-  final bonusOneRule =
-      _unlockRuleForRoleAward(role.id, 3, RoleAwardTier.bonus);
-  final bonusTwoRule =
-      _unlockRuleForRoleAward(role.id, 4, RoleAwardTier.bonus);
+  final legendRule = _unlockRuleForRoleAward(role.id, 2, RoleAwardTier.legend);
+  final bonusOneRule = _unlockRuleForRoleAward(role.id, 3, RoleAwardTier.bonus);
+  final bonusTwoRule = _unlockRuleForRoleAward(role.id, 4, RoleAwardTier.bonus);
 
   return <RoleAwardDefinition>[
     RoleAwardDefinition(
@@ -238,10 +209,7 @@ List<RoleAwardDefinition> _defaultRoleAwardLadder(Role role) {
 }
 
 class _UnlockRuleSeed {
-  const _UnlockRuleSeed({
-    required this.metric,
-    required this.minimum,
-  });
+  const _UnlockRuleSeed({required this.metric, required this.minimum});
 
   final String metric;
   final int minimum;

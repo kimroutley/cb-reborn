@@ -12,10 +12,7 @@ void main() {
       expect(definitions.any((d) => d.tier == RoleAwardTier.rookie), true);
       expect(definitions.any((d) => d.tier == RoleAwardTier.pro), true);
       expect(definitions.any((d) => d.tier == RoleAwardTier.legend), true);
-      expect(
-        definitions.where((d) => d.tier == RoleAwardTier.bonus).length,
-        2,
-      );
+      expect(definitions.where((d) => d.tier == RoleAwardTier.bonus).length, 2);
       expect(definitions.every((d) => d.roleId == role.id), true);
     }
   });
@@ -66,25 +63,49 @@ void main() {
     expect(definitions, isNotEmpty);
 
     for (final definition in definitions) {
-      expect(definition.iconKey, isNotNull,
-          reason: '${definition.awardId} missing iconKey');
-      expect(definition.iconKey, isNotEmpty,
-          reason: '${definition.awardId} iconKey is empty');
+      expect(
+        definition.iconKey,
+        isNotNull,
+        reason: '${definition.awardId} missing iconKey',
+      );
+      expect(
+        definition.iconKey,
+        isNotEmpty,
+        reason: '${definition.awardId} iconKey is empty',
+      );
 
-      expect(definition.iconSource, isNotNull,
-          reason: '${definition.awardId} missing iconSource');
-      expect(definition.iconSource, isNotEmpty,
-          reason: '${definition.awardId} iconSource is empty');
+      expect(
+        definition.iconSource,
+        isNotNull,
+        reason: '${definition.awardId} missing iconSource',
+      );
+      expect(
+        definition.iconSource,
+        isNotEmpty,
+        reason: '${definition.awardId} iconSource is empty',
+      );
 
-      expect(definition.iconLicense, isNotNull,
-          reason: '${definition.awardId} missing iconLicense');
-      expect(definition.iconLicense, isNotEmpty,
-          reason: '${definition.awardId} iconLicense is empty');
+      expect(
+        definition.iconLicense,
+        isNotNull,
+        reason: '${definition.awardId} missing iconLicense',
+      );
+      expect(
+        definition.iconLicense,
+        isNotEmpty,
+        reason: '${definition.awardId} iconLicense is empty',
+      );
 
-      expect(definition.iconUrl, isNotNull,
-          reason: '${definition.awardId} missing iconUrl');
-      expect(definition.iconUrl, isNotEmpty,
-          reason: '${definition.awardId} iconUrl is empty');
+      expect(
+        definition.iconUrl,
+        isNotNull,
+        reason: '${definition.awardId} missing iconUrl',
+      );
+      expect(
+        definition.iconUrl,
+        isNotEmpty,
+        reason: '${definition.awardId} iconUrl is empty',
+      );
     }
   });
 
@@ -95,17 +116,28 @@ void main() {
         continue;
       }
 
-      expect(definition.iconAuthor, isNotNull,
-          reason: '${definition.awardId} missing iconAuthor for CC-BY icon');
-      expect(definition.iconAuthor, isNotEmpty,
-          reason: '${definition.awardId} has empty iconAuthor for CC-BY icon');
+      expect(
+        definition.iconAuthor,
+        isNotNull,
+        reason: '${definition.awardId} missing iconAuthor for CC-BY icon',
+      );
+      expect(
+        definition.iconAuthor,
+        isNotEmpty,
+        reason: '${definition.awardId} has empty iconAuthor for CC-BY icon',
+      );
 
-      expect(definition.attributionText, isNotNull,
-          reason:
-              '${definition.awardId} missing attributionText for CC-BY icon');
-      expect(definition.attributionText, isNotEmpty,
-          reason:
-              '${definition.awardId} has empty attributionText for CC-BY icon');
+      expect(
+        definition.attributionText,
+        isNotNull,
+        reason: '${definition.awardId} missing attributionText for CC-BY icon',
+      );
+      expect(
+        definition.attributionText,
+        isNotEmpty,
+        reason:
+            '${definition.awardId} has empty attributionText for CC-BY icon',
+      );
     }
   });
 
@@ -117,7 +149,10 @@ void main() {
 
   test('catalog contains no unknown icon sources', () {
     final unknownAwardIds = roleAwardDefinitionsWithUnknownIconSource();
-    expect(unknownAwardIds, isEmpty,
-        reason: 'Unknown icon sources in awards: $unknownAwardIds');
+    expect(
+      unknownAwardIds,
+      isEmpty,
+      reason: 'Unknown icon sources in awards: $unknownAwardIds',
+    );
   });
 }

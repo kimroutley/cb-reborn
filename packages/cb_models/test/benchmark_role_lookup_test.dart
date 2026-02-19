@@ -56,6 +56,10 @@ void main() {
     // Assert that the optimization is actually faster
     // Note: On very fast machines or small datasets, overhead might skew results,
     // but for 100k iterations it should be measurable.
-    expect(mapTime, lessThan(linearTime), reason: "Map lookup should be faster than linear search");
+    expect(
+      mapTime,
+      lessThan(linearTime),
+      reason: "Map lookup should be faster than linear search",
+    );
   });
 }
