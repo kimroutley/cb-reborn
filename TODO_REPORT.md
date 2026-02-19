@@ -32,13 +32,13 @@ Potential issues identified during code exploration.
 
 -   **Drama Queen Night Death Trigger**:
     -   **Issue:** The `DramaQueen` role description states: "When killed, swap two cards...".
-    -   **Finding:** `DramaQueenHandler` appears to be implemented only in `DayResolutionStrategy` (for exile). There is no obvious handler in `DeathResolutionStrategy` (Night). If a Drama Queen is killed at night, their ability may not trigger.
-    -   **Action:** Verify if `DramaQueen` should trigger on night death and implement `DramaQueenDeathHandler` in `packages/cb_logic/lib/src/night_actions/resolution/` if needed.
+    -   **Finding (Updated 2026-02-19):** Implemented and validated. Added `DramaQueenDeathHandler` to night death resolution so a Drama Queen killed at night now triggers vendetta swaps.
+    -   **Action:** ✅ Complete. Keep regression coverage in `packages/cb_logic/test/night_resolution_test.dart`.
 
 -   **Passive Role Logic**:
     -   **Issue:** Verify handling of passive/reactive roles in Night Resolution.
     -   **Finding:** `DeathResolutionStrategy` correctly includes handlers for `Medic`, `SecondWind`, `SeasonedDrinker`, `AllyCat`, `Minor`, `Clinger`, and `Creep`.
-    -   **Action:** Ensure `Wallflower` (witness murder) logic is correctly hooked into the murder event or notification system, as it is not a "death handler" but an information role.
+    -   **Action (Updated):** `Wallflower` flow appears implemented with scripting + observation + reporting coverage; keep this as regression-watch rather than a blocking gap.
 
 ## 4. Documentation & Cleanup
 
