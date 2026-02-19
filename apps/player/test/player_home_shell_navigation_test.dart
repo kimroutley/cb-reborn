@@ -48,6 +48,38 @@ class _LobbyFirstNavigationNotifier extends PlayerNavigationNotifier {
 }
 
 void main() {
+  testWidgets(
+      'PlayerHomeShell preserves hall of fame destination while disconnected',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cloudPlayerBridgeProvider.overrideWith(() => _TestCloudBridge()),
+          playerBridgeProvider.overrideWith(() => _TestLocalBridge()),
+          playerNavigationProvider
+              .overrideWith(() => _HomeFirstNavigationNotifier()),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(body: PlayerHomeShell()),
+        ),
+      ),
+    );
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(PlayerHomeShell)),
+    );
+
+    container
+        .read(playerNavigationProvider.notifier)
+        .setDestination(PlayerDestination.hallOfFame);
+    await tester.pump();
+
+    expect(
+      container.read(playerNavigationProvider),
+      PlayerDestination.hallOfFame,
+    );
+  });
+
   testWidgets('PlayerHomeShell routes join acceptance to lobby from home',
       (tester) async {
     await tester.pumpWidget(

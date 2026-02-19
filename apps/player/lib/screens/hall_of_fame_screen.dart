@@ -57,6 +57,7 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
   Map<String, int> _roleUnlockCounts = const {};
   Set<String> _unlockedAwardIds = const {};
   int _recentUnlockCount = 0;
+  bool _persistenceReady = true;
   String? _selectedAwardRoleId;
   RoleAwardTier? _selectedAwardTier;
   bool _isLoading = true;
@@ -72,7 +73,14 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
       _isLoading = true;
     });
 
-    final records = PersistenceService.instance.loadGameRecords();
+    PersistenceService? service;
+    try {
+      service = PersistenceService.instance;
+    } catch (_) {
+      service = null;
+    }
+
+    final records = service?.loadGameRecords() ?? const <GameRecord>[];
     final Map<String, PlayerStat> playerStats = {};
 
     for (var record in records) {
@@ -93,8 +101,11 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
       }
     }
 
-    await PersistenceService.instance.rebuildRoleAwardProgresses();
-    final allProgress = PersistenceService.instance.loadRoleAwardProgresses();
+    if (service != null) {
+      await service.rebuildRoleAwardProgresses();
+    }
+    final allProgress = service?.loadRoleAwardProgresses() ??
+        const <PlayerRoleAwardProgress>[];
     final unlockedCounts = <String, int>{};
     final unlockedAwardIds = <String>{};
     for (final progress in allProgress) {
@@ -111,7 +122,8 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
     }
 
     final recentUnlocks =
-        PersistenceService.instance.loadRecentRoleAwardUnlocks(limit: 10);
+        service?.loadRecentRoleAwardUnlocks(limit: 10) ??
+            const <PlayerRoleAwardProgress>[];
 
     setState(() {
       _stats = playerStats.values.toList()
@@ -119,6 +131,7 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
       _roleUnlockCounts = unlockedCounts;
       _unlockedAwardIds = unlockedAwardIds;
       _recentUnlockCount = recentUnlocks.length;
+      _persistenceReady = service != null;
       _isLoading = false;
     });
   }
@@ -176,12 +189,22 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
           style: Theme.of(context).textTheme.titleLarge!,
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Refresh Hall of Fame',
+            onPressed: _isLoading ? null : _loadStats,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
       ),
       body: CBNeonBackground(
         child: SafeArea(
           child: _isLoading
               ? const Center(child: CBBreathingSpinner())
-              : ListView(
+              : RefreshIndicator(
+                  onRefresh: _loadStats,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.only(top: 16, bottom: 32),
                   children: [
                     if (_stats.isEmpty)
@@ -225,6 +248,18 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
                         ),
                       ),
                     ),
+                    if (!_persistenceReady)
+                      Padding(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: Text(
+                          'Career records are not initialized yet. Showing award catalog only.',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: _buildRoleAwardFilters(scheme, visibleRoles.length),
@@ -251,13 +286,14 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
                         .map((role) => _buildRoleAwardCard(role, scheme)),
                   ],
                 ),
+              ),
         ),
       ),
     );
   }
 
   Widget _buildRoleAwardFilters(ColorScheme scheme, int visibleRoleCount) {
-    final roleOptions = roleCatalog
+    final roleOptions = [...roleCatalog]
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     return CBGlassTile(

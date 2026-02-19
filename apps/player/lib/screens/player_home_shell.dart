@@ -34,6 +34,13 @@ class PlayerHomeShell extends ConsumerStatefulWidget {
 class _PlayerHomeShellState extends ConsumerState<PlayerHomeShell> {
   bool _handlingSetupTransition = false;
 
+  static const Set<PlayerDestination> _sessionBoundDestinations = {
+    PlayerDestination.lobby,
+    PlayerDestination.claim,
+    PlayerDestination.transition,
+    PlayerDestination.game,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +65,11 @@ class _PlayerHomeShellState extends ConsumerState<PlayerHomeShell> {
     if (!hasBridgeSession) {
       _handlingSetupTransition = false;
       onboarding.reset();
-      nav.setDestination(PlayerDestination.home);
+
+      final currentDestination = ref.read(playerNavigationProvider);
+      if (_sessionBoundDestinations.contains(currentDestination)) {
+        nav.setDestination(PlayerDestination.home);
+      }
       return;
     }
 
