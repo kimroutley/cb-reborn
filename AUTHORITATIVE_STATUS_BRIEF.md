@@ -4,39 +4,39 @@ This brief reflects the **live repository state on 2026-02-19**.
 
 ## Executive summary
 
-- `main` is currently aligned with `origin/main` (no ahead/behind divergence).
-- Repository is **not release-clean right now** due to a large active in-flight change set.
-- The previous profile/awards/theme stabilization work is in history, but a new broad polish pass is underway and has not been fully gated.
+- `main` is **ahead of `origin/main` by 4 commits**.
+- Working tree is **clean** (no uncommitted tracked or untracked project changes).
+- The previously broad in-flight set has been sliced into scoped commits and validated.
 
 ## Current branch state
 
 - Branch: `main`
-- Remote relation: in sync with `origin/main`
-- Uncommitted tracked changes: **39 files**
-  - `apps/`: 28
-  - `packages/`: 9
-  - local agent metadata dirs: 2
+- Remote relation: `ahead 4`
+- Working tree: clean
+- Latest commit train:
+  1. `docs(status): refresh authoritative brief for active in-flight state`
+  2. `feat(apps): polish host/player auth and game flow surfaces`
+  3. `refactor(core): tune role scripting and award catalog coverage`
+  4. `docs(skills): align code-reviewer skill template`
 
-## Implication
+## Validation snapshot (completed)
 
-At this moment, the workspace should be treated as an **active development checkpoint**, not a final release snapshot.
+- Analyze passed:
+  - `apps/host`
+  - `apps/player`
+  - `packages/cb_logic`
+  - `packages/cb_models`
+  - `packages/cb_theme`
+- Tests passed:
+  - `apps/host` full suite
+  - `apps/player` targeted suites (`connect_screen_navigation_guard`, `join_link_debounce`, `onboarding_loading_states`)
+  - `packages/cb_logic` targeted suites (`all_roles_script_audit`, `night_resolution`)
+  - `packages/cb_models` targeted suites (`benchmark_role_lookup`, `role_award_catalog`)
 
-## Risk posture (current)
+## Release posture
 
-1. **Scope spread risk**: changes are distributed across Host, Player, and shared packages.
-2. **Validation gap risk**: full repo gates have not yet been re-run against the *current* 39-file in-flight set.
-3. **Packaging risk**: without commit slicing, release notes and PR narrative can drift from actual code state.
-
-## Stabilization plan (recommended immediate sequence)
-
-1. Slice current in-flight edits into 2-4 coherent commit groups (UI polish, logic/model adjustments, tests/docs).
-2. Run gates per slice:
-   - `apps/host`: analyze + relevant tests
-   - `apps/player`: analyze + relevant tests
-   - touched `packages/*`: analyze + tests
-3. Refresh `PR_DESCRIPTION.md` and `RELEASE_NOTES_2026-02-19.md` from final commit list.
-4. Re-check `git status` is clean and re-verify `origin/main...HEAD` divergence before merge/release.
+Repository is now in a **stabilized pre-push state**. Remaining release actions are operational (push branch, update PR/release docs if needed, final review).
 
 ## Operator note
 
-Use this file as the single source of truth for "ready vs in-progress" state. If the working tree is dirty, this brief must explicitly say so.
+Use this file as the single source of truth for "ready vs in-progress" state. Update it whenever branch divergence or working-tree cleanliness changes.
