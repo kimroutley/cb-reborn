@@ -62,5 +62,10 @@
 ## Operator checklist for next session
 
 1. If new skill templates are edited, run `scripts/check-skill-sync.ps1` locally before push.
-2. Keep `AUTHORITATIVE_STATUS_BRIEF.md` aligned with actual git divergence and cleanliness.
-3. If release notes are expanded, append (do not overwrite) this handoff context.
+1. Keep `AUTHORITATIVE_STATUS_BRIEF.md` aligned with actual git divergence and cleanliness.
+1. If release notes are expanded, append (do not overwrite) this handoff context.
+1. Execute the expanded manual gates in `QA_SMOKE_CHECKLIST_2026-02-19.md` (real-device local/cloud switching, deep-link cold/warm start, QR pathing, Host iOS email-link auth, and release-signing secret verification) before final production rollout.
+1. Re-test Host mode switching (`LOCAL -> CLOUD -> LOCAL`) after `sync_mode_runtime.dart` bridge-reset hardening.
+1. Re-test Host iOS email-link completion after `phone_auth_gate.dart` latest-link + timeout handling.
+1. Capture pass/fail evidence for GitHub release-signing secret presence/consumption.
+1. Current status: required Firebase deploy secrets are missing; provision `FIREBASE_SERVICE_ACCOUNT`, `FIREBASE_PROJECT_ID`, and `FIREBASE_TOKEN` before production rollout.

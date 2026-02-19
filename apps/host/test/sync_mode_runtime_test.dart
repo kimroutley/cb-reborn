@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('syncHostBridgesForMode', () {
-    test('cloud mode stops local before starting cloud', () async {
+    test('cloud mode stops both bridges before starting cloud', () async {
       final calls = <String>[];
 
       await syncHostBridgesForMode(
@@ -15,10 +15,10 @@ void main() {
         startCloud: () async => calls.add('startCloud'),
       );
 
-      expect(calls, equals(['stopLocal', 'startCloud']));
+      expect(calls, equals(['stopLocal', 'stopCloud', 'startCloud']));
     });
 
-    test('local mode stops cloud before starting local', () async {
+    test('local mode stops both bridges before starting local', () async {
       final calls = <String>[];
 
       await syncHostBridgesForMode(
@@ -29,7 +29,7 @@ void main() {
         startCloud: () async => calls.add('startCloud'),
       );
 
-      expect(calls, equals(['stopCloud', 'startLocal']));
+      expect(calls, equals(['stopLocal', 'stopCloud', 'startLocal']));
     });
   });
 }

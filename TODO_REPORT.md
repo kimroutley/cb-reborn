@@ -11,20 +11,20 @@ These are high-level feature requests and architectural improvements prioritized
     -   **Status (Updated 2026-02-19):** Core flow implemented. Player dead-state now routes into a shared Ghost Lounge view with Dead Pool betting + live bet visibility, and Host dashboard surfaces active Dead Pool bets.
 -   **💾 Multi-slot Save System**
     -   **Task:** Expand persistence beyond a single active recovery save.
-    -   **Status (Updated):** Backend support appears implemented in `cb_logic` persistence layer; remaining work is UX surfacing/validation, not core storage.
+    -   **Status (Updated 2026-02-19):** Implemented in host flow. `apps/host/lib/screens/save_load_screen.dart` now surfaces fixed save slots (`slot_1..slot_3`) with save/load/clear handling and slot integrity messaging. Treat as complete for host release scope; keep manual UX smoke validation on real devices.
 -   **🧪 Real-device Multiplayer Validation**
     -   **Task:** Execute a validation checklist for local/cloud mode switching, deep-linking, and QR scanning on physical devices.
-    -   **Status:** Manual validation required.
+    -   **Status (Updated 2026-02-19):** First physical pass surfaced issues (mode switch instability and cloud connectivity glitches). Mitigations applied in `apps/host/lib/sync_mode_runtime.dart` (defensive stop-both-then-start bridge reset) and `apps/player/lib/cloud_player_bridge.dart` (wait for first cloud snapshot before join success + timeout error path). Re-test on physical devices is required before sign-off.
 -   **🎭 Role Mechanics Parity Audit**
     -   **Task:** Audit `cb_logic` against `COMPREHENSIVE_ROLE_MECHANICS.md`.
-    -   **Status:** In Progress (see Logic Gaps below).
+    -   **Status (Updated 2026-02-19):** Complete for current release scope. Verified against scripted setup/night/day flows plus passive/reactive handlers (`all_roles_script_audit_test.dart` + `night_resolution_test.dart` passing).
 
 ## 2. QA & Validation (from PROJECT_DEVELOPER_HANDBOOK.md)
 
 Specific validation steps required before release.
 
--   **Release-signing Secret Provisioning**: Ensure secrets are provisioned in GitHub environment for `main` branch enforcement.
--   **Host iOS Email Link Auth**: End-to-end verification of deep-link flow on iOS.
+-   **Release-signing Secret Provisioning**: Ensure secrets are provisioned in GitHub environment for `main` branch enforcement. **Status (Updated 2026-02-19):** Verified missing by operator (none present). This is a release blocker for `deploy-firebase` until `FIREBASE_SERVICE_ACCOUNT`, `FIREBASE_PROJECT_ID`, and `FIREBASE_TOKEN` are added. CI now includes an explicit preflight secret validation step in `.github/workflows/ci-cd.yml` so failure is immediate and actionable.
+-   **Host iOS Email Link Auth**: End-to-end verification of deep-link flow on iOS. **Status (Updated 2026-02-19):** Field report indicated post-login hang. Mitigation patch applied in `apps/host/lib/auth/phone_auth_gate.dart` (latest-link tracking + completion timeout/error handling). Physical iOS re-test/sign-off pending.
 
 ## 3. Logic Gaps & Audit Findings
 
@@ -51,4 +51,4 @@ Minor tasks to improve code hygiene.
 
 ## 5. Implicit Tasks
 
--   **Bot Simulation**: Ensure all new roles (e.g., `SecondWind`, `Creep`) have appropriate bot logic if `isBotFriendly` is true.
+- **Bot Simulation**: Ensure all new roles (e.g., `SecondWind`, `Creep`) have appropriate bot logic if `isBotFriendly` is true. **Status (Updated 2026-02-19):** Expanded to full-role coverage — role catalog no longer excludes bot assignment for Whore/Lightweight/Messy Bitch/Clinger, and `simulateBotTurns` is now regression-tested across actor-scoped night actions plus setup/reactive prompts (Medic choice, Creep/Clinger setup, Wallflower observe, Second Wind convert, Tea Spiller reveal, Predator retaliation, Drama Queen setup/vendetta, Bartender). Added automated coverage guardrail in dedicated file: `packages/cb_logic/test/bot_simulation_audit_test.dart` (`bot audit: generated interactive role steps are simulatable`), which derives interactive steps from script generation and fails if bot simulation cannot execute them.

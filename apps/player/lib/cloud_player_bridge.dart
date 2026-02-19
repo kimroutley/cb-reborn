@@ -15,6 +15,8 @@ import 'player_session_cache.dart';
 /// Subscribes to Firestore docs for game state instead of WebSocket.
 class CloudPlayerBridge extends Notifier<PlayerGameState>
     implements PlayerBridgeActions {
+  static const Duration _initialSnapshotTimeout = Duration(seconds: 12);
+
   FirebaseBridge? _firebase;
   StreamSubscription? _gameSub;
   StreamSubscription? _privateSub;
@@ -42,9 +44,16 @@ class CloudPlayerBridge extends Notifier<PlayerGameState>
   Future<void> joinWithCode(String code) async {
     _cachedJoinCode = code.trim().toUpperCase();
 
-    // Reset connection errors before attempting to connect
+    // Reset connection state before attempting to connect.
     state = state.copyWith(
-        joinError: null, myPlayerId: null, myPlayerSnapshot: null);
+      joinError: null,
+      joinAccepted: false,
+      isConnected: false,
+      myPlayerId: null,
+      myPlayerSnapshot: null,
+    );
+
+    final firstSnapshotReady = Completer<void>();
 
     try {
       await _gameSub?.cancel();
@@ -64,25 +73,44 @@ class CloudPlayerBridge extends Notifier<PlayerGameState>
         final data = snapshot.data();
         if (data == null) return;
         _applyPublicState(data);
+        if (!firstSnapshotReady.isCompleted) {
+          firstSnapshotReady.complete();
+        }
+      }, onError: (error) {
+        if (!firstSnapshotReady.isCompleted) {
+          firstSnapshotReady.completeError(error);
+        }
       });
 
-      // Mark as connected and join accepted immediately (host will see the join request)
-      state = state.copyWith(
-        isConnected: true,
-        joinAccepted: true,
-        joinError: null,
-      );
+      // Wait for the first public game snapshot before declaring the join
+      // successful. This prevents false-positive "connected" UI states when
+      // cloud data is unavailable or delayed.
+      await firstSnapshotReady.future.timeout(_initialSnapshotTimeout);
+
+      state = state.copyWith(isConnected: true, joinAccepted: true);
       _persistSessionCache();
 
       debugPrint('[CloudPlayerBridge] Subscribed to game $code');
-    } catch (e) {
-      debugPrint('[CloudPlayerBridge] Connection or subscription failed: $e');
+    } on TimeoutException {
+      await disconnect();
       state = state.copyWith(
-        joinError: 'Failed to join game via cloud',
+        joinError:
+            'Cloud join timed out. Confirm host lobby is live and retry.',
         isConnected: false,
         joinAccepted: false,
       );
-      await disconnect(); // Ensure full disconnect on error
+      _persistSessionCache();
+      rethrow;
+    } catch (e) {
+      debugPrint('[CloudPlayerBridge] Connection or subscription failed: $e');
+      await disconnect(); // Ensure full disconnect on error.
+      state = state.copyWith(
+        joinError: 'Failed to join game via cloud. Please retry.',
+        isConnected: false,
+        joinAccepted: false,
+      );
+      _persistSessionCache();
+      rethrow;
     }
   }
 
@@ -270,7 +298,7 @@ class CloudPlayerBridge extends Notifier<PlayerGameState>
       deadPoolBets: deadPoolBets,
       ghostChatMessages: state.ghostChatMessages,
       isConnected: true,
-      joinAccepted: state.joinAccepted,
+      joinAccepted: true,
       joinError: state.joinError,
       claimError: state.claimError,
       myPlayerId: updatedMyPlayerId, // Set updated ID

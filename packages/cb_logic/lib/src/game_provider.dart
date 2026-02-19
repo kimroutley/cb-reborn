@@ -288,6 +288,20 @@ class Game extends _$Game {
         handleInteraction(stepId: step.id, targetId: choice);
         actionCount = 1;
       }
+    } else if (step.actionType == ScriptActionType.selectTwoPlayers) {
+      final targetPool = _eligibleTargetsForStep(step);
+      if (targetPool.length >= 2) {
+        final first = targetPool[rng.nextInt(targetPool.length)];
+        final remaining = targetPool.where((p) => p.id != first.id).toList();
+        if (remaining.isNotEmpty) {
+          final second = remaining[rng.nextInt(remaining.length)];
+          handleInteraction(
+            stepId: step.id,
+            targetId: '${first.id},${second.id}',
+          );
+          actionCount = 1;
+        }
+      }
     } else if (_isInteractiveAction(step.actionType)) {
       final targetPool = _eligibleTargetsForStep(step);
       if (targetPool.isNotEmpty) {

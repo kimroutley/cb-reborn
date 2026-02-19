@@ -1852,6 +1852,525 @@ void main() {
       expect(state.gameHistory.last, 'DIRECTOR: EYES OPEN COMMAND');
     });
   });
+
+  group('Bot Simulation', () {
+    test('simulateBotTurns covers actor-scoped actionable night roles', () {
+      final scenarios = <Map<String, dynamic>>[
+        {
+          'roleId': RoleIds.dealer,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'dealer_act_${botId}_1',
+                title: 'DEALER',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.dealer,
+              ),
+        },
+        {
+          'roleId': RoleIds.silverFox,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'silver_fox_act_${botId}_1',
+                title: 'SILVER FOX',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.silverFox,
+              ),
+        },
+        {
+          'roleId': RoleIds.whore,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'whore_act_${botId}_1',
+                title: 'WHORE',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.whore,
+              ),
+        },
+        {
+          'roleId': RoleIds.sober,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'sober_act_${botId}_1',
+                title: 'SOBER',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.sober,
+              ),
+        },
+        {
+          'roleId': RoleIds.roofi,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'roofi_act_${botId}_1',
+                title: 'ROOFI',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.roofi,
+              ),
+        },
+        {
+          'roleId': RoleIds.bouncer,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'bouncer_act_${botId}_1',
+                title: 'BOUNCER',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.bouncer,
+              ),
+        },
+        {
+          'roleId': RoleIds.medic,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'medic_act_${botId}_1',
+                title: 'MEDIC',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.medic,
+              ),
+        },
+        {
+          'roleId': RoleIds.lightweight,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'lightweight_act_${botId}_1',
+                title: 'LIGHTWEIGHT',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.lightweight,
+              ),
+        },
+        {
+          'roleId': RoleIds.messyBitch,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'messy_bitch_act_${botId}_1',
+                title: 'MESSY BITCH',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.messyBitch,
+              ),
+        },
+        {
+          'roleId': RoleIds.clubManager,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'club_manager_act_${botId}_1',
+                title: 'CLUB MANAGER',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.clubManager,
+              ),
+        },
+        {
+          'roleId': RoleIds.messyBitch,
+          'stepBuilder': (String botId) => ScriptStep(
+                id: 'messy_bitch_kill_${botId}_1',
+                title: 'MESSY BITCH KILL',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.messyBitch,
+                isOptional: true,
+              ),
+        },
+      ];
+
+      for (final scenario in scenarios) {
+        game.state = const GameState();
+        game.addBot();
+        game.addPlayer('Target A');
+        game.addPlayer('Target B');
+        game.addPlayer('Target C');
+
+        var state = container.read(gameProvider);
+        final botId = state.players.first.id;
+        final roleId = scenario['roleId'] as String;
+        game.assignRole(botId, roleId);
+
+        state = container.read(gameProvider);
+        final stepBuilder = scenario['stepBuilder'] as ScriptStep Function(String);
+        final step = stepBuilder(botId);
+
+        game.state = state.copyWith(
+          phase: GamePhase.night,
+          dayCount: 1,
+          scriptQueue: [step],
+          scriptIndex: 0,
+          actionLog: const {},
+        );
+
+        final acted = game.simulateBotTurns();
+        expect(acted, 1, reason: 'Expected bot action for role $roleId');
+
+        final updated = container.read(gameProvider);
+        final selectedId = updated.actionLog[step.id];
+        expect(selectedId, isNotNull, reason: 'Missing action log for $roleId');
+        expect(selectedId, isNot(equals(botId)),
+            reason: 'Bot self-targeted for role $roleId');
+
+        final aliveIds =
+            updated.players.where((p) => p.isAlive).map((p) => p.id).toSet();
+        expect(aliveIds.contains(selectedId), isTrue,
+            reason: 'Bot selected invalid target for role $roleId');
+      }
+    });
+
+    test('simulateBotTurns covers setup and reactive role prompts', () {
+      final scenarios = <Map<String, dynamic>>[
+        {
+          'roleId': RoleIds.medic,
+          'phase': GamePhase.setup,
+          'dayCount': 0,
+          'step': (String botId) => ScriptStep(
+                id: 'medic_choice_${botId}_0',
+                title: 'MEDIC CHOICE',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.binaryChoice,
+                roleId: RoleIds.medic,
+                options: const ['PROTECT_DAILY', 'REVIVE'],
+              ),
+          'validator': (GameState state, String botId, ScriptStep step) {
+            final medic = state.players.firstWhere((p) => p.id == botId);
+            expect(medic.medicChoice, isNotNull);
+            expect(state.actionLog[step.id], isNotNull);
+          },
+        },
+        {
+          'roleId': RoleIds.creep,
+          'phase': GamePhase.setup,
+          'dayCount': 0,
+          'step': (String botId) => ScriptStep(
+                id: 'creep_setup_${botId}_0',
+                title: 'CREEP SETUP',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.creep,
+              ),
+          'validator': (GameState state, String botId, ScriptStep step) {
+            final creep = state.players.firstWhere((p) => p.id == botId);
+            expect(creep.creepTargetId, isNotNull);
+            expect(state.actionLog[step.id], isNotNull);
+          },
+        },
+        {
+          'roleId': RoleIds.clinger,
+          'phase': GamePhase.setup,
+          'dayCount': 0,
+          'step': (String botId) => ScriptStep(
+                id: 'clinger_setup_${botId}_0',
+                title: 'CLINGER SETUP',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.clinger,
+              ),
+          'validator': (GameState state, String botId, ScriptStep step) {
+            final clinger = state.players.firstWhere((p) => p.id == botId);
+            expect(clinger.clingerPartnerId, isNotNull);
+            expect(state.actionLog[step.id], isNotNull);
+          },
+        },
+        {
+          'roleId': RoleIds.wallflower,
+          'phase': GamePhase.night,
+          'dayCount': 1,
+          'step': (String botId) => ScriptStep(
+                id: 'wallflower_observe_${botId}_1',
+                title: 'WALLFLOWER OBSERVE',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.binaryChoice,
+                roleId: RoleIds.wallflower,
+                options: const ['PEEKED', 'GAWKED'],
+              ),
+          'validator': (GameState state, String botId, ScriptStep step) {
+            expect(state.actionLog[step.id], isNotNull);
+          },
+        },
+        {
+          'roleId': RoleIds.secondWind,
+          'phase': GamePhase.day,
+          'dayCount': 1,
+          'step': (String botId) => ScriptStep(
+                id: 'second_wind_convert_${botId}_1',
+                title: 'SECOND WIND',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.binaryChoice,
+                roleId: RoleIds.secondWind,
+                options: const ['CONVERT', 'EXECUTE'],
+              ),
+          'before': (Game game, String botId) {
+            final current = game.state;
+            game.state = current.copyWith(
+              players: current.players
+                  .map(
+                    (p) => p.id == botId
+                        ? p.copyWith(secondWindPendingConversion: true)
+                        : p,
+                  )
+                  .toList(),
+            );
+          },
+          'validator': (GameState state, String botId, ScriptStep step) {
+            final sw = state.players.firstWhere((p) => p.id == botId);
+            expect(sw.secondWindConverted || !sw.isAlive, isTrue);
+          },
+        },
+        {
+          'roleId': RoleIds.teaSpiller,
+          'phase': GamePhase.day,
+          'dayCount': 1,
+          'step': (String botId) => ScriptStep(
+                id: 'tea_spiller_reveal_${botId}_1',
+                title: 'TEA SPILLER REVEAL',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.teaSpiller,
+              ),
+          'before': (Game game, String botId) {
+            final current = game.state;
+            game.state = current.copyWith(
+              players: current.players
+                  .map(
+                    (p) => p.id == botId
+                        ? p.copyWith(isAlive: false, deathReason: 'exile')
+                        : p,
+                  )
+                  .toList(),
+            );
+          },
+          'validator': (GameState state, String botId, ScriptStep step) {
+            expect(state.actionLog[step.id], isNotNull);
+          },
+        },
+        {
+          'roleId': RoleIds.predator,
+          'phase': GamePhase.day,
+          'dayCount': 1,
+          'step': (String botId) => ScriptStep(
+                id: 'predator_retaliation_${botId}_1',
+                title: 'PREDATOR RETALIATION',
+                readAloudText: '',
+                instructionText: '',
+                actionType: ScriptActionType.selectPlayer,
+                roleId: RoleIds.predator,
+              ),
+          'before': (Game game, String botId) {
+            final current = game.state;
+            game.state = current.copyWith(
+              players: current.players
+                  .map(
+                    (p) => p.id == botId
+                        ? p.copyWith(isAlive: false, deathReason: 'exile')
+                        : p,
+                  )
+                  .toList(),
+            );
+          },
+          'validator': (GameState state, String botId, ScriptStep step) {
+            expect(state.actionLog[step.id], isNotNull);
+          },
+        },
+      ];
+
+      for (final scenario in scenarios) {
+        game.state = const GameState();
+        game.addBot();
+        game.addPlayer('Target A');
+        game.addPlayer('Target B');
+        game.addPlayer('Target C');
+
+        var state = container.read(gameProvider);
+        final botId = state.players.first.id;
+        final roleId = scenario['roleId'] as String;
+        game.assignRole(botId, roleId);
+
+        final before = scenario['before'] as void Function(Game, String)?;
+        if (before != null) {
+          before(game, botId);
+        }
+
+        state = container.read(gameProvider);
+        final stepBuilder = scenario['step'] as ScriptStep Function(String);
+        final step = stepBuilder(botId);
+        final phase = scenario['phase'] as GamePhase;
+        final dayCount = scenario['dayCount'] as int;
+
+        game.state = state.copyWith(
+          phase: phase,
+          dayCount: dayCount,
+          scriptQueue: [step],
+          scriptIndex: 0,
+          actionLog: const {},
+        );
+
+        final acted = game.simulateBotTurns();
+        expect(acted, 1, reason: 'Expected bot action for role $roleId');
+
+        final updated = container.read(gameProvider);
+        final validator =
+            scenario['validator'] as void Function(GameState, String, ScriptStep);
+        validator(updated, botId, step);
+      }
+    });
+
+    test('simulateBotTurns handles bartender two-target night action', () {
+      game.addBot();
+      game.addPlayer('Target A');
+      game.addPlayer('Target B');
+      game.addPlayer('Target C');
+
+      var state = container.read(gameProvider);
+      final bartenderBotId = state.players.first.id;
+      game.assignRole(bartenderBotId, RoleIds.bartender);
+
+      state = container.read(gameProvider);
+      final stepId = 'bartender_act_${bartenderBotId}_1';
+      game.state = state.copyWith(
+        phase: GamePhase.night,
+        dayCount: 1,
+        scriptQueue: [
+          ScriptStep(
+            id: stepId,
+            title: 'BARTENDER MIX',
+            readAloudText: '',
+            instructionText: '',
+            actionType: ScriptActionType.selectTwoPlayers,
+            roleId: RoleIds.bartender,
+          ),
+        ],
+        scriptIndex: 0,
+        actionLog: const {},
+      );
+
+      final acted = game.simulateBotTurns();
+      expect(acted, 1);
+
+      final updated = container.read(gameProvider);
+      final payload = updated.actionLog[stepId];
+      expect(payload, isNotNull);
+
+      final picks = payload!
+          .split(',')
+          .map((id) => id.trim())
+          .where((id) => id.isNotEmpty)
+          .toList();
+
+      expect(picks.length, 2);
+      expect(picks[0], isNot(equals(picks[1])));
+      expect(picks[0], isNot(equals(bartenderBotId)));
+      expect(picks[1], isNot(equals(bartenderBotId)));
+
+      final aliveIds =
+          updated.players.where((p) => p.isAlive).map((p) => p.id).toSet();
+      expect(aliveIds.contains(picks[0]), isTrue);
+      expect(aliveIds.contains(picks[1]), isTrue);
+    });
+
+    test('simulateBotTurns handles drama queen setup two-target selection', () {
+      game.addBot();
+      game.addPlayer('Target A');
+      game.addPlayer('Target B');
+      game.addPlayer('Target C');
+
+      var state = container.read(gameProvider);
+      final dramaBotId = state.players.first.id;
+      game.assignRole(dramaBotId, RoleIds.dramaQueen);
+
+      state = container.read(gameProvider);
+      game.state = state.copyWith(
+        phase: GamePhase.setup,
+        scriptQueue: [
+          ScriptStep(
+            id: 'drama_queen_setup_${dramaBotId}_0',
+            title: 'DRAMA QUEEN SETUP',
+            readAloudText: '',
+            instructionText: '',
+            actionType: ScriptActionType.selectTwoPlayers,
+            roleId: RoleIds.dramaQueen,
+          ),
+        ],
+        scriptIndex: 0,
+        actionLog: const {},
+      );
+
+      final acted = game.simulateBotTurns();
+      expect(acted, 1);
+
+      final updated = container.read(gameProvider);
+      final drama = updated.players.firstWhere((p) => p.id == dramaBotId);
+      expect(drama.dramaQueenTargetAId, isNotNull);
+      expect(drama.dramaQueenTargetBId, isNotNull);
+      expect(drama.dramaQueenTargetAId, isNot(equals(drama.dramaQueenTargetBId)));
+      expect(drama.dramaQueenTargetAId, isNot(equals(dramaBotId)));
+      expect(drama.dramaQueenTargetBId, isNot(equals(dramaBotId)));
+    });
+
+    test('simulateBotTurns handles vendetta two-target payload format', () {
+      game.addBot();
+      game.addPlayer('Dealer');
+      game.addPlayer('Buddy');
+      game.addPlayer('Sober');
+
+      var state = container.read(gameProvider);
+      final dramaBotId = state.players.first.id;
+      game.assignRole(dramaBotId, RoleIds.dramaQueen);
+
+      state = container.read(gameProvider);
+      game.state = state.copyWith(
+        players: state.players
+            .map(
+              (p) => p.id == dramaBotId
+                  ? p.copyWith(isAlive: false, deathReason: 'exile')
+                  : p,
+            )
+            .toList(),
+        phase: GamePhase.day,
+        dayCount: 1,
+        scriptQueue: [
+          ScriptStep(
+            id: 'drama_queen_vendetta_${dramaBotId}_1',
+            title: 'DRAMA QUEEN VENDETTA',
+            readAloudText: '',
+            instructionText: '',
+            actionType: ScriptActionType.selectTwoPlayers,
+            roleId: RoleIds.dramaQueen,
+          ),
+        ],
+        scriptIndex: 0,
+        actionLog: const {},
+      );
+
+      final acted = game.simulateBotTurns();
+      expect(acted, 1);
+
+      final updated = container.read(gameProvider);
+      final payload = updated.actionLog['drama_queen_vendetta_${dramaBotId}_1'];
+      expect(payload, isNotNull);
+
+      final picks = payload!
+          .split(',')
+          .map((id) => id.trim())
+          .where((id) => id.isNotEmpty)
+          .toList();
+
+      expect(picks.length, 2);
+      expect(picks[0], isNot(equals(picks[1])));
+
+      final aliveIds = updated.players.where((p) => p.isAlive).map((p) => p.id).toSet();
+      expect(aliveIds.contains(picks[0]), isTrue);
+      expect(aliveIds.contains(picks[1]), isTrue);
+    });
+  });
 }
 
 void _addMockPlayers(Game game, int count) {

@@ -14,14 +14,14 @@ const List<Role> roleCatalog = [
   // ═══════════════════════════════════════════════
   //  THE DEALERS (Killers)
   // ═══════════════════════════════════════════════
-
   Role(
     id: RoleIds.dealer,
     name: 'The Dealer',
     alliance: Team.clubStaff,
     type: 'Killer',
     complexity: 2,
-    tacticalTip: 'Coordinate your targets. Don\'t always eliminate the loudest players; sometimes the quiet ones are easier to frame during the day.',
+    tacticalTip:
+        'Coordinate your targets. Don\'t always eliminate the loudest players; sometimes the quiet ones are easier to frame during the day.',
     description: 'Choose a victim to murder each night with the other Dealers.',
     nightPriority: 10,
     ability: 'Night Kill',
@@ -36,14 +36,14 @@ const List<Role> roleCatalog = [
     alliance: Team.clubStaff,
     type: 'Defensive',
     complexity: 4,
-    tacticalTip: 'Your scapegoat is your shield. Keep them alive but ensure they are the primary suspect if you start feeling the heat.',
+    tacticalTip:
+        'Your scapegoat is your shield. Keep them alive but ensure they are the primary suspect if you start feeling the heat.',
     description:
         'Choose a scapegoat. The next time a Dealer would be voted out, the elimination is deflected to your scapegoat instead. One use.',
     nightPriority: 55,
     ability: 'Vote Deflection',
     assetPath: 'assets/roles/whore.png',
     colorHex: '#008080', // Teal - from CB Visuals
-    isBotFriendly: false,
   ),
 
   Role(
@@ -52,7 +52,8 @@ const List<Role> roleCatalog = [
     alliance: Team.clubStaff,
     type: 'Disruptive',
     complexity: 3,
-    tacticalTip: 'Use your alibi to build trust. Saving a "confirmed" Party Animal can make you look like a hero and blend you in with the crowd.',
+    tacticalTip:
+        'Use your alibi to build trust. Saving a "confirmed" Party Animal can make you look like a hero and blend you in with the crowd.',
     description:
         'Each night, choose one player. During the following day, they cannot be voted out.',
     nightPriority: 50,
@@ -64,14 +65,14 @@ const List<Role> roleCatalog = [
   // ═══════════════════════════════════════════════
   //  THE PARTY ANIMALS (Innocents)
   // ═══════════════════════════════════════════════
-
   Role(
     id: RoleIds.partyAnimal,
     name: 'The Party Animal',
     alliance: Team.partyAnimals,
     type: 'Passive',
     complexity: 1,
-    tacticalTip: 'Your strength is in your vote and your social awareness. Pay attention to inconsistencies in claims and don\'t be afraid to lead discussions.',
+    tacticalTip:
+        'Your strength is in your vote and your social awareness. Pay attention to inconsistencies in claims and don\'t be afraid to lead discussions.',
     description:
         'No special ability. Your strength is in your vote and your survival.',
     nightPriority: 0,
@@ -87,7 +88,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Defensive',
     complexity: 3,
-    tacticalTip: 'Self-protect on Night 1 if the game feels aggressive. Saving a powerful role like the Bouncer or Wallflower can completely flip the game.',
+    tacticalTip:
+        'Self-protect on Night 1 if the game feels aggressive. Saving a powerful role like the Bouncer or Wallflower can completely flip the game.',
     description:
         'Choose to protect a player each night, or sacrifice that power for a one-time revive.',
     nightPriority: 30,
@@ -104,7 +106,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Investigative',
     complexity: 3,
-    tacticalTip: 'Target the most influential talkers. Finding a Dealer early is great, but confirming a powerful ally is just as important for the town.',
+    tacticalTip:
+        'Target the most influential talkers. Finding a Dealer early is great, but confirming a powerful ally is just as important for the town.',
     description:
         'Each night, check a player\'s ID. The Host reveals if they are Dealer-side or not.',
     nightPriority: 20,
@@ -119,7 +122,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Offensive',
     complexity: 4,
-    tacticalTip: 'Silence Dealers to block their kills, or silence loud "suspects" to prevent them from leading the vote against you the next day.',
+    tacticalTip:
+        'Silence Dealers to block their kills, or silence loud "suspects" to prevent them from leading the vote against you the next day.',
     description:
         'Paralyze a player each night. They are silenced the next day. Roofing the only Dealer blocks their kill.',
     nightPriority: 15,
@@ -134,7 +138,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Protective',
     complexity: 3,
-    tacticalTip: 'Send suspected power roles home to keep them safe from murder, or target suspicious players to block their potential night action.',
+    tacticalTip:
+        'Send suspected power roles home to keep them safe from murder, or target suspicious players to block their potential night action.',
     description:
         'Send a player home at the start of night. They are safe from murder and cannot act tonight.',
     nightPriority: 5,
@@ -149,7 +154,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Investigative',
     complexity: 4,
-    tacticalTip: 'Observe without acting. Only reveal your identity when you have definitive proof of a Dealer\'s action to ensure the town follows your lead.',
+    tacticalTip:
+        'Observe without acting. Only reveal your identity when you have definitive proof of a Dealer\'s action to ensure the town follows your lead.',
     description:
         'Can discreetly open eyes during the murder phase to witness the kill.',
     nightPriority: 0,
@@ -165,7 +171,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Investigative',
     complexity: 4,
-    tacticalTip: 'Your lives are a resource. Don\'t be afraid to be vocal and draw fire, but remember you can only communicate using "Meow".',
+    tacticalTip:
+        'Your lives are a resource. Don\'t be afraid to be vocal and draw fire, but remember you can only communicate using "Meow".',
     description:
         'Can open eyes when the Bouncer checks IDs. Must communicate using "Meow". You have 9 lives.',
     nightPriority: 0,
@@ -180,7 +187,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Defensive',
     complexity: 2,
-    tacticalTip: 'You are safe from the first attack. Use this temporary invincibility to be bold in discussions and gather as much intel as possible.',
+    tacticalTip:
+        'You are safe from the first attack. Use this temporary invincibility to be bold in discussions and gather as much intel as possible.',
     description:
         'Dealer murder attempts fail until the Bouncer has checked your identity. Can still be voted out.',
     nightPriority: 0,
@@ -195,7 +203,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Tank',
     complexity: 2,
-    tacticalTip: 'You are the team\'s tank. Take the heat for others and use your extra lives to survive long enough to find the Dealers.',
+    tacticalTip:
+        'You are the team\'s tank. Take the heat for others and use your extra lives to survive long enough to find the Dealers.',
     description:
         'Extra lives equal to the number of Dealers. Only Dealer kills burn a life.',
     nightPriority: 0,
@@ -210,14 +219,14 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Passive',
     complexity: 5,
-    tacticalTip: 'The Taboo name is a powerful social weapon. Use the pressure of the Bar Tab to flush out players who aren\'t paying close attention.',
+    tacticalTip:
+        'The Taboo name is a powerful social weapon. Use the pressure of the Bar Tab to flush out players who aren\'t paying close attention.',
     description:
         'After every night, a name becomes taboo. If you speak that name, you die immediately.',
     nightPriority: 45,
     ability: 'Memory Loss (Taboo)',
     assetPath: 'assets/roles/lightweight.png',
     colorHex: '#FFA500', // Orange - from CB Visuals
-    isBotFriendly: false,
   ),
 
   Role(
@@ -226,7 +235,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Reactive',
     complexity: 2,
-    tacticalTip: 'Your death is an information tool. Ensure you die at a time when your public revelation will cause the most disruption for the Dealers.',
+    tacticalTip:
+        'Your death is an information tool. Ensure you die at a time when your public revelation will cause the most disruption for the Dealers.',
     description:
         'If voted out, immediately expose the role of one player who voted against you.',
     nightPriority: 0,
@@ -241,7 +251,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Reactive',
     complexity: 3,
-    tacticalTip: 'Make it known that attacking you has a heavy price. Use your retaliatory strike to take out the Dealers\' most influential leader.',
+    tacticalTip:
+        'Make it known that attacking you has a heavy price. Use your retaliatory strike to take out the Dealers\' most influential leader.',
     description:
         'If voted out, choose one of the players who voted against you to die with you.',
     nightPriority: 0,
@@ -256,7 +267,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Reactive',
     complexity: 4,
-    tacticalTip: 'Swapping roles can sow total chaos. Use it to confuse the Dealers and steal a powerful card from someone you suspect is evil.',
+    tacticalTip:
+        'Swapping roles can sow total chaos. Use it to confuse the Dealers and steal a powerful card from someone you suspect is evil.',
     description:
         'When killed, swap two cards with remaining players and look at the swapped cards.',
     nightPriority: 0,
@@ -271,7 +283,8 @@ const List<Role> roleCatalog = [
     alliance: Team.partyAnimals,
     type: 'Investigative',
     complexity: 4,
-    tacticalTip: 'Comparing alignment is powerful but subtle. Look for players who claim to be on the same side and verify if they are truly aligned.',
+    tacticalTip:
+        'Comparing alignment is powerful but subtle. Look for players who claim to be on the same side and verify if they are truly aligned.',
     description:
         'Each night, choose two players. Learn if they are ALIGNED (same side) or NOT ALIGNED.',
     nightPriority: 35,
@@ -283,21 +296,20 @@ const List<Role> roleCatalog = [
   // ═══════════════════════════════════════════════
   //  WILDCARDS (Variables)
   // ═══════════════════════════════════════════════
-
   Role(
     id: RoleIds.messyBitch,
     name: 'The Messy Bitch',
     alliance: Team.neutral,
     type: 'Chaos',
     complexity: 5,
-    tacticalTip: 'Chaos is your win condition. Spread enough rumours to keep the town distracted while you work towards your solo victory.',
+    tacticalTip:
+        'Chaos is your win condition. Spread enough rumours to keep the town distracted while you work towards your solo victory.',
     description:
         'Each night, start a rumour about a player. Win immediately if every living player has heard a rumour.',
     nightPriority: 40,
     ability: 'The Rumour Mill',
     assetPath: 'assets/roles/messy_bitch.png',
     colorHex: '#E6E6FA', // Lavender - from CB Visuals
-    isBotFriendly: false,
   ),
 
   Role(
@@ -306,7 +318,8 @@ const List<Role> roleCatalog = [
     alliance: Team.neutral,
     type: 'Investigative',
     complexity: 3,
-    tacticalTip: 'Survival is your only goal. Gather intel to stay ahead of the curve, but don\'t become such a threat that the Dealers target you.',
+    tacticalTip:
+        'Survival is your only goal. Gather intel to stay ahead of the curve, but don\'t become such a threat that the Dealers target you.',
     description:
         'Every night, secretly look at a fellow player\'s role card. Objective is pure self-survival.',
     nightPriority: 25,
@@ -321,14 +334,14 @@ const List<Role> roleCatalog = [
     alliance: Team.neutral,
     type: 'Passive-Aggressive',
     complexity: 4,
-    tacticalTip: 'Your partner is your life. Protect them at all costs, but be ready to snap and take your revenge if they are eliminated.',
+    tacticalTip:
+        'Your partner is your life. Protect them at all costs, but be ready to snap and take your revenge if they are eliminated.',
     description:
         'Obsessed with a partner. Must support their vote. If they die, you die. Can be freed as an Attack Dog.',
     nightPriority: 0,
     ability: 'Obsession + Attack Dog',
     assetPath: 'assets/roles/clinger.png',
     colorHex: '#FFFF00', // Yellow - from CB Visuals
-    isBotFriendly: false,
   ),
 
   Role(
@@ -338,7 +351,8 @@ const List<Role> roleCatalog = [
     startAlliance: Team.partyAnimals,
     type: 'Convertible',
     complexity: 4,
-    tacticalTip: 'You are a wildcard. Negotiate with both sides to see who offers you the best chance of staying alive and returning to the lounge.',
+    tacticalTip:
+        'You are a wildcard. Negotiate with both sides to see who offers you the best chance of staying alive and returning to the lounge.',
     description:
         'If Dealers try to kill you, you survive. Next day they can convert you (revive as Dealer) or execute you.',
     nightPriority: 0,
@@ -353,7 +367,8 @@ const List<Role> roleCatalog = [
     alliance: Team.neutral,
     type: 'Mimic',
     complexity: 4,
-    tacticalTip: 'Lurk in the shadows. Wait for a powerful role to die and then step into their shoes to change the game\'s direction at the perfect moment.',
+    tacticalTip:
+        'Lurk in the shadows. Wait for a powerful role to die and then step into their shoes to change the game\'s direction at the perfect moment.',
     description:
         'At Night 0, choose a player to mimic. Your alliance becomes theirs. When they die, you inherit their role.',
     nightPriority: 0,

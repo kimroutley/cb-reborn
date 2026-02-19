@@ -9,12 +9,16 @@ Future<void> syncHostBridgesForMode({
   required AsyncOp stopCloud,
   required AsyncOp startCloud,
 }) async {
+  // Defensive reset: always stop both transports before activating the
+  // selected one. This avoids stale runtime state when users toggle modes
+  // rapidly (e.g., LOCAL -> CLOUD -> LOCAL in the same session).
+  await stopLocal();
+  await stopCloud();
+
   if (mode == SyncMode.cloud) {
-    await stopLocal();
     await startCloud();
     return;
   }
 
-  await stopCloud();
   await startLocal();
 }

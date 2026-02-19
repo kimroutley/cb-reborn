@@ -20,6 +20,7 @@ class PhoneAuthGate extends StatefulWidget {
 
 class _PhoneAuthGateState extends State<PhoneAuthGate> {
   static const _pendingEmailKey = 'host_email_link_pending_email';
+  static const Duration _completeLinkTimeout = Duration(seconds: 15);
 
   final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
@@ -31,6 +32,7 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
   bool _isSavingUsername = false;
   GameStyle? _selectedStyle;
   String? _error;
+  String? _latestAuthLink;
 
   @override
   void initState() {
@@ -62,14 +64,18 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
 
     final initialUri = await appLinks.getInitialLink();
     if (initialUri != null) {
+      _latestAuthLink = initialUri.toString();
       await _tryCompleteEmailLink(initialUri.toString());
     }
 
     _authLinkSubscription = appLinks.uriLinkStream.listen((uri) {
+      _latestAuthLink = uri.toString();
       _tryCompleteEmailLink(uri.toString());
     });
 
-    await _tryCompleteEmailLink(Uri.base.toString());
+    final baseLink = Uri.base.toString();
+    _latestAuthLink ??= baseLink;
+    await _tryCompleteEmailLink(baseLink);
   }
 
   Future<void> _persistPendingEmail(String email) async {
@@ -143,6 +149,14 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
   }
 
   Future<void> _completeEmailLinkSignIn(String link, String email) async {
+    final normalizedEmail = email.trim();
+    if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
+      setState(() {
+        _error = 'Enter the same email used to request the sign-in link.';
+      });
+      return;
+    }
+
     setState(() {
       _isCompletingLink = true;
       _error = null;
@@ -150,9 +164,9 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
 
     try {
       await FirebaseAuth.instance.signInWithEmailLink(
-        email: email.trim(),
+        email: normalizedEmail,
         emailLink: link,
-      );
+      ).timeout(_completeLinkTimeout);
       await _clearPendingEmail();
     } on FirebaseAuthException catch (e) {
       if (!mounted) {
@@ -160,6 +174,22 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
       }
       setState(() {
         _error = e.message ?? 'Failed to complete sign-in link.';
+      });
+    } on TimeoutException {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error =
+            'Sign-in confirmation timed out. Re-open the email link and try again.';
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error =
+            'Could not complete sign-in. Re-open the latest email link and retry.';
       });
     } finally {
       if (mounted) {
@@ -247,7 +277,7 @@ class _PhoneAuthGateState extends State<PhoneAuthGate> {
             return _buildStyleSelection(context);
           }
 
-          final currentLink = Uri.base.toString();
+            final currentLink = _latestAuthLink ?? Uri.base.toString();
           final isSignInLink =
               FirebaseAuth.instance.isSignInWithEmailLink(currentLink);
 
