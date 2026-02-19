@@ -20,26 +20,10 @@ class CustomDrawer extends ConsumerWidget {
       return true;
     }
 
-    final shouldDiscard = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Discard Changes?'),
-            content: const Text(
-              'You have unsaved profile edits. Leave without saving?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Discard'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+    final shouldDiscard = await showCBDiscardChangesDialog(
+      context,
+      message: 'You have unsaved profile edits. Leave without saving?',
+    );
 
     if (shouldDiscard) {
       ref.read(playerProfileDirtyProvider.notifier).reset();
