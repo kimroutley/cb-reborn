@@ -21,30 +21,13 @@ class ProfileActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: CBPrimaryButton(
-                label: saving ? 'Saving...' : 'Save Profile',
-                icon: Icons.save_outlined,
-                onPressed: canSave ? onSave : null,
-              ),
-            ),
-            const SizedBox(width: CBSpace.x2),
-            CBTextButton(
-              label: 'Discard',
-              onPressed: canDiscard ? onDiscard : null,
-            ),
-          ],
-        ),
-        const SizedBox(height: CBSpace.x2),
-        CBTextButton(
-          label: 'Reload From Cloud',
-          onPressed: saving ? null : onReload,
-        ),
-      ],
+    return CBProfileActionButtons(
+      saving: saving,
+      canSave: canSave,
+      canDiscard: canDiscard,
+      onSave: onSave,
+      onDiscard: onDiscard,
+      onReload: onReload,
     );
   }
 }

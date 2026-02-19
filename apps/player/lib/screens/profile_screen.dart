@@ -10,7 +10,14 @@ import '../profile_edit_guard.dart';
 import '../widgets/profile_action_buttons.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({
+    super.key,
+    this.repository,
+    this.currentUserResolver,
+  });
+
+  final ProfileRepository? repository;
+  final User? Function()? currentUserResolver;
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -32,8 +39,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final FocusNode _usernameFocusNode = FocusNode();
   final FocusNode _publicIdFocusNode = FocusNode();
 
-  late final ProfileRepository _repository =
-      ProfileRepository(firestore: FirebaseFirestore.instance);
+  ProfileRepository? _repository;
 
   bool _loadingProfile = true;
   bool _saving = false;
@@ -49,7 +55,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   DateTime? _createdAt;
   DateTime? _updatedAt;
 
-  User? get _user => FirebaseAuth.instance.currentUser;
+  ProfileRepository get _profileRepository {
+    return _repository ??= widget.repository ??
+        ProfileRepository(firestore: FirebaseFirestore.instance);
+  }
+
+  User? get _user {
+    final resolver = widget.currentUserResolver;
+    if (resolver != null) {
+      return resolver();
+    }
+    try {
+      return FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      return null;
+    }
+  }
 
   bool get _hasChanges {
     return _usernameController.text.trim() != _initialUsername ||
@@ -70,7 +91,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   void dispose() {
-    ref.read(playerProfileDirtyProvider.notifier).reset();
     _usernameController.removeListener(_onInputChanged);
     _publicIdController.removeListener(_onInputChanged);
     _usernameController.dispose();
@@ -81,7 +101,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _syncDirtyFlag() {
-    ref.read(playerProfileDirtyProvider.notifier).setDirty(_hasChanges);
+    final isDirty = _hasChanges;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(playerProfileDirtyProvider.notifier).setDirty(isDirty);
+    });
   }
 
   void _onInputChanged() {
@@ -123,35 +149,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
     _discardChanges();
     setState(() => _allowImmediatePop = true);
-    Navigator.of(context).maybePop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).maybePop();
+    });
   }
 
   Future<bool> _confirmDiscardChanges() async {
     if (!_hasChanges) {
       return true;
     }
-    final decision = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Discard Changes?'),
-          content: const Text(
-            'You have unsaved profile edits. Leave without saving?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Discard'),
-            ),
-          ],
-        );
-      },
+    return showCBDiscardChangesDialog(
+      context,
+      message: 'You have unsaved profile edits. Leave without saving?',
     );
-    return decision ?? false;
   }
 
   void _captureInitialSnapshot() {
@@ -201,7 +214,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     try {
-      final profile = await _repository.loadProfile(user.uid);
+      final profile = await _profileRepository.loadProfile(user.uid);
       if (!mounted) {
         return;
       }
@@ -275,7 +288,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     try {
       if (username != _initialUsername) {
-        final usernameAvailable = await _repository.isUsernameAvailable(
+        final usernameAvailable = await _profileRepository.isUsernameAvailable(
           username,
           excludingUid: user.uid,
         );
@@ -289,7 +302,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       if (normalizedPublicId.isNotEmpty &&
           normalizedPublicId != _initialPublicId) {
-        final publicIdAvailable = await _repository.isPublicPlayerIdAvailable(
+        final publicIdAvailable =
+            await _profileRepository.isPublicPlayerIdAvailable(
           normalizedPublicId,
           excludingUid: user.uid,
         );
@@ -304,7 +318,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final preferredStyleToSave =
           _selectedPreferredStyle == 'auto' ? null : _selectedPreferredStyle;
 
-      await _repository.upsertBasicProfile(
+      await _profileRepository.upsertBasicProfile(
         uid: user.uid,
         username: username,
         email: user.email,
@@ -486,23 +500,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: CBSpace.x3),
-                                    _ReadonlyRow(
+                                    CBProfileReadonlyRow(
                                       label: 'UID',
                                       value: user?.uid ?? 'N/A',
                                     ),
                                     const SizedBox(height: CBSpace.x2),
-                                    _ReadonlyRow(
+                                    CBProfileReadonlyRow(
                                       label: 'EMAIL',
                                       value:
                                           user?.email ?? 'No email on account',
                                     ),
                                     const SizedBox(height: CBSpace.x2),
-                                    _ReadonlyRow(
+                                    CBProfileReadonlyRow(
                                       label: 'CREATED',
                                       value: _formatDateTime(_createdAt),
                                     ),
                                     const SizedBox(height: CBSpace.x2),
-                                    _ReadonlyRow(
+                                    CBProfileReadonlyRow(
                                       label: 'UPDATED',
                                       value: _formatDateTime(_updatedAt),
                                     ),
@@ -610,7 +624,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       children: _preferredStyles.map((style) {
                                         final selected =
                                             style == _selectedPreferredStyle;
-                                        return _PreferenceChip(
+                                        return CBProfilePreferenceChip(
                                           label: _styleLabel(style),
                                           selected: selected,
                                           enabled: !_saving,
@@ -640,7 +654,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       children: clubAvatarEmojis.map((emoji) {
                                         final selected =
                                             emoji == _selectedAvatar;
-                                        return _AvatarChip(
+                                        return CBProfileAvatarChip(
                                           emoji: emoji,
                                           selected: selected,
                                           enabled: !_saving,
@@ -676,140 +690,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ReadonlyRow extends StatelessWidget {
-  const _ReadonlyRow({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: textTheme.labelSmall?.copyWith(
-            color: scheme.onSurface.withValues(alpha: 0.6),
-            letterSpacing: 1,
-          ),
-        ),
-        const SizedBox(height: 4),
-        SelectableText(
-          value,
-          style: textTheme.bodyMedium?.copyWith(
-            color: scheme.onSurface,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AvatarChip extends StatelessWidget {
-  const _AvatarChip({
-    required this.emoji,
-    required this.selected,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final String emoji;
-  final bool selected;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return Opacity(
-      opacity: enabled ? 1 : 0.6,
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          width: 42,
-          height: 42,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected
-                ? scheme.primary.withValues(alpha: 0.22)
-                : scheme.surfaceContainerHighest.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected
-                  ? scheme.primary
-                  : scheme.outlineVariant.withValues(alpha: 0.5),
-              width: selected ? 2 : 1,
-            ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: scheme.primary.withValues(alpha: 0.2),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Text(
-            emoji,
-            style: const TextStyle(fontSize: 20),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PreferenceChip extends StatelessWidget {
-  const _PreferenceChip({
-    required this.label,
-    required this.selected,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-
-    return Opacity(
-      opacity: enabled ? 1 : 0.6,
-      child: CBGlassTile(
-        isSelected: selected,
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(12),
-        borderColor: selected
-            ? scheme.secondary
-            : scheme.outlineVariant.withValues(alpha: 0.5),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: selected ? scheme.secondary : scheme.onSurface,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-          ),
         ),
       ),
     );
