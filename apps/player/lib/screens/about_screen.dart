@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../widgets/custom_drawer.dart';
+
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
@@ -15,26 +17,29 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CBNeonBackground(
-      child: SafeArea(
-        child: FutureBuilder<_PlayerAboutData>(
-          future: _loadAboutData(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    return CBPrismScaffold(
+      title: 'ABOUT',
+      drawer: const CustomDrawer(),
+      body: FutureBuilder<_PlayerAboutData>(
+        future: _loadAboutData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CBBreathingLoader());
+          }
 
-            final packageInfo = snapshot.data?.packageInfo;
-            final releases = snapshot.data?.releases ?? const <AppBuildUpdate>[];
-            final releaseDate = releases.isNotEmpty
-                ? DateFormat.yMMMd().format(releases.first.releaseDate)
-                : 'Unknown release date';
+          final packageInfo = snapshot.data?.packageInfo;
+          final releases = snapshot.data?.releases ?? const <AppBuildUpdate>[];
+          final releaseDate = releases.isNotEmpty
+              ? DateFormat.yMMMd().format(releases.first.releaseDate)
+              : 'Unknown release date';
 
-            final versionLabel = packageInfo == null
-                ? 'Unknown version'
-                : '${packageInfo.version} (Build ${packageInfo.buildNumber})';
+          final versionLabel = packageInfo == null
+              ? 'Unknown version'
+              : '${packageInfo.version} (Build ${packageInfo.buildNumber})';
 
-            return CBAboutContent(
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: CBAboutContent(
               appHeading: 'CLUB BLACKOUT: REBORN',
               appSubtitle: 'PLAYER COMPANION APP',
               versionLabel: versionLabel,
@@ -43,9 +48,9 @@ class AboutScreen extends StatelessWidget {
               copyrightLabel:
                   '© ${DateTime.now().year} Kyrian Co. All rights reserved.',
               recentBuilds: releases,
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }

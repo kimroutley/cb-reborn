@@ -4,6 +4,8 @@ import 'package:cb_theme/cb_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../widgets/custom_drawer.dart';
+
 // Reusing PlayerStat definition from Host app for consistency
 class PlayerStat {
   final String playerName;
@@ -166,7 +168,6 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final missingPlaceholderRoles = missingRoleAwardPlaceholders();
     final awardCoverage = const RoleAwardProgressService().buildCoverageSummary();
     final visibleRoles = roleCatalog
         .where((role) {
@@ -181,114 +182,82 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
         })
         .toList(growable: false);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(
-          'HALL OF FAME',
-          style: Theme.of(context).textTheme.titleLarge!,
+    return CBPrismScaffold(
+      title: 'HALL OF FAME',
+      drawer: const CustomDrawer(),
+      actions: [
+        IconButton(
+          tooltip: 'Refresh Hall of Fame',
+          onPressed: _isLoading ? null : _loadStats,
+          icon: const Icon(Icons.refresh_rounded),
         ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: 'Refresh Hall of Fame',
-            onPressed: _isLoading ? null : _loadStats,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
-      ),
-      body: CBNeonBackground(
-        child: SafeArea(
-          child: _isLoading
-              ? const Center(child: CBBreathingSpinner())
-              : RefreshIndicator(
-                  onRefresh: _loadStats,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.only(top: 16, bottom: 32),
-                  children: [
-                    if (_stats.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: CBGlassTile(
-                          isPrismatic: true,
-                          borderColor: scheme.primary.withValues(alpha: 0.4),
-                          child: Text(
-                            'No game records found. Play a game to enter the Hall of Fame!',
-                            textAlign: TextAlign.center,
-                            style: textTheme.headlineMedium?.copyWith(
-                              color: scheme.onSurface.withValues(alpha: 0.7),
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      ...List.generate(
-                        _stats.length,
-                        (index) => _buildProfileCard(_stats[index], index, scheme),
-                      ),
-                    const SizedBox(height: 12),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+      ],
+      body: _isLoading
+          ? const Center(child: CBBreathingLoader())
+          : RefreshIndicator(
+              onRefresh: _loadStats,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(top: 16, bottom: 32, left: 16, right: 16),
+                children: [
+                  if (_stats.isEmpty)
+                    CBGlassTile(
+                      isPrismatic: true,
+                      borderColor: scheme.primary.withValues(alpha: 0.4),
                       child: Text(
-                        'ROLE AWARDS',
-                        style: textTheme.titleLarge?.copyWith(
-                          color: scheme.primary,
-                          fontWeight: FontWeight.bold,
+                        'No game records found. Play a game to enter the Hall of Fame!',
+                        textAlign: TextAlign.center,
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: scheme.onSurface.withValues(alpha: 0.7),
                         ),
+                      ),
+                    )
+                  else
+                    ...List.generate(
+                      _stats.length,
+                      (index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildProfileCard(_stats[index], index, scheme),
                       ),
                     ),
+                  const SizedBox(height: 12),
+                  CBSectionHeader(
+                    title: 'ROLE AWARDS',
+                    icon: Icons.emoji_events_rounded,
+                    color: scheme.primary,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'Role ladders finalized: ${awardCoverage.rolesWithDefinitions}/${awardCoverage.totalRoles} • Recent unlocks: $_recentUnlockCount',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                  if (!_persistenceReady)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
-                        'Role ladders finalized: ${awardCoverage.rolesWithDefinitions}/${awardCoverage.totalRoles} • Recent unlocks: $_recentUnlockCount',
-                        style: textTheme.bodyMedium?.copyWith(
+                        'Career records are not initialized yet. Showing award catalog only.',
+                        style: textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
+                          fontStyle: FontStyle.italic,
                         ),
                       ),
                     ),
-                    if (!_persistenceReady)
-                      Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        child: Text(
-                          'Career records are not initialized yet. Showing award catalog only.',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: _buildRoleAwardFilters(scheme, visibleRoles.length),
-                    ),
-                    if (missingPlaceholderRoles.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: CBGlassTile(
-                          isPrismatic: true,
-                          borderColor: scheme.error.withValues(alpha: 0.5),
-                          child: Text(
-                            'Placeholder registry is missing roles: ${missingPlaceholderRoles.join(', ')}',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: scheme.error,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ...visibleRoles
-                        .map((role) => _buildRoleAwardCard(role, scheme)),
-                  ],
-                ),
+                  _buildRoleAwardFilters(scheme, visibleRoles.length),
+                  const SizedBox(height: 16),
+                  ...visibleRoles
+                      .map((role) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildRoleAwardCard(role, scheme),
+                          )),
+                ],
               ),
-        ),
-      ),
+            ),
     );
   }
 
@@ -296,94 +265,84 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
     final roleOptions = [...roleCatalog]
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
-    return CBGlassTile(
-      isPrismatic: true,
+    return CBPanel(
       borderColor: scheme.primary.withValues(alpha: 0.35),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Filters',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+            'FILTERS',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
+                  color: scheme.primary,
                 ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: InputDecorator(
+                child: DropdownButtonFormField<String?>(
+                  value: _selectedAwardRoleId,
                   decoration: const InputDecoration(
-                    labelText: 'Role',
-                    border: OutlineInputBorder(),
+                    labelText: 'ROLE',
                     isDense: true,
                   ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String?>(
-                      value: _selectedAwardRoleId,
-                      isExpanded: true,
-                      items: [
-                        const DropdownMenuItem<String?>(
-                          value: null,
-                          child: Text('All roles'),
-                        ),
-                        ...roleOptions.map(
-                          (role) => DropdownMenuItem<String?>(
-                            value: role.id,
-                            child: Text(role.name),
-                          ),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedAwardRoleId = value;
-                        });
-                      },
+                  items: [
+                    const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('ALL ROLES'),
                     ),
-                  ),
+                    ...roleOptions.map(
+                      (role) => DropdownMenuItem<String?>(
+                        value: role.id,
+                        child: Text(role.name.toUpperCase()),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedAwardRoleId = value;
+                    });
+                  },
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: InputDecorator(
+                child: DropdownButtonFormField<RoleAwardTier?>(
+                  value: _selectedAwardTier,
                   decoration: const InputDecoration(
-                    labelText: 'Tier',
-                    border: OutlineInputBorder(),
+                    labelText: 'TIER',
                     isDense: true,
                   ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<RoleAwardTier?>(
-                      value: _selectedAwardTier,
-                      isExpanded: true,
-                      items: [
-                        const DropdownMenuItem<RoleAwardTier?>(
-                          value: null,
-                          child: Text('All tiers'),
-                        ),
-                        ...RoleAwardTier.values.map(
-                          (tier) => DropdownMenuItem<RoleAwardTier?>(
-                            value: tier,
-                            child: Text(_tierLabel(tier)),
-                          ),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedAwardTier = value;
-                        });
-                      },
+                  items: [
+                    const DropdownMenuItem<RoleAwardTier?>(
+                      value: null,
+                      child: Text('ALL TIERS'),
                     ),
-                  ),
+                    ...RoleAwardTier.values.map(
+                      (tier) => DropdownMenuItem<RoleAwardTier?>(
+                        value: tier,
+                        child: Text(_tierLabel(tier).toUpperCase()),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedAwardTier = value;
+                    });
+                  },
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
-            'Showing $visibleRoleCount of ${roleCatalog.length} roles.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            'SHOWING $visibleRoleCount OF ${roleCatalog.length} ROLES.',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
+                  fontSize: 9,
                 ),
           ),
         ],
@@ -409,33 +368,62 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
         .length;
     final descriptor = hasFinalized
         ? roleAwardDefinitions.isEmpty
-            ? 'No awards match current filters.'
-            : '${roleAwardDefinitions.length} awards shown • $visibleUnlockCount unlocks (total: $unlockCount)'
-        : placeholderText;
+            ? 'NO AWARDS MATCH CURRENT FILTERS.'
+            : '${roleAwardDefinitions.length} AWARDS • $visibleUnlockCount UNLOCKS (TOTAL: $unlockCount)'
+        : placeholderText.toUpperCase();
+
+    final roleColor = CBColors.fromHex(role.colorHex);
 
     return CBGlassTile(
-      isPrismatic: true,
-      borderColor: scheme.primary.withValues(alpha: 0.35),
+      onTap: () {
+        // Future: Navigation to detailed role award ladder
+      },
+      borderColor: roleColor.withValues(alpha: 0.4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            role.name,
-            style: textTheme.titleMedium,
+          Row(
+            children: [
+              CBRoleAvatar(
+                assetPath: role.assetPath,
+                color: roleColor,
+                size: 32,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      role.name.toUpperCase(),
+                      style: textTheme.labelLarge!.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                        shadows: CBColors.textGlow(roleColor, intensity: 0.3),
+                      ),
+                    ),
+                    Text(
+                      role.type.toUpperCase(),
+                      style: textTheme.labelSmall?.copyWith(
+                        color: roleColor.withValues(alpha: 0.7),
+                        fontSize: 9,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (hasFinalized && unlockCount > 0)
+                CBBadge(text: '$unlockCount', color: roleColor),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            role.type,
-            style: textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             descriptor,
-            style: textTheme.bodyLarge?.copyWith(
-              color: scheme.primary,
-              fontWeight: FontWeight.w700,
+            style: textTheme.labelSmall?.copyWith(
+              color: hasFinalized ? scheme.primary : scheme.onSurfaceVariant,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -450,77 +438,85 @@ class _HallOfFameScreenState extends ConsumerState<HallOfFameScreen> {
     switch (index) {
       case 0:
         rankColor = scheme.tertiary; // Gold/Yellow for 1st place
-        rankIcon = Icons.emoji_events;
+        rankIcon = Icons.emoji_events_rounded;
         break;
       case 1:
-        rankColor =
-            scheme.onSurface.withValues(alpha: 0.85); // Silver for 2nd place
-        rankIcon = Icons.military_tech;
+        rankColor = CBColors.coolGrey; // Silver for 2nd place
+        rankIcon = Icons.military_tech_rounded;
         break;
       case 2:
-        rankColor =
-            scheme.error; // Bronze for 3rd place, or a distinct color for top 3
+        rankColor = scheme.secondary; // Bronze/Secondary for 3rd place
         rankIcon = Icons.military_tech_outlined;
         break;
       default:
-        rankColor =
-            scheme.primary.withValues(alpha: 0.55); // Default for others
+        rankColor = scheme.primary.withValues(alpha: 0.55);
     }
 
     return CBGlassTile(
-      isPrismatic: true,
-      borderColor: rankColor,
+      borderColor: rankColor.withValues(alpha: 0.6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               if (rankIcon != null)
-                Icon(rankIcon, color: rankColor, shadows: [
-                  BoxShadow(color: rankColor, blurRadius: 10, spreadRadius: 1)
+                Icon(rankIcon, color: rankColor, size: 24, shadows: [
+                  Shadow(color: rankColor.withValues(alpha: 0.5), blurRadius: 8)
                 ]),
-              if (rankIcon != null) const SizedBox(width: 10),
+              if (rankIcon != null) const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '#${index + 1} ${stat.playerName}',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  '#${index + 1} ${stat.playerName.toUpperCase()}',
+                  style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
                 ),
+              ),
+              CBBadge(
+                text: '${stat.winPercentage.toStringAsFixed(0)}% WIN RATE',
+                color: rankColor,
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Wins: ${stat.gamesWon} • Win Rate: ${stat.winPercentage.toStringAsFixed(1)}%',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: rankColor),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _buildCompactStat('GAMES', '${stat.gamesPlayed}', scheme),
+              const SizedBox(width: 24),
+              _buildCompactStat('WINS', '${stat.gamesWon}', scheme),
+              const SizedBox(width: 24),
+              Expanded(
+                child: _buildCompactStat('MAIN', stat.mostPlayedRole.toUpperCase(), scheme),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          _buildStatRow('Games Played', '${stat.gamesPlayed}', scheme: scheme),
-          _buildStatRow('Games Won', '${stat.gamesWon}', scheme: scheme),
-          _buildStatRow('Favorite Role', stat.mostPlayedRole, scheme: scheme),
         ],
       ),
     );
   }
 
-  Widget _buildStatRow(String label, String value,
-      {required ColorScheme scheme}) {
+  Widget _buildCompactStat(String label, String value, ColorScheme scheme) {
     final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: textTheme.bodyLarge!
-                  .copyWith(color: scheme.onSurfaceVariant)),
-          Text(value,
-              style: textTheme.bodyLarge!.copyWith(
-                  fontWeight: FontWeight.bold, color: scheme.onSurface)),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: textTheme.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+            fontSize: 8,
+            letterSpacing: 1.0,
+          ),
+        ),
+        Text(
+          value,
+          style: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: scheme.onSurface,
+          ),
+        ),
+      ],
     );
   }
 }

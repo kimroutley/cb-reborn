@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cb_player/auth/auth_provider.dart';
 import 'package:cb_comms/cb_comms_player.dart';
 import 'package:cb_theme/cb_theme.dart';
@@ -5,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../active_bridge.dart';
 import '../player_onboarding_provider.dart';
 import '../widgets/custom_drawer.dart';
@@ -21,6 +24,106 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   final TextEditingController _nameController = TextEditingController();
   bool _savingName = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        final prefs = await SharedPreferences.getInstance();
+        final seenGuide = prefs.getBool('player_guide_seen') ?? false;
+        if (!seenGuide && mounted) {
+          await _showPlayerGuideDialog(context);
+          await prefs.setBool('player_guide_seen', true);
+        }
+      }
+    });
+  }
+
+  Future<void> _showPlayerGuideDialog(BuildContext context) async {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return showThemedDialog(
+      context: context,
+      accentColor: scheme.secondary,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'WELCOME, PATRON',
+            style: textTheme.headlineSmall!.copyWith(
+              color: scheme.secondary,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
+              shadows: CBColors.textGlow(scheme.secondary),
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildGuideRow(
+            context,
+            Icons.chat_bubble_outline_rounded,
+            'STAY INFORMED',
+            'Watch the feed for game events, narrative clues, and voting results.',
+          ),
+          const SizedBox(height: 16),
+          _buildGuideRow(
+            context,
+            Icons.fingerprint_rounded,
+            'YOUR IDENTITY',
+            'When the game starts, hold your identity card to reveal your secret role.',
+          ),
+          const SizedBox(height: 16),
+          _buildGuideRow(
+            context,
+            Icons.menu_rounded,
+            'CLUB BIBLE',
+            'Check the side menu for role guides and game rules at any time.',
+          ),
+          const SizedBox(height: 32),
+          CBPrimaryButton(
+            label: 'ACKNOWLEDGED',
+            backgroundColor: scheme.secondary.withValues(alpha: 0.2),
+            foregroundColor: scheme.secondary,
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGuideRow(
+      BuildContext context, IconData icon, String title, String description) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: scheme.secondary, size: 24),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                      color: scheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.7),
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   void dispose() {
@@ -148,50 +251,58 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     return CBPrismScaffold(
       title: 'LOBBY',
       drawer: const CustomDrawer(),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: scheme.surface.withValues(alpha: 0.9),
-          border: Border(
-            top: BorderSide(
-              color: scheme.primary.withValues(alpha: 0.3),
-              width: 1,
+      bottomNavigationBar: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: scheme.surface.withValues(alpha: 0.6),
+              border: Border(
+                top: BorderSide(
+                  color: scheme.primary.withValues(alpha: 0.4),
+                  width: 1.0,
+                ),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.2),
+                  blurRadius: 24,
+                  spreadRadius: -10,
+                  offset: const Offset(0, -10),
+                )
+              ],
             ),
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CBBreathingLoader(size: 32),
-              const SizedBox(height: 20),
-              Text(
-                status.title,
-                textAlign: TextAlign.center,
-                style: textTheme.labelSmall!.copyWith(
-                  color: scheme.onSurface,
-                  letterSpacing: 2.5,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    BoxShadow(
-                      color: scheme.primary.withValues(alpha: 0.5),
-                      blurRadius: 24,
-                      spreadRadius: 12,
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CBBreathingLoader(size: 32),
+                  const SizedBox(height: 20),
+                  Text(
+                    status.title,
+                    textAlign: TextAlign.center,
+                    style: textTheme.labelSmall!.copyWith(
+                      color: scheme.onSurface,
+                      letterSpacing: 2.5,
+                      fontWeight: FontWeight.bold,
+                      shadows:
+                          CBColors.textGlow(scheme.primary, intensity: 0.7),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    status.detail,
+                    textAlign: TextAlign.center,
+                    style: textTheme.labelSmall!.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.5),
+                      fontSize: 8,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                status.detail,
-                textAlign: TextAlign.center,
-                style: textTheme.labelSmall!.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.3),
-                  fontSize: 8,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -248,6 +359,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                     child: CBPrimaryButton(
                       label: _savingName ? 'SAVING...' : 'SAVE USERNAME',
                       onPressed: _savingName ? null : _saveUsername,
+                      fullWidth: false,
                     ),
                   ),
                 ],

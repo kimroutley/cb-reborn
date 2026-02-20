@@ -419,17 +419,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 color: scheme.primary.withValues(alpha: 0.9),
                                 fontWeight: FontWeight.w600,
                               ),
-<<<<<<< ui-polish-host-player-9962985775398423612
-=======
-                            ],
-                            const SizedBox(height: 24),
-                            CBPrimaryButton(
-                              label: _isConnecting
-                                  ? 'CONNECTING...'
-                                  : 'CONNECT TO HOST',
-                              onPressed:
-                                  _isConnecting ? null : _connectFromButton,
->>>>>>> main
                             ),
                           ],
                           const SizedBox(height: 24),
@@ -437,7 +426,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             label: _isConnecting
                                 ? 'CONNECTING...'
                                 : 'CONNECT TO HOST',
-                            onPressed: _isConnecting ? null : _connect,
+                            onPressed:
+                                _isConnecting ? null : _connectFromButton,
                           ),
                           if (_connectionError != null) ...[
                             const SizedBox(height: 16),

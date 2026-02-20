@@ -3,15 +3,12 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'auth/player_auth_screen.dart';
 import 'join_link_state.dart';
 
 import 'firebase_options.dart';
-import 'bootstrap/player_bootstrap_gate.dart';
-import 'screens/player_home_shell.dart';
 import 'screens/stats_screen.dart';
 import 'screens/hall_of_fame_screen.dart';
-import 'widgets/effects_overlay.dart';
+import 'screens/intro_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -115,11 +112,7 @@ class PlayerApp extends ConsumerWidget {
               '/stats': (context) => const StatsScreen(),
               '/hall-of-fame': (context) => const HallOfFameScreen(),
             },
-            home: PlayerBootstrapGate(
-              child: PlayerAuthScreen(
-                child: const EffectsOverlay(child: PlayerHomeShell()),
-              ),
-            ),
+            home: const PlayerIntroScreen(),
             debugShowCheckedModeBanner: false,
           );
         },

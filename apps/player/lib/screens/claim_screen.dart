@@ -1,5 +1,6 @@
 import 'package:cb_theme/cb_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../active_bridge.dart';
@@ -17,6 +18,7 @@ class _ClaimScreenState extends ConsumerState<ClaimScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final activeBridge = ref.watch(activeBridgeProvider);
     final gameState = activeBridge.state;
 
@@ -24,49 +26,75 @@ class _ClaimScreenState extends ConsumerState<ClaimScreen> {
         .where((p) => p.isAlive && !gameState.claimedPlayerIds.contains(p.id))
         .toList();
 
-    return CBNeonBackground(
-      child: Column(
+    return CBPrismScaffold(
+      title: 'IDENTITY CLAIM',
+      showAppBar: false,
+      body: Column(
         children: [
-          SizedBox(height: MediaQuery.paddingOf(context).top + 56),
-          CBSectionHeader(
-            title: 'IDENTITY SELECTION',
-            color: scheme.primary,
+          SizedBox(height: MediaQuery.paddingOf(context).top + 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'SELECT IDENTITY',
+              style: textTheme.headlineMedium!.copyWith(
+                color: scheme.primary,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2.0,
+                shadows: CBColors.textGlow(scheme.primary, intensity: 0.6),
+              ),
+            ),
           ),
-          const SizedBox(height: CBSpace.x2),
-          CBSectionHeader(
-            title: 'AVAILABLE IDENTITIES',
-            color: scheme.primary,
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'CHOOSE YOUR ASSIGNED IDENTITY FROM THE LIST BELOW.',
+              textAlign: TextAlign.center,
+              style: textTheme.bodySmall!.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.6),
+                letterSpacing: 1.0,
+              ),
+            ),
           ),
-          const SizedBox(height: CBSpace.x3),
+          const SizedBox(height: 32),
           Expanded(
             child: availablePlayers.isEmpty
                 ? Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(CBSpace.x6),
+                      padding: const EdgeInsets.all(32.0),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const CBBreathingLoader(size: 40),
-                          const SizedBox(height: CBSpace.x3),
+                          const CBBreathingLoader(size: 48),
+                          const SizedBox(height: 24),
                           Text(
                             gameState.players.isEmpty
                                 ? 'LOADING IDENTITIES...'
                                 : 'WAITING FOR AN OPEN IDENTITY...',
                             textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium!
-                                .copyWith(
-                                  color: scheme.primary,
-                                  letterSpacing: 1.2,
-                                ),
+                            style: textTheme.labelLarge!.copyWith(
+                              color: scheme.primary,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
+                          if (gameState.players.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                'Please wait for the Host to add you.',
+                                textAlign: TextAlign.center,
+                                style: textTheme.bodyMedium!.copyWith(
+                                  color: scheme.onSurface.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
                   )
                 : ListView.builder(
-                    padding: CBInsets.screenH,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: availablePlayers.length,
                     itemBuilder: (context, index) {
                       final player = availablePlayers[index];
@@ -74,32 +102,62 @@ class _ClaimScreenState extends ConsumerState<ClaimScreen> {
 
                       return CBFadeSlide(
                         delay: Duration(milliseconds: 30 * index),
-                        child: CBGlassTile(
-                          onTap: () {
-                            setState(() => _selectedId = player.id);
-                          },
-                          borderColor: isSelected
-                              ? scheme.primary
-                              : scheme.outlineVariant,
-                          child: ListTile(
-                            title: Text(player.name),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: CBGlassTile(
+                            onTap: () {
+                              setState(() => _selectedId = player.id);
+                              HapticFeedback.selectionClick();
+                            },
+                            isPrismatic: isSelected,
+                            isSelected: isSelected,
+                            borderColor: isSelected
+                                ? scheme.primary
+                                : scheme.outlineVariant.withValues(alpha: 0.3),
+                            child: Row(
+                              children: [
+                                CBRoleAvatar(
+                                  size: 40,
+                                  color: isSelected ? scheme.primary : scheme.onSurface.withValues(alpha: 0.5),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Text(
+                                    player.name.toUpperCase(),
+                                    style: textTheme.titleMedium!.copyWith(
+                                      color: isSelected ? scheme.primary : scheme.onSurface,
+                                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.normal,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    color: scheme.primary,
+                                    shadows: CBColors.iconGlow(scheme.primary),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       );
                     },
                   ),
           ),
-          Padding(
-            padding: CBInsets.screen,
-            child: CBPrimaryButton(
-              label: 'CLAIM IDENTITY',
-              onPressed: _selectedId == null
-                  ? null
-                  : () {
-                      activeBridge.actions
-                          .claimPlayer(_selectedId!); // Trigger the claim
-                      // Navigator.pop is not needed because GameRouter listens to state
-                    },
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: CBPrimaryButton(
+                label: 'CONFIRM IDENTITY',
+                icon: Icons.fingerprint_rounded,
+                onPressed: _selectedId == null
+                    ? null
+                    : () {
+                        HapticFeedback.heavyImpact();
+                        activeBridge.actions.claimPlayer(_selectedId!);
+                      },
+              ),
             ),
           ),
         ],

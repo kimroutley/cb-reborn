@@ -105,10 +105,17 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    final usernameFinder = find.byType(TextField).first;
-    expect(tester.widget<TextField>(usernameFinder).controller!.text, 'Starter');
+    final usernameField = find.byType(CBTextField).first;
+    final usernameEditable = find.descendant(
+      of: usernameField,
+      matching: find.byType(EditableText),
+    );
+    expect(
+      tester.widget<EditableText>(usernameEditable).controller.text,
+      'Starter',
+    );
 
-    await tester.enterText(usernameFinder, 'Dirty Local');
+    await tester.enterText(usernameEditable, 'Dirty Local');
     await tester.pump();
 
     controller.add(<String, dynamic>{
@@ -122,13 +129,21 @@ void main() {
       find.text('Cloud profile update detected. Save/discard to sync latest values.'),
       findsOneWidget,
     );
-    expect(tester.widget<TextField>(usernameFinder).controller!.text, 'Dirty Local');
+    expect(
+      tester.widget<EditableText>(usernameEditable).controller.text,
+      'Dirty Local',
+    );
 
-    final discardButton = tester.widget<CBTextButton>(find.byType(CBTextButton).first);
-    discardButton.onPressed!.call();
+    final discardButtonFinder = find.widgetWithText(CBGhostButton, 'DISCARD');
+    await tester.ensureVisible(discardButtonFinder);
+    await tester.tap(discardButtonFinder);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
-    expect(tester.widget<TextField>(usernameFinder).controller!.text, 'Remote Applied');
+    expect(
+      tester.widget<EditableText>(usernameEditable).controller.text,
+      'Remote Applied',
+    );
   });
 
   testWidgets('queues remote profile updates while dirty then applies after save', (tester) async {
@@ -161,8 +176,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    final usernameField = find.byType(TextField).first;
-    await tester.enterText(usernameField, 'Local Save');
+    final usernameField = find.byType(CBTextField).first;
+    final usernameEditable = find.descendant(
+      of: usernameField,
+      matching: find.byType(EditableText),
+    );
+    await tester.enterText(usernameEditable, 'Local Save');
     await tester.pump();
 
     controller.add(<String, dynamic>{
@@ -177,12 +196,16 @@ void main() {
       findsOneWidget,
     );
 
-    final saveButton = tester.widget<CBPrimaryButton>(find.byType(CBPrimaryButton).first);
-    saveButton.onPressed!.call();
+    final saveButtonFinder = find.widgetWithText(CBPrimaryButton, 'SAVE CHANGES');
+    await tester.ensureVisible(saveButtonFinder);
+    await tester.tap(saveButtonFinder);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(tester.widget<TextField>(usernameField).controller!.text, 'Remote After Save');
+    expect(
+      tester.widget<EditableText>(usernameEditable).controller.text,
+      'Remote After Save',
+    );
     expect(find.text('Cloud profile update detected. Save/discard to sync latest values.'), findsNothing);
   });
 

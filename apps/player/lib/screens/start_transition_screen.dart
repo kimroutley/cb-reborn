@@ -10,56 +10,58 @@ class StartTransitionScreen extends StatelessWidget {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return CBNeonBackground(
-      child: Center(
+    return CBPrismScaffold(
+      title: 'ENTERING CLUB...',
+      showAppBar: false,
+      body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: CBPanel(
-              borderColor: scheme.primary.withValues(alpha: 0.55),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CBBreathingLoader(size: 62),
-                  const SizedBox(height: 20),
-                  Text(
-                    'SYNCING INTO THE CLUB...',
-                    textAlign: TextAlign.center,
-                    style: textTheme.titleLarge?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.4,
-                      shadows: CBColors.textGlow(scheme.primary),
-                    ),
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CBBreathingLoader(size: 80),
+                const SizedBox(height: 48),
+                Text(
+                  'INITIALIZING NEURAL LINK...',
+                  textAlign: TextAlign.center,
+                  style: textTheme.headlineSmall?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2.0,
+                    shadows: CBColors.textGlow(scheme.primary, intensity: 0.6),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Final checks underway. Lights up, sound check, then you are in.',
-                    textAlign: TextAlign.center,
-                    style: textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Establishing secure connection to the host terminal. Prepare for assignment.',
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodyLarge!.copyWith(
+                    color: scheme.onSurface.withValues(alpha: 0.8),
+                    height: 1.4,
                   ),
-                  const SizedBox(height: 18),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      minHeight: 6,
-                      backgroundColor: scheme.surfaceContainerHighest
-                          .withValues(alpha: 0.45),
-                      valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
-                    ),
+                ),
+                const SizedBox(height: 48),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    minHeight: 4,
+                    backgroundColor: scheme.primary.withValues(alpha: 0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Club vibes loading...',
-                    textAlign: TextAlign.center,
-                    style: textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurface.withValues(alpha: 0.65),
-                      letterSpacing: 1.1,
-                    ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'ENCRYPTING DATA PACKETS...',
+                  textAlign: TextAlign.center,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: scheme.primary.withValues(alpha: 0.6),
+                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.w800,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

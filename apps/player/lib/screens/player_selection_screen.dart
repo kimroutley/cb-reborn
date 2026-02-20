@@ -51,84 +51,90 @@ class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(
-          (widget.step.isVote ? 'VOTE CASTING' : 'SELECT TARGET').toUpperCase(),
-          style: Theme.of(context).textTheme.titleLarge!,
-        ),
-        centerTitle: true,
-      ),
-      body: CBNeonBackground(
-        child: SafeArea(
-          child: Column(
-            children: [
-              if (_isMultiSelect)
-                Padding(
-                  padding: CBInsets.panel,
-                  child: CBMessageBubble(
-                    sender: 'SYSTEM',
-                    message:
-                        'SELECT 2 PLAYERS TO COMPARE (${_selectedIds.length}/2)',
-                    isSystemMessage: true,
-                    color: scheme.tertiary,
-                  ),
-                ),
-              Expanded(
-                child: ListView.builder(
-                  padding: CBInsets.screen,
-                  itemCount: widget.players.length,
-                  itemBuilder: (context, index) {
-                    final player = widget.players[index];
-                    final isSelected = _selectedIds.contains(player.id);
-
-                    return CBFadeSlide(
-                      delay: Duration(milliseconds: 30 * index),
-                      child: CBGlassTile(
-                        isPrismatic: true,
-                        borderColor:
-                            isSelected ? scheme.tertiary : scheme.primary,
-                        onTap: () => _onTap(player.id),
-                        child: Row(
-                          children: [
-                            CBRoleAvatar(
-                              assetPath: 'assets/roles/${player.roleId}.png',
-                              size: 40,
-                              color:
-                                  isSelected ? scheme.tertiary : scheme.primary,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(player.name,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    player.roleName,
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (isSelected)
-                              Icon(Icons.check_circle, color: scheme.tertiary),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+    return CBPrismScaffold(
+      title: widget.step.isVote ? 'VOTE CASTING' : 'SELECT TARGET',
+      body: Column(
+        children: [
+          if (_isMultiSelect)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: CBMessageBubble(
+                sender: 'SYSTEM',
+                message:
+                    'SELECT 2 PLAYERS TO COMPARE (${_selectedIds.length}/2)',
+                isSystemMessage: true,
+                color: scheme.tertiary,
               ),
-            ],
+            ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              itemCount: widget.players.length,
+              itemBuilder: (context, index) {
+                final player = widget.players[index];
+                final isSelected = _selectedIds.contains(player.id);
+                final roleColor = CBColors.fromHex(player.roleColorHex);
+
+                return CBFadeSlide(
+                  delay: Duration(milliseconds: 30 * index),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: CBGlassTile(
+                      isPrismatic: isSelected,
+                      isSelected: isSelected,
+                      borderColor:
+                          isSelected ? scheme.primary : roleColor.withValues(alpha: 0.3),
+                      onTap: () => _onTap(player.id),
+                      child: Row(
+                        children: [
+                          CBRoleAvatar(
+                            assetPath: 'assets/roles/${player.roleId}.png',
+                            size: 40,
+                            color: roleColor,
+                            pulsing: isSelected,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  player.name.toUpperCase(),
+                                  style: textTheme.labelLarge!.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.0,
+                                    color: isSelected ? scheme.primary : scheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  player.roleName.toUpperCase(),
+                                  style: textTheme.labelSmall!.copyWith(
+                                    color: roleColor.withValues(alpha: 0.7),
+                                    fontSize: 9,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: scheme.primary,
+                              shadows: CBColors.iconGlow(scheme.primary),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ),
       bottomNavigationBar: (widget.step.isVote || _isMultiSelect)
           ? _buildBottomBar(context)
@@ -137,21 +143,25 @@ class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
   }
 
   Widget _buildBottomBar(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     if (_isMultiSelect) {
       return Padding(
-        padding: CBInsets.panel,
+        padding: const EdgeInsets.all(24),
         child: CBPrimaryButton(
-          label: 'CONFIRM MIXOLOGY',
+          label: 'CONFIRM TARGETS',
           onPressed: _selectedIds.length == 2 ? _confirmSelection : null,
-          icon: Icons.check_circle_outline,
+          icon: Icons.check_circle_outline_rounded,
         ),
       );
     }
 
     return Padding(
-      padding: CBInsets.panel,
+      padding: const EdgeInsets.all(24),
       child: CBPrimaryButton(
         label: 'ABSTAIN / SKIP',
+        backgroundColor: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        foregroundColor: scheme.onSurfaceVariant,
         onPressed: () => widget.onPlayerSelected('abstain'),
         icon: Icons.block_flipped,
       ),

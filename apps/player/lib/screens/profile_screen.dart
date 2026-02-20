@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../profile_edit_guard.dart';
+import '../widgets/custom_drawer.dart';
 import '../widgets/profile_action_buttons.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -549,7 +550,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _handleAttemptPop();
       },
       child: CBPrismScaffold(
-        title: 'Profile',
+        title: 'PLAYER PROFILE',
+        drawer: const CustomDrawer(),
         body: Column(
           children: [
             AnimatedSwitcher(
@@ -564,7 +566,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             Expanded(
               child: _loadingProfile
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(child: CBBreathingLoader())
                   : AnimatedOpacity(
                       opacity: _saving ? 0.7 : 1,
                       duration: const Duration(milliseconds: 250),
@@ -576,49 +578,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               CBSectionHeader(
-                                title: 'PLAYER PROFILE',
+                                title: 'IDENTITY CARD',
                                 icon: Icons.badge_outlined,
                                 color: scheme.primary,
                               ),
-                              const SizedBox(height: CBSpace.x2),
+                              const SizedBox(height: CBSpace.x4),
+
                               AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 250),
                                 child: (_hasChanges || _remoteUpdatePending)
-                                    ? CBGlassTile(
-                                        key: const ValueKey('dirty-banner'),
-                                        isPrismatic: true,
-                                        borderColor: scheme.tertiary
-                                            .withValues(alpha: 0.6),
-                                        borderRadius: BorderRadius.circular(14),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.auto_awesome_rounded,
-                                              color: scheme.tertiary,
-                                              size: 18,
-                                            ),
-                                            const SizedBox(width: CBSpace.x2),
-                                            Expanded(
-                                              child: Text(
-                                                _remoteUpdatePending
-                                                    ? 'Cloud profile update detected. Save/discard to sync latest values.'
-                                                    : 'Unsaved changes in progress.',
-                                                style: theme.textTheme.bodySmall
-                                                    ?.copyWith(
-                                                  color: scheme.onSurface,
-                                                  fontWeight: FontWeight.w700,
+                                    ? Padding(
+                                      padding: const EdgeInsets.only(bottom: 24),
+                                      child: CBGlassTile(
+                                          key: const ValueKey('dirty-banner'),
+                                          isPrismatic: true,
+                                          borderColor: scheme.tertiary
+                                              .withValues(alpha: 0.6),
+                                          borderRadius: BorderRadius.circular(14),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.auto_awesome_rounded,
+                                                color: scheme.tertiary,
+                                                size: 18,
+                                              ),
+                                              const SizedBox(width: CBSpace.x2),
+                                              Expanded(
+                                                child: Text(
+                                                  _remoteUpdatePending
+                                                      ? 'Cloud profile update detected. Save/discard to sync latest values.'
+                                                      : 'Unsaved changes in progress.',
+                                                  style: theme.textTheme.bodySmall
+                                                      ?.copyWith(
+                                                    color: scheme.onSurface,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
-                                      )
+                                    )
                                     : const SizedBox(
                                         key: ValueKey('clean-banner'),
                                         height: 0,
                                       ),
                               ),
-                              const SizedBox(height: CBSpace.x4),
+
                               CBPanel(
                                 borderColor:
                                     scheme.primary.withValues(alpha: 0.35),
@@ -626,7 +632,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'ACCOUNT',
+                                      'ACCOUNT DETAILS',
                                       style:
                                           theme.textTheme.labelSmall?.copyWith(
                                         color: scheme.primary,
@@ -634,31 +640,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         fontWeight: FontWeight.w800,
                                       ),
                                     ),
-                                    const SizedBox(height: CBSpace.x3),
+                                    const SizedBox(height: CBSpace.x4),
                                     CBProfileReadonlyRow(
                                       label: 'UID',
                                       value: user?.uid ?? 'N/A',
                                     ),
-                                    const SizedBox(height: CBSpace.x2),
+                                    const SizedBox(height: CBSpace.x3),
                                     CBProfileReadonlyRow(
                                       label: 'EMAIL',
                                       value:
                                           user?.email ?? 'No email on account',
                                     ),
-                                    const SizedBox(height: CBSpace.x2),
+                                    const SizedBox(height: CBSpace.x3),
                                     CBProfileReadonlyRow(
                                       label: 'CREATED',
                                       value: _formatDateTime(_createdAt),
                                     ),
-                                    const SizedBox(height: CBSpace.x2),
+                                    const SizedBox(height: CBSpace.x3),
                                     CBProfileReadonlyRow(
-                                      label: 'UPDATED',
+                                      label: 'LAST UPDATE',
                                       value: _formatDateTime(_updatedAt),
                                     ),
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: CBSpace.x4),
+                              const SizedBox(height: CBSpace.x6),
                               CBPanel(
                                 borderColor:
                                     scheme.secondary.withValues(alpha: 0.35),
@@ -674,7 +680,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         fontWeight: FontWeight.w800,
                                       ),
                                     ),
-                                    const SizedBox(height: CBSpace.x3),
+                                    const SizedBox(height: CBSpace.x4),
                                     CBTextField(
                                       controller: _usernameController,
                                       focusNode: _usernameFocusNode,
@@ -694,20 +700,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                             .requestFocus(_publicIdFocusNode);
                                       },
                                       decoration: const InputDecoration(
-                                        labelText: 'Username *',
+                                        labelText: 'USERNAME',
                                         hintText: '3-24 characters',
                                       ),
                                     ),
-                                    const SizedBox(height: CBSpace.x1),
+                                    const SizedBox(height: CBSpace.x2),
                                     Text(
                                       'This is what other players see in lobbies and recaps.',
                                       style:
                                           theme.textTheme.bodySmall?.copyWith(
                                         color: scheme.onSurface
-                                            .withValues(alpha: 0.7),
+                                            .withValues(alpha: 0.5),
+                                        fontSize: 9,
                                       ),
                                     ),
-                                    const SizedBox(height: CBSpace.x3),
+                                    const SizedBox(height: CBSpace.x4),
                                     CBTextField(
                                       controller: _publicIdController,
                                       focusNode: _publicIdFocusNode,
@@ -727,12 +734,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       },
                                       decoration: const InputDecoration(
                                         labelText:
-                                            'Public Player ID (optional)',
+                                            'PUBLIC PLAYER ID (OPTIONAL)',
                                         hintText: 'night_fox',
                                       ),
                                     ),
                                     if (normalizedPublicId.isNotEmpty) ...[
-                                      const SizedBox(height: CBSpace.x1),
+                                      const SizedBox(height: CBSpace.x2),
                                       Text(
                                         'Share link key: $normalizedPublicId',
                                         style:
@@ -742,9 +749,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         ),
                                       ),
                                     ],
-                                    const SizedBox(height: CBSpace.x4),
+                                    const SizedBox(height: CBSpace.x6),
                                     Text(
-                                      'PROFILE STYLE',
+                                      'VISUAL STYLE',
                                       style:
                                           theme.textTheme.labelSmall?.copyWith(
                                         color: scheme.tertiary,
@@ -752,7 +759,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         fontWeight: FontWeight.w800,
                                       ),
                                     ),
-                                    const SizedBox(height: CBSpace.x2),
+                                    const SizedBox(height: CBSpace.x3),
                                     Wrap(
                                       spacing: 8,
                                       runSpacing: 8,
@@ -760,7 +767,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         final selected =
                                             style == _selectedPreferredStyle;
                                         return CBProfilePreferenceChip(
-                                          label: _styleLabel(style),
+                                          label: _styleLabel(style).toUpperCase(),
                                           selected: selected,
                                           enabled: !_saving,
                                           onTap: () {
@@ -772,9 +779,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         );
                                       }).toList(growable: false),
                                     ),
-                                    const SizedBox(height: CBSpace.x4),
+                                    const SizedBox(height: CBSpace.x6),
                                     Text(
-                                      'AVATAR EMOJI',
+                                      'AVATAR',
                                       style:
                                           theme.textTheme.labelSmall?.copyWith(
                                         color: scheme.tertiary,
@@ -782,7 +789,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         fontWeight: FontWeight.w800,
                                       ),
                                     ),
-                                    const SizedBox(height: CBSpace.x2),
+                                    const SizedBox(height: CBSpace.x3),
                                     Wrap(
                                       spacing: 8,
                                       runSpacing: 8,
@@ -801,7 +808,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         );
                                       }).toList(growable: false),
                                     ),
-                                    const SizedBox(height: CBSpace.x5),
+                                    const SizedBox(height: CBSpace.x6),
                                     ProfileActionButtons(
                                       saving: _saving,
                                       canSave: !_saving &&

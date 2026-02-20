@@ -50,8 +50,6 @@ class _GameActionTileState extends State<GameActionTile> {
                     .sendAction(stepId: widget.step.id, targetId: targetId);
               }
 
-              // Only pop if it's not a multi-select or if we just sent the combined result
-              // (Depending on how onPlayerSelected is implemented for multi-select)
               if (!isMultiSelect || targetId.contains(',')) {
                 Navigator.pop(context);
               }
@@ -72,15 +70,11 @@ class _GameActionTileState extends State<GameActionTile> {
               children: [
                 Text(
                   widget.step.title.toUpperCase(),
-                  style: textTheme.headlineSmall!.copyWith(
+                  style: textTheme.labelLarge!.copyWith(
                     color: widget.roleColor,
-                    shadows: [
-                      BoxShadow(
-                        color: widget.roleColor.withValues(alpha: 0.5),
-                        blurRadius: 24,
-                        spreadRadius: 12,
-                      ),
-                    ],
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2.0,
+                    shadows: CBColors.textGlow(widget.roleColor, intensity: 0.5),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -89,6 +83,8 @@ class _GameActionTileState extends State<GameActionTile> {
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: CBPrimaryButton(
                       label: option.toUpperCase(),
+                      backgroundColor: widget.roleColor.withValues(alpha: 0.2),
+                      foregroundColor: widget.roleColor,
                       onPressed: () {
                         widget.bridge.sendAction(
                             stepId: widget.step.id, targetId: option);
@@ -109,17 +105,21 @@ class _GameActionTileState extends State<GameActionTile> {
   Widget build(BuildContext context) {
     String title;
     IconData icon;
+    String subTitle = "INPUT REQUIRED";
 
     if (widget.step.isVote) {
       title = "CRITICAL VOTE";
       icon = Icons.how_to_vote_rounded;
+      subTitle = "EXILE PROTOCOL ACTIVE";
     } else if (widget.step.actionType == ScriptActionType.selectPlayer.name ||
         widget.step.actionType == ScriptActionType.selectTwoPlayers.name) {
       title = "SELECT TARGET";
       icon = Icons.gps_fixed_rounded;
+      subTitle = "NEURAL LINK ESTABLISHED";
     } else if (widget.step.actionType == ScriptActionType.binaryChoice.name) {
       title = "MAKE A CHOICE";
       icon = Icons.alt_route_rounded;
+      subTitle = "DECISION MATRIX LOADED";
     } else {
       title = "OPERATIVE ACTION";
       icon = Icons.flash_on_rounded;
@@ -128,50 +128,96 @@ class _GameActionTileState extends State<GameActionTile> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return CBGlassTile(
-      borderColor: widget.roleColor,
-      onTap: _handleActionTap,
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: textTheme.headlineSmall!.copyWith(
-              color: widget.roleColor,
-              shadows: [
-                BoxShadow(
-                  color: widget.roleColor.withValues(alpha: 0.5),
-                  blurRadius: 24,
-                  spreadRadius: 12,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: CBGlassTile(
+        borderColor: widget.roleColor.withValues(alpha: 0.6),
+        onTap: _handleActionTap,
+        isPrismatic: true,
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: widget.roleColor, size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: textTheme.labelLarge!.copyWith(
+                    color: widget.roleColor,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2.0,
+                    shadows: CBColors.textGlow(widget.roleColor, intensity: 0.4),
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.step.instructionText.isNotEmpty
-                ? widget.step.instructionText
-                : "INPUT REQUIRED",
-            style: textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 16),
-          Icon(icon, color: scheme.onSurface, size: 20),
-          const SizedBox(height: 16),
-          Text(
-            "WAKE UP, ${widget.player.name.toUpperCase()}. THE CLUB IS WAITING.",
-            textAlign: TextAlign.center,
-            style: textTheme.labelSmall!.copyWith(
-              color: scheme.onSurface.withValues(alpha: 0.4),
-              fontSize: 9,
-              letterSpacing: 1.0,
+            const SizedBox(height: 12),
+            Text(
+              subTitle,
+              style: textTheme.labelSmall!.copyWith(
+                color: widget.roleColor.withValues(alpha: 0.6),
+                fontSize: 9,
+                letterSpacing: 1.5,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Icon(
-            Icons.touch_app,
-            color: scheme.onSurface.withValues(alpha: 0.24),
-            size: 16,
-          ),
-        ],
+            const SizedBox(height: 20),
+            Text(
+              widget.step.instructionText.isNotEmpty
+                  ? widget.step.instructionText.toUpperCase()
+                  : "WAITING FOR YOUR INPUT...",
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium!.copyWith(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 32,
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.transparent, widget.roleColor.withValues(alpha: 0.5)],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Icon(
+                    Icons.touch_app_rounded,
+                    color: widget.roleColor.withValues(alpha: 0.4),
+                    size: 18,
+                  ),
+                ),
+                Container(
+                  width: 32,
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [widget.roleColor.withValues(alpha: 0.5), Colors.transparent],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "WAKE UP, ${widget.player.name.toUpperCase()}. THE CLUB IS WAITING.",
+              textAlign: TextAlign.center,
+              style: textTheme.labelSmall!.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.3),
+                fontSize: 8,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
