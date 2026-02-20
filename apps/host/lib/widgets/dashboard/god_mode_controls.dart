@@ -11,100 +11,206 @@ class GodModeControls extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final alivePlayers = gameState.players.where((p) => p.isAlive).toList();
+    final alivePlayerIds = gameState.players
+        .where((p) => p.isAlive)
+        .map((p) => p.id)
+        .toSet();
+    final pendingDramaSwapTargetIds = <String>{};
+    for (final dramaQueen in gameState.players.where(
+      (p) => p.role.id == RoleIds.dramaQueen && p.isAlive,
+    )) {
+      final targetAId = dramaQueen.dramaQueenTargetAId;
+      final targetBId = dramaQueen.dramaQueenTargetBId;
+      if (targetAId == null || targetBId == null) continue;
+      if (targetAId == targetBId) continue;
+      if (targetAId == dramaQueen.id || targetBId == dramaQueen.id) continue;
+      if (!alivePlayerIds.contains(targetAId) ||
+          !alivePlayerIds.contains(targetBId)) {
+        continue;
+      }
+      pendingDramaSwapTargetIds
+        ..add(targetAId)
+        ..add(targetBId);
+    }
 
     return CBPanel(
-      borderColor: scheme.secondary.withValues(alpha: 0.7),
+      borderColor: scheme.secondary.withValues(alpha: 0.6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CBSectionHeader(
-            title: 'God Mode Controls',
+            title: 'GOD MODE PROTOCOLS',
             color: scheme.secondary,
-            icon: Icons.flash_on,
+            icon: Icons.bolt_rounded,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            'Powerful host tools. Use responsibly.',
-            style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                  color: CBColors.matrixGreen,
-                ),
+            '// AUTHORIZED HOST INTERVENTIONS ONLY. USE WITH EXTREME PREJUDICE.',
+            style: textTheme.labelSmall!.copyWith(
+              color: scheme.secondary.withValues(alpha: 0.6),
+              fontSize: 8,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-          const SizedBox(height: 16),
-          ...alivePlayers
-              .map((player) => _buildPlayerControlTile(context, ref, player)),
+          const SizedBox(height: 20),
+          if (alivePlayers.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  'NO ACTIVE TARGETS DETECTED',
+                  style: textTheme.labelSmall!.copyWith(
+                    color: scheme.onSurface.withValues(alpha: 0.3),
+                    letterSpacing: 2.0,
+                  ),
+                ),
+              ),
+            )
+          else
+            ...alivePlayers.map((player) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildPlayerControlTile(
+                    context,
+                    ref,
+                    player,
+                    hasPendingDramaSwap:
+                        pendingDramaSwapTargetIds.contains(player.id),
+                  ),
+                )),
         ],
       ),
     );
   }
 
   Widget _buildPlayerControlTile(
-      BuildContext context, WidgetRef ref, Player player) {
-    final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    return ExpansionTile(
-      leading: CBRoleAvatar(
-        assetPath: player.role.assetPath,
-        color: CBColors.fromHex(player.role.colorHex),
-        size: 32,
-      ),
-      title: Text(
-        player.name,
-        style: textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
-      ),
-      subtitle: Text(
-        player.role.name,
-        style: textTheme.bodySmall!.copyWith(
-          color: scheme.onSurfaceVariant,
-        ),
-      ),
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
+    BuildContext context,
+    WidgetRef ref,
+    Player player, {
+    required bool hasPendingDramaSwap,
+  }) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final scheme = theme.colorScheme;
+    final roleColor = CBColors.fromHex(player.role.colorHex);
+
+    return CBGlassTile(
+      padding: EdgeInsets.zero,
+      borderColor: roleColor.withValues(alpha: 0.3),
+      child: Theme(
+        data: theme.copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          iconColor: roleColor,
+          collapsedIconColor: roleColor.withValues(alpha: 0.7),
+          leading: CBRoleAvatar(
+            assetPath: player.role.assetPath,
+            color: roleColor,
+            size: 36,
+            pulsing: player.isAlive && !player.isSinBinned,
+          ),
+          title: Row(
             children: [
-              CBGhostButton(
-                label: 'KILL',
-                color: CBColors.dead,
-                onPressed: () => _confirmKill(context, ref, player),
-              ),
-              CBGhostButton(
-                label: player.isMuted ? 'UNMUTE' : 'MUTE',
-                color: CBColors.alertOrange,
-                onPressed: () => _toggleMute(context, ref, player),
-              ),
-              CBGhostButton(
-                label: player.hasHostShield ? 'REMOVE SHIELD' : 'GRANT SHIELD',
-                color: CBColors.electricCyan,
-                onPressed: () => _grantShield(context, ref, player),
-              ),
-              CBGhostButton(
-                label: player.isSinBinned ? 'RELEASE' : 'SIN BIN',
-                color: CBColors.darkMetal,
-                onPressed: () => _toggleSinBin(context, ref, player),
-              ),
-              CBGhostButton(
-                label: player.isShadowBanned ? 'UNBAN' : 'SHADOW BAN',
-                color: CBColors.alertOrange,
-                onPressed: () => _toggleShadowBan(context, ref, player),
-              ),
-              CBGhostButton(
-                label: 'KICK',
-                color: CBColors.dead,
-                onPressed: () => _kickPlayer(context, ref, player),
-              ),
+              Expanded(
+                child: Text(
+                  player.name.toUpperCase(),
+                  style: textTheme.labelLarge!.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                    shadows: CBColors.textGlow(roleColor, intensity: 0.3),
+                  ),
+                ),
+            ),
+              if (hasPendingDramaSwap)
+                CBBadge(
+                  text: 'PENDING SWAP',
+                  color: scheme.secondary,
+                ),
             ],
           ),
+          subtitle: Text(
+            '// ${player.role.name.toUpperCase()}',
+            style: textTheme.labelSmall!.copyWith(
+              color: roleColor.withValues(alpha: 0.6),
+              fontSize: 9,
+              letterSpacing: 1.0,
+            ),
+          ),
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 1, color: Colors.white12),
+                  const SizedBox(height: 16),
+                  Text(
+                    'AVAILABLE INTERVENTIONS',
+                    style: textTheme.labelSmall!.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.4),
+                      fontSize: 8,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _ActionChip(
+                        label: 'ELIMINATE',
+                        icon: Icons.close_rounded,
+                        color: scheme.error,
+                        onTap: () => _confirmKill(context, ref, player),
+                      ),
+                      _ActionChip(
+                        label: player.isMuted ? 'UNMUTE' : 'MUTE',
+                        icon: player.isMuted ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                        color: scheme.secondary,
+                        onTap: () => _toggleMute(context, ref, player),
+                      ),
+                      _ActionChip(
+                        label: player.hasHostShield ? 'DISPELS SHIELD' : 'SHIELD',
+                        icon: Icons.shield_rounded,
+                        color: scheme.primary,
+                        onTap: () => _grantShield(context, ref, player),
+                      ),
+                      _ActionChip(
+                        label: player.isSinBinned ? 'RELEASE' : 'SIN BIN',
+                        icon: Icons.timer_rounded,
+                        color: CBColors.coolGrey,
+                        onTap: () => _toggleSinBin(context, ref, player),
+                      ),
+                      _ActionChip(
+                        label: player.isShadowBanned ? 'UNBAN' : 'SHADOW BAN',
+                        icon: Icons.visibility_off_rounded,
+                        color: scheme.secondary,
+                        onTap: () => _toggleShadowBan(context, ref, player),
+                      ),
+                      _ActionChip(
+                        label: 'EJECT',
+                        icon: Icons.person_remove_rounded,
+                        color: scheme.error,
+                        onTap: () => _kickPlayer(context, ref, player),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   void _confirmKill(BuildContext context, WidgetRef ref, Player player) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     showThemedDialog(
       context: context,
       accentColor: scheme.error,
@@ -113,39 +219,39 @@ class GodModeControls extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'CONFIRM KILL',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: scheme.error,
-                  letterSpacing: 1.6,
-                  fontWeight: FontWeight.bold,
-                  shadows: CBColors.textGlow(scheme.error, intensity: 0.6),
-                ),
+            'PROTOCOL: TERMINATION',
+            style: textTheme.labelLarge!.copyWith(
+              color: scheme.error,
+              letterSpacing: 1.6,
+              fontWeight: FontWeight.w900,
+              shadows: CBColors.textGlow(scheme.error, intensity: 0.5),
+            ),
           ),
           const SizedBox(height: 16),
           Text(
-            'Force eliminate ${player.name}? This will trigger death effects.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.75),
-                  height: 1.3,
-                ),
+            'Force eliminate ${player.name.toUpperCase()}? This bypasses all protections and triggers global death effects.',
+            style: textTheme.bodyMedium!.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.8),
+              height: 1.4,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               CBGhostButton(
-                label: 'CANCEL',
+                label: 'ABORT',
                 onPressed: () => Navigator.pop(context),
               ),
               const SizedBox(width: 12),
               CBPrimaryButton(
                 fullWidth: false,
-                label: 'KILL',
+                label: 'EXECUTE',
                 backgroundColor: scheme.error,
                 onPressed: () {
                   ref.read(gameProvider.notifier).forceKillPlayer(player.id);
                   Navigator.pop(context);
-                  showThemedSnackBar(context, '${player.name} eliminated');
+                  showThemedSnackBar(context, '${player.name} ELIMINATED', accentColor: scheme.error);
                 },
               ),
             ],
@@ -156,16 +262,19 @@ class GodModeControls extends ConsumerWidget {
   }
 
   void _toggleMute(BuildContext context, WidgetRef ref, Player player) {
+    final scheme = Theme.of(context).colorScheme;
     ref
         .read(gameProvider.notifier)
         .togglePlayerMute(player.id, !player.isMuted);
     showThemedSnackBar(
-        context, '${player.name} ${player.isMuted ? 'unmuted' : 'muted'}');
+        context, '${player.name.toUpperCase()} ${player.isMuted ? 'UNMUTED' : 'MUTED'}',
+        accentColor: scheme.secondary);
   }
 
   void _grantShield(BuildContext context, WidgetRef ref, Player player) {
     final scheme = Theme.of(context).colorScheme;
-    // Grant or update shield
+    final textTheme = Theme.of(context).textTheme;
+
     showThemedDialog(
       context: context,
       accentColor: scheme.primary,
@@ -174,37 +283,41 @@ class GodModeControls extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'GRANT SHIELD',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: scheme.primary,
-                  letterSpacing: 1.6,
-                  fontWeight: FontWeight.bold,
-                  shadows: CBColors.textGlow(scheme.primary, intensity: 0.6),
-                ),
+            'PROTOCOL: AEGIS SHIELD',
+            style: textTheme.labelLarge!.copyWith(
+              color: scheme.primary,
+              letterSpacing: 1.6,
+              fontWeight: FontWeight.w900,
+              shadows: CBColors.textGlow(scheme.primary, intensity: 0.5),
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
-            'Grant temporary immunity to ${player.name}.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.7),
-                ),
+            'Grant high-priority immunity to ${player.name.toUpperCase()}.',
+            style: textTheme.bodyMedium!.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.8),
+            ),
           ),
-          const SizedBox(height: 16),
-          DropdownMenu<int>(
-            initialSelection: 1,
-            label: const Text('Duration (days)'),
-            dropdownMenuEntries: const [
-              DropdownMenuEntry(value: 1, label: '1 day'),
-              DropdownMenuEntry(value: 2, label: '2 days'),
-              DropdownMenuEntry(value: 3, label: '3 days'),
+          const SizedBox(height: 24),
+          DropdownButtonFormField<int>(
+            initialValue: 1,
+            decoration: const InputDecoration(
+              labelText: 'DURATION (NIGHTS)',
+              isDense: true,
+            ),
+            items: const [
+              DropdownMenuItem(value: 1, child: Text('1 NIGHT')),
+              DropdownMenuItem(value: 2, child: Text('2 NIGHTS')),
+              DropdownMenuItem(value: 3, child: Text('3 NIGHTS')),
             ],
-            onSelected: (days) {
+            onChanged: (days) {
               if (days == null) return;
               Navigator.pop(context);
               ref.read(gameProvider.notifier).grantHostShield(player.id, days);
               showThemedSnackBar(
                 context,
-                'Shield granted to ${player.name} ($days days)',
+                'SHIELD GRANTED TO ${player.name.toUpperCase()} ($days NIGHTS)',
+                accentColor: scheme.primary,
               );
             },
           ),
@@ -213,7 +326,7 @@ class GodModeControls extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               CBGhostButton(
-                label: 'CANCEL',
+                label: 'ABORT',
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -226,57 +339,60 @@ class GodModeControls extends ConsumerWidget {
   void _toggleSinBin(BuildContext context, WidgetRef ref, Player player) {
     ref.read(gameProvider.notifier).setSinBin(player.id, !player.isSinBinned);
     showThemedSnackBar(context,
-        '${player.name} ${player.isSinBinned ? 'released from' : 'sent to'} sin bin');
+        '${player.name.toUpperCase()} ${player.isSinBinned ? 'RELEASED' : 'SENT TO SIN BIN'}',
+        accentColor: CBColors.coolGrey);
   }
 
   void _toggleShadowBan(BuildContext context, WidgetRef ref, Player player) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     showThemedDialog(
       context: context,
-      accentColor: scheme.tertiary,
+      accentColor: scheme.secondary,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            player.isShadowBanned ? 'CONFIRM UNBAN' : 'CONFIRM SHADOW BAN',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: scheme.tertiary,
-                  letterSpacing: 1.6,
-                  fontWeight: FontWeight.bold,
-                  shadows: CBColors.textGlow(scheme.tertiary, intensity: 0.6),
-                ),
+            player.isShadowBanned ? 'PROTOCOL: LIFT BAN' : 'PROTOCOL: SHADOW BAN',
+            style: textTheme.labelLarge!.copyWith(
+              color: scheme.secondary,
+              letterSpacing: 1.6,
+              fontWeight: FontWeight.w900,
+              shadows: CBColors.textGlow(scheme.secondary, intensity: 0.5),
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             player.isShadowBanned
-                ? 'Remove shadow ban from ${player.name}?'
-                : 'Shadow ban ${player.name}? Their actions will be silently discarded without their knowledge.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.75),
-                  height: 1.3,
-                ),
+                ? 'Restore full transmission rights to ${player.name.toUpperCase()}?'
+                : 'Silence ${player.name.toUpperCase()}? Their actions will be silently discarded while they believe they are active.',
+            style: textTheme.bodyMedium!.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.8),
+              height: 1.4,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               CBGhostButton(
-                label: 'CANCEL',
+                label: 'ABORT',
                 onPressed: () => Navigator.pop(context),
               ),
               const SizedBox(width: 12),
               CBPrimaryButton(
                 fullWidth: false,
-                label: player.isShadowBanned ? 'UNBAN' : 'SHADOW BAN',
-                backgroundColor: scheme.tertiary,
+                label: player.isShadowBanned ? 'RESTORE' : 'EXECUTE',
+                backgroundColor: scheme.secondary,
                 onPressed: () {
                   ref
                       .read(gameProvider.notifier)
                       .setShadowBan(player.id, !player.isShadowBanned);
                   Navigator.pop(context);
                   showThemedSnackBar(context,
-                      '${player.name} ${player.isShadowBanned ? 'unbanned' : 'shadow banned'}');
+                      '${player.name.toUpperCase()} ${player.isShadowBanned ? 'UNBANNED' : 'SHADOW BANNED'}',
+                      accentColor: scheme.secondary);
                 },
               ),
             ],
@@ -289,6 +405,7 @@ class GodModeControls extends ConsumerWidget {
   void _kickPlayer(BuildContext context, WidgetRef ref, Player player) {
     String reason = '';
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     showThemedDialog(
       context: context,
       accentColor: scheme.error,
@@ -297,53 +414,104 @@ class GodModeControls extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'KICK PLAYER',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: scheme.error,
-                  letterSpacing: 1.6,
-                  fontWeight: FontWeight.bold,
-                  shadows: CBColors.textGlow(scheme.error, intensity: 0.5),
-                ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Permanently remove ${player.name} from the game?',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.75),
-                  height: 1.3,
-                ),
-          ),
-          const SizedBox(height: 16),
-          CBTextField(
-            decoration: const InputDecoration(
-              labelText: 'Reason (optional)',
+            'PROTOCOL: NODE EJECTION',
+            style: textTheme.labelLarge!.copyWith(
+              color: scheme.error,
+              letterSpacing: 1.6,
+              fontWeight: FontWeight.w900,
+              shadows: CBColors.textGlow(scheme.error, intensity: 0.5),
             ),
-            onChanged: (value) => reason = value,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Permanently eject ${player.name.toUpperCase()} from the club network?',
+            style: textTheme.bodyMedium!.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.8),
+            ),
           ),
           const SizedBox(height: 24),
+          CBTextField(
+            hintText: 'REASON FOR EJECTION (OPTIONAL)',
+            onChanged: (value) => reason = value,
+          ),
+          const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               CBGhostButton(
-                label: 'CANCEL',
+                label: 'ABORT',
                 onPressed: () => Navigator.pop(context),
               ),
               const SizedBox(width: 12),
               CBPrimaryButton(
                 fullWidth: false,
-                label: 'KICK',
+                label: 'EJECT',
                 backgroundColor: scheme.error,
                 onPressed: () {
                   ref.read(gameProvider.notifier).kickPlayer(player.id,
                       reason.isEmpty ? 'No reason provided' : reason);
                   Navigator.pop(context);
                   showThemedSnackBar(
-                      context, '${player.name} kicked from game');
+                      context, '${player.name.toUpperCase()} EJECTED', accentColor: scheme.error);
                 },
               ),
             ],
           )
         ],
+      ),
+    );
+  }
+}
+
+class _ActionChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionChip({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: () {
+          HapticService.selection();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 8),
+              Text(
+                label.toUpperCase(),
+                style: textTheme.labelSmall!.copyWith(
+                  color: color,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

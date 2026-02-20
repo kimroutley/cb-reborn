@@ -36,107 +36,117 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            // ── LOGO / TITLE AREA ──
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(seconds: 1),
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.translate(
-                    offset: Offset(0, 20 * (1 - value)),
-                    child: child,
+              // ── LOGO / TITLE AREA ──
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(seconds: 1),
+                child: Text(
+                  'HOST COMMAND CENTER',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall!.copyWith(
+                    color: scheme.primary,
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.w900,
+                    shadows: CBColors.textGlow(scheme.primary),
                   ),
                 ),
-
-                const SizedBox(height: CBSpace.x12),
-
-                // ── QUICK STATS ROW ──
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildQuickStatTile(
-                        context,
-                        'TOTAL GAMES',
-                        '${stats.totalGames}',
-                        Icons.videogame_asset_outlined,
-                        scheme.primary,
-                      ),
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 20 * (1 - value)),
+                      child: child,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildQuickStatTile(
-                        context,
-                        'AVG PLAYERS',
-                        stats.averagePlayerCount.toStringAsFixed(1),
-                        Icons.people_outline_rounded,
-                        scheme.secondary,
-                      ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: CBSpace.x12),
+
+              // ── QUICK STATS ROW ──
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickStatTile(
+                      context,
+                      'TOTAL GAMES',
+                      '${stats.totalGames}',
+                      Icons.videogame_asset_outlined,
+                      scheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildQuickStatTile(
+                      context,
+                      'AVG PLAYERS',
+                      stats.averagePlayerCount.toStringAsFixed(1),
+                      Icons.people_outline_rounded,
+                      scheme.secondary,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: CBSpace.x6),
+
+              // ── MAIN ACTIONS PANEL ──
+              CBPanel(
+                borderColor: scheme.primary.withValues(alpha: 0.5),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CBPrimaryButton(
+                      label: 'START NEW GAME',
+                      icon: Icons.add_circle_outline,
+                      onPressed: () {
+                        HapticService.heavy();
+                        ref
+                            .read(hostNavigationProvider.notifier)
+                            .setDestination(HostDestination.lobby);
+                      },
+                    ),
+                    const SizedBox(height: CBSpace.x4),
+                    CBGhostButton(
+                      label: 'RESTORE SESSION',
+                      onPressed: () {
+                        HapticService.light();
+                        ref
+                            .read(hostNavigationProvider.notifier)
+                            .setDestination(HostDestination.saveLoad);
+                      },
+                    ),
+                    const SizedBox(height: CBSpace.x3),
+                    CBGhostButton(
+                      label: 'VIEW HALL OF FAME',
+                      onPressed: () {
+                        HapticService.light();
+                        ref
+                            .read(hostNavigationProvider.notifier)
+                            .setDestination(HostDestination.hallOfFame);
+                      },
                     ),
                   ],
                 ),
+              ),
 
-                const SizedBox(height: CBSpace.x6),
+              const SizedBox(height: CBSpace.x10),
 
-                // ── MAIN ACTIONS PANEL ──
-                CBPanel(
-                  borderColor: scheme.primary.withValues(alpha: 0.5),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      CBPrimaryButton(
-                        label: "START NEW GAME",
-                        icon: Icons.add_circle_outline,
-                        onPressed: () {
-                          HapticService.heavy();
-                          ref
-                              .read(hostNavigationProvider.notifier)
-                              .setDestination(HostDestination.lobby);
-                        },
-                      ),
-                      const SizedBox(height: CBSpace.x4),
-                      CBGhostButton(
-                        label: 'RESTORE SESSION',
-                        onPressed: () {
-                          HapticService.light();
-                          ref
-                              .read(hostNavigationProvider.notifier)
-                              .setDestination(HostDestination.saveLoad);
-                        },
-                      ),
-                      const SizedBox(height: CBSpace.x3),
-                      CBGhostButton(
-                        label: 'VIEW HALL OF FAME',
-                        onPressed: () {
-                          HapticService.light();
-                          ref
-                              .read(hostNavigationProvider.notifier)
-                              .setDestination(HostDestination.hallOfFame);
-                        },
-                      ),
-                    ],
-                  ),
+              // ── SYSTEM FOOTER ──
+              Text(
+                'V4.0.8 NEON | SECURE CONNECTION ACTIVE',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelSmall!.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.6),
+                  letterSpacing: 1.5,
+                  fontSize: 9,
                 ),
-
-                const SizedBox(height: CBSpace.x10),
-
-                // ── SYSTEM FOOTER ──
-                Text(
-                  "V4.0.8 NEON | SECURE CONNECTION ACTIVE",
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall!.copyWith(
-                    color: scheme.onSurface.withValues(alpha: 0.6),
-                    letterSpacing: 1.5,
-                    fontSize: 9,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
-    ),
-  );
+    );
 }
 
   Widget _buildQuickStatTile(
@@ -153,6 +163,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       borderColor: color.withValues(alpha: 0.2),
       borderRadius: BorderRadius.circular(CBRadius.md),
       padding: const EdgeInsets.all(16),
+      isPrismatic: true, // Updated to prismatic
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

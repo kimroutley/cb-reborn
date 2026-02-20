@@ -8,12 +8,14 @@ class RosterTile extends ConsumerWidget {
   final Player player;
   final bool showKill;
   final bool isClaimed;
+  final bool hasPendingDramaSwap;
 
   const RosterTile({
     super.key,
     required this.player,
     this.showKill = false,
     this.isClaimed = false,
+    this.hasPendingDramaSwap = false,
   });
 
   @override
@@ -99,6 +101,14 @@ class RosterTile extends ConsumerWidget {
           if (player.clingerPartnerId != null && player.isAlive) ...[
             const SizedBox(width: 4),
             MiniTag(text: 'L', color: scheme.primary, tooltip: 'Clinger'),
+          ],
+          if (hasPendingDramaSwap && player.isAlive) ...[
+            const SizedBox(width: 4),
+            MiniTag(
+              text: 'DQ',
+              color: scheme.secondary,
+              tooltip: 'Pending Drama Queen swap',
+            ),
           ],
           const SizedBox(width: 8),
           Container(

@@ -1,10 +1,9 @@
-import 'package:cb_models/cb_models.dart';
+﻿import 'package:cb_models/cb_models.dart';
 import 'package:cb_theme/cb_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../widgets/dashboard/ai_export_panel.dart';
-import '../widgets/dashboard/dead_pool_panel.dart';
 import '../widgets/dashboard/director_commands.dart';
 import '../widgets/dashboard/enhanced_logs_panel.dart';
 import '../widgets/dashboard/god_mode_controls.dart';
@@ -34,8 +33,6 @@ class DashboardView extends ConsumerWidget {
         if (gameState.phase != GamePhase.lobby) ...[
           LiveIntelPanel(players: gameState.players),
           const SizedBox(height: 24),
-          DeadPoolPanel(gameState: gameState),
-          const SizedBox(height: 24),
         ],
 
         // God Mode Control Panel
@@ -59,3 +56,4 @@ class DashboardView extends ConsumerWidget {
     );
   }
 }
+

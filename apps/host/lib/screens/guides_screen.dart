@@ -14,11 +14,13 @@ class GuidesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final gameState = ref.watch(gameProvider);
 
-    // We now use CBGuideScreen directly for parity between Host and Player
-    return CBGuideScreen(
-      gameState: gameState,
-      localPlayer: null,
+    return CBPrismScaffold(
+      title: 'CLUB BIBLE',
       drawer: const CustomDrawer(currentDestination: HostDestination.guides),
+      body: CBGuideScreen(
+        gameState: gameState,
+        localPlayer: null,
+      ),
     );
   }
 }

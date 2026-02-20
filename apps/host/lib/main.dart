@@ -10,7 +10,7 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'widgets/effects_overlay.dart';
-import 'screens/host_home_shell.dart';
+import 'screens/intro_screen.dart';
 
 import 'host_settings.dart';
 
@@ -98,8 +98,8 @@ class HostApp extends ConsumerWidget {
           return MaterialApp(
             title: 'Club Blackout Host',
             theme: CBTheme.buildTheme(scheme),
-            home: EffectsOverlay(
-              child: const HostHomeShell(),
+            home: const EffectsOverlay(
+              child: HostIntroScreen(),
             ),
             debugShowCheckedModeBanner: false,
           );

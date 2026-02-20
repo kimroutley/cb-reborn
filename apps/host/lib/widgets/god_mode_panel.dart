@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cb_models/cb_models.dart';
-import 'package:cb_comms/cb_comms.dart';
 import 'package:cb_theme/cb_theme.dart';
 import 'package:cb_logic/cb_logic.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../host_bridge.dart';
+import '../cloud_host_bridge.dart';
 
 class GodModePanel extends ConsumerWidget {
   final GameState gameState;
@@ -16,7 +15,7 @@ class GodModePanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
-    final hostBridge = ref.read(hostBridgeProvider);
+    final hostBridge = ref.read(cloudHostBridgeProvider);
 
     return ListView(
       padding: CBInsets.screen,
@@ -36,7 +35,7 @@ class GodModePanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildDirectorCommands(BuildContext context, HostBridge hostBridge) {
+  Widget _buildDirectorCommands(BuildContext context, CloudHostBridge hostBridge) {
     final scheme = Theme.of(context).colorScheme;
     return CBPanel(
       borderColor: scheme.secondary.withValues(alpha: 0.4),
@@ -55,11 +54,11 @@ class GodModePanel extends ConsumerWidget {
             children: [
               _buildCmdButton(context, "NEON FLICKER", Icons.lightbulb_outline,
                   () {
-                hostBridge.broadcast(GameMessage.effect(GodModeEffect.flicker));
+                controller.sendDirectorCommand('flicker');
               }),
               _buildCmdButton(context, "SYSTEM GLITCH", Icons.settings_ethernet,
                   () {
-                hostBridge.broadcast(GameMessage.effect(GodModeEffect.glitch));
+                controller.sendDirectorCommand('glitch');
               }),
               _buildCmdButton(context, "RANDOM RUMOUR", Icons.record_voice_over,
                   () {
@@ -329,7 +328,7 @@ class GodModePanel extends ConsumerWidget {
     );
   }
 
-  void _showVoiceOfGodDialog(BuildContext context, HostBridge hostBridge) {
+  void _showVoiceOfGodDialog(BuildContext context, CloudHostBridge hostBridge) {
     String message = '';
     final scheme = Theme.of(context).colorScheme;
     showThemedDialog(
@@ -371,8 +370,7 @@ class GodModePanel extends ConsumerWidget {
                 label: 'SEND',
                 onPressed: () {
                   if (message.isNotEmpty) {
-                    hostBridge.broadcast(GameMessage.effect(GodModeEffect.toast,
-                        payload: {'message': message}));
+                    controller.sendDirectorCommand('toast:');
                   }
                   Navigator.pop(context);
                 },
@@ -384,3 +382,5 @@ class GodModePanel extends ConsumerWidget {
     );
   }
 }
+
+

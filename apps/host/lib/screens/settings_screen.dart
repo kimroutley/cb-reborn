@@ -78,28 +78,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       actions: const [SimulationModeBadgeAction()],
       drawer: const CustomDrawer(),
       body: SingleChildScrollView(
-        padding: CBInsets.screen,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Column(
           children: [
-            _buildSectionHeader(context, 'Audio'),
+            _buildSectionHeader(context, 'AUDIO CONFIG', Icons.volume_up_rounded, scheme.secondary),
             _buildAudioSettings(context, settings, notifier, scheme),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, 'AI & Narration'),
+            _buildSectionHeader(context, 'AI NARRATION', Icons.auto_awesome_rounded, scheme.tertiary),
             _buildNarrationSettings(context, settings, notifier, scheme),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, 'Display'),
+            _buildSectionHeader(context, 'DISPLAY', Icons.monitor_rounded, scheme.primary),
             _buildDisplaySettings(context, settings, notifier, scheme),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, 'Cloud Access'),
+            _buildSectionHeader(context, 'CLOUD LINK', Icons.cloud_done_rounded, scheme.primary),
             _buildCloudAccessSettings(context, scheme),
             const SizedBox(height: 24),
-            _buildSectionHeader(context, 'Game Data'),
+            _buildSectionHeader(context, 'DATA MANAGEMENT', Icons.storage_rounded, scheme.error),
             _buildDataSettings(context, scheme),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             _buildAboutSection(scheme, _packageInfo),
-            const SizedBox(height: 40),
+            const SizedBox(height: 48),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: CBSectionHeader(
+        title: title,
+        icon: icon,
+        color: color,
       ),
     );
   }
@@ -112,33 +123,51 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ? authState.user!.email!.trim()
         : (authState.user?.displayName?.trim().isNotEmpty == true
             ? authState.user!.displayName!.trim()
-            : 'host');
-
-    final statusText = isAuthenticated
-        ? 'Signed in as $userIdentity'
-        : isLoading
-            ? 'Checking cloud access...'
-            : 'Offline mode active. Sign in only when you need cloud hosting.';
+            : 'HOST');
 
     return CBPanel(
-      borderColor: scheme.tertiary.withValues(alpha: 0.4),
+      borderColor: scheme.tertiary.withValues(alpha: 0.35),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            statusText,
-            style: CBTypography.body.copyWith(
-              color: isAuthenticated
-                  ? scheme.tertiary
-                  : scheme.onSurface.withValues(alpha: 0.8),
-            ),
+          Row(
+            children: [
+              Icon(
+                isAuthenticated ? Icons.link_rounded : Icons.link_off_rounded,
+                color: isAuthenticated ? scheme.tertiary : scheme.onSurface.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isAuthenticated ? 'LINK ACTIVE' : 'OFFLINE MODE',
+                      style: CBTypography.labelSmall.copyWith(
+                        color: isAuthenticated ? scheme.tertiary : scheme.onSurface,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    Text(
+                      isAuthenticated ? userIdentity.toUpperCase() : 'SIGN IN FOR CLOUD HOSTING',
+                      style: CBTypography.bodySmall.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.7),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: isAuthenticated
                 ? CBGhostButton(
-                    label: 'SIGN OUT OF CLOUD',
+                    label: 'TERMINATE LINK',
+                    color: scheme.tertiary,
                     onPressed: isLoading
                         ? null
                         : () async {
@@ -146,13 +175,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             if (!context.mounted) return;
                             showThemedSnackBar(
                               context,
-                              'Signed out of cloud access.',
+                              'CLOUD LINK TERMINATED',
                               accentColor: scheme.tertiary,
                             );
                           },
                   )
                 : CBPrimaryButton(
-                    label: 'SIGN IN FOR CLOUD HOSTING',
+                    label: 'ESTABLISH LINK',
+                    backgroundColor: scheme.tertiary.withValues(alpha: 0.2),
+                    foregroundColor: scheme.tertiary,
                     onPressed: isLoading
                         ? null
                         : () async {
@@ -169,13 +200,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 AuthStatus.authenticated) {
                               showThemedSnackBar(
                                 context,
-                                'Cloud hosting access enabled.',
+                                'CLOUD UPLINK ESTABLISHED',
                                 accentColor: scheme.tertiary,
                               );
                             } else {
                               showThemedSnackBar(
                                 context,
-                                'Cloud sign-in not completed. Staying offline.',
+                                'LINK FAILED. STAYING OFFLINE.',
                                 accentColor: scheme.error,
                               );
                             }
@@ -187,13 +218,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: CBSectionHeader(title: title),
-    );
-  }
-
   Widget _buildAudioSettings(
     BuildContext context,
     HostSettings settings,
@@ -201,19 +225,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ColorScheme scheme,
   ) {
     return CBPanel(
-      borderColor: scheme.secondary.withValues(alpha: 0.4),
+      borderColor: scheme.secondary.withValues(alpha: 0.35),
       child: Column(
         children: [
           _buildSlider(
             context,
-            'Music Volume',
+            'MUSIC LEVEL',
             settings.musicVolume,
-            scheme.primary,
+            scheme.secondary,
             (v) => notifier.setMusicVolume(v),
           ),
+          const SizedBox(height: 16),
           _buildSlider(
             context,
-            'SFX Volume',
+            'SFX LEVEL',
             settings.sfxVolume,
             scheme.secondary,
             (v) => notifier.setSfxVolume(v),
@@ -230,13 +255,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ColorScheme scheme,
   ) {
     return CBPanel(
-      borderColor: scheme.tertiary.withValues(alpha: 0.4),
+      borderColor: scheme.tertiary.withValues(alpha: 0.35),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Enable Gemini Narration', style: CBTypography.body),
+              Text(
+                'AI NARRATION ENGINE',
+                style: CBTypography.labelSmall.copyWith(
+                  color: scheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                ),
+              ),
               CBSwitch(
                 value: settings.geminiNarrationEnabled,
                 onChanged: (v) => notifier.setGeminiNarrationEnabled(v),
@@ -245,7 +277,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
           if (settings.geminiNarrationEnabled) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             _buildPersonalitySelector(context, settings, notifier, scheme),
           ],
         ],
@@ -268,40 +300,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'HOST PERSONALITY',
-          style: CBTypography.micro.copyWith(color: scheme.tertiary),
+          'HOST PERSONALITY MODULE',
+          style: CBTypography.labelSmall.copyWith(
+            color: scheme.tertiary.withValues(alpha: 0.8),
+            fontSize: 9,
+            letterSpacing: 1.5,
+          ),
         ),
-        const SizedBox(height: 8),
-        CBPanel(
+        const SizedBox(height: 12),
+        CBGlassTile(
           borderColor: scheme.tertiary.withValues(alpha: 0.4),
-          child: InkWell(
-            onTap: () => _showPersonalityPicker(context, settings, notifier),
+          isPrismatic: true,
+          padding: EdgeInsets.zero,
+          onTap: () => _showPersonalityPicker(context, settings, notifier),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(currentPersonality.name,
-                          style: CBTypography.bodyBold),
+                      Text(
+                        currentPersonality.name.toUpperCase(),
+                        style: CBTypography.labelLarge.copyWith(
+                          color: scheme.tertiary,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         currentPersonality.description,
-                        style: CBTypography.caption,
+                        style: CBTypography.bodySmall.copyWith(
+                          color: scheme.onSurface.withValues(alpha: 0.7),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Icon(Icons.unfold_more, color: scheme.tertiary),
+                Icon(Icons.unfold_more_rounded, color: scheme.tertiary),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           child: CBGhostButton(
-            label: 'PREVIEW VOICE',
+            label: 'TEST VOICE SYNTHESIS',
+            color: scheme.tertiary,
             onPressed: () => _showPreviewDialog(context, currentPersonality),
           ),
         ),
@@ -322,38 +370,41 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${personality.name.toUpperCase()} PREVIEW',
-                style: CBTypography.micro.copyWith(
+                'VOICE CHECK: ${personality.name.toUpperCase()}',
+                style: CBTypography.labelLarge.copyWith(
                   color: scheme.tertiary,
                   letterSpacing: 2,
+                  fontWeight: FontWeight.w900,
+                  shadows: CBColors.textGlow(scheme.tertiary, intensity: 0.5),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(12),
+                  color: scheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(16),
                   border:
-                      Border.all(color: scheme.tertiary.withValues(alpha: 0.2)),
+                      Border.all(color: scheme.tertiary.withValues(alpha: 0.3)),
                 ),
                 child: _isPreviewLoading
                     ? const Center(
-                        child: CircularProgressIndicator(),
+                        child: CBBreathingLoader(size: 32),
                       )
                     : Text(
-                        _previewText ?? 'Silence...',
-                        style: CBTypography.body.copyWith(
+                        _previewText ?? 'AWAITING INPUT...',
+                        style: CBTypography.bodyMedium.copyWith(
                           fontStyle: FontStyle.italic,
-                          color: scheme.onSurface,
+                          color: scheme.onSurface.withValues(alpha: 0.9),
+                          height: 1.4,
                         ),
                         textAlign: TextAlign.center,
                       ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               CBPrimaryButton(
-                label: 'CLOSE',
+                label: 'DISMISS',
                 backgroundColor: scheme.tertiary,
                 onPressed: () => Navigator.pop(context),
               ),
@@ -389,13 +440,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ColorScheme scheme,
   ) {
     return CBPanel(
-      borderColor: scheme.primary.withValues(alpha: 0.4),
+      borderColor: scheme.primary.withValues(alpha: 0.35),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('High Contrast Mode', style: CBTypography.body),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'HIGH CONTRAST MODE',
+                    style: CBTypography.labelSmall.copyWith(
+                      color: scheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  Text(
+                    'INCREASED VISIBILITY',
+                    style: CBTypography.labelSmall.copyWith(
+                      fontSize: 8,
+                      color: scheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
               CBSwitch(
                 value: settings.highContrast,
                 onChanged: (v) => notifier.setHighContrast(v),
@@ -410,26 +480,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _buildDataSettings(BuildContext context, ColorScheme scheme) {
     return CBPanel(
-      borderColor: scheme.error.withValues(alpha: 0.4),
+      borderColor: scheme.error.withValues(alpha: 0.35),
       child: Column(
         children: [
           _buildActionRow(
             context,
-            'Clear Hall of Fame',
-            'Permanently delete all player stats.',
-            Icons.delete_forever,
+            'PURGE HALL OF FAME',
+            'PERMANENTLY DELETE ALL RECORDS',
+            Icons.delete_forever_rounded,
             scheme.error,
             () => _confirmClearData(context),
           ),
           Divider(
-            color: scheme.onSurface.withValues(alpha: 0.2),
-            height: 16,
+            color: scheme.onSurface.withValues(alpha: 0.1),
+            height: 24,
           ),
           _buildActionRow(
             context,
-            'Reset Active Session',
-            'Clear the current game state if stuck.',
-            Icons.restore,
+            'RESET ACTIVE SESSION',
+            'CLEAR STUCK GAME STATES',
+            Icons.restore_page_rounded,
             scheme.error,
             () => _confirmClearSession(context, scheme.error),
           ),
@@ -440,19 +510,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _buildAboutSection(ColorScheme scheme, PackageInfo? packageInfo) {
     final versionText = packageInfo != null
-        ? 'Version ${packageInfo.version} (Build ${packageInfo.buildNumber})'
-        : 'Version Loading...';
+        ? 'v${packageInfo.version} (BUILD ${packageInfo.buildNumber})'
+        : 'VERSION LOADING...';
     return Center(
       child: Column(
         children: [
           Text(
-            'Club Blackout: Reborn',
-            style: CBTypography.h2.copyWith(color: scheme.onSurfaceVariant),
+            'CLUB BLACKOUT: REBORN',
+            style: CBTypography.h3.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.5),
+              letterSpacing: 2.0,
+              fontWeight: FontWeight.w900,
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             versionText,
-            style: CBTypography.caption,
+            style: CBTypography.labelSmall.copyWith(
+              color: scheme.onSurface.withValues(alpha: 0.3),
+              letterSpacing: 1.5,
+            ),
           ),
         ],
       ),
@@ -472,8 +549,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: CBTypography.body),
-            Text('${(value * 100).toInt()}%', style: CBTypography.caption),
+            Text(
+              label,
+              style: CBTypography.labelSmall.copyWith(
+                color: accentColor,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.0,
+              ),
+            ),
+            Text(
+              '${(value * 100).toInt()}%',
+              style: CBTypography.labelSmall.copyWith(
+                color: accentColor.withValues(alpha: 0.7),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
         CBSlider(
@@ -494,35 +584,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     VoidCallback onTap,
   ) {
     final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+                ),
+                child: Icon(icon, color: accentColor, size: 20),
               ),
-              child: Icon(icon, color: accentColor),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: CBTypography.bodyBold),
-                  Text(subtitle, style: CBTypography.caption),
-                ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: CBTypography.labelSmall.copyWith(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: CBTypography.bodySmall.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.5),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: scheme.onSurface.withValues(alpha: 0.5),
-            ),
-          ],
+              Icon(
+                Icons.chevron_right_rounded,
+                color: scheme.onSurface.withValues(alpha: 0.3),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -539,35 +648,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Icon(Icons.warning_amber_rounded, color: scheme.error, size: 48),
           const SizedBox(height: 16),
           Text(
-            'CLEAR DATA',
+            'CONFIRM PURGE',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: scheme.error,
                   letterSpacing: 1.6,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
                   shadows: CBColors.textGlow(scheme.error, intensity: 0.55),
                 ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            'This action cannot be undone. All Hall of Fame records will be lost.',
+            'IRREVERSIBLE ACTION. ALL HALL OF FAME RECORDS WILL BE WIPED.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withValues(alpha: 0.7),
-                  height: 1.3,
+                  color: scheme.onSurface.withValues(alpha: 0.8),
+                  height: 1.4,
                 ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               CBGhostButton(
-                label: 'CANCEL',
+                label: 'ABORT',
                 onPressed: () => Navigator.pop(context),
               ),
               const SizedBox(width: 12),
               CBPrimaryButton(
                 fullWidth: false,
-                label: 'DELETE ALL',
+                label: 'EXECUTE PURGE',
                 backgroundColor: scheme.error,
                 onPressed: () async {
                   await PersistenceService.instance.clearGameRecords();
@@ -588,35 +697,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.restore, color: color, size: 48),
+          Icon(Icons.restore_page_rounded, color: color, size: 48),
           const SizedBox(height: 16),
           Text(
             'RESET SESSION',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: color,
                   letterSpacing: 1.6,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
                   shadows: CBColors.textGlow(color, intensity: 0.55),
                 ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            'This will clear any active game state. Use this if the app is stuck.',
+            'CLEARS ACTIVE GAME STATE. USE ONLY IF THE SYSTEM IS UNRESPONSIVE.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context)
                       .colorScheme
                       .onSurface
-                      .withValues(alpha: 0.7),
-                  height: 1.3,
+                      .withValues(alpha: 0.8),
+                  height: 1.4,
                 ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               CBGhostButton(
-                label: 'CANCEL',
+                label: 'ABORT',
                 onPressed: () => Navigator.pop(context),
               ),
               const SizedBox(width: 12),

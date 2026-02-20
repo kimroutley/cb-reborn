@@ -19,6 +19,27 @@ void showPlayerRoster(
       final alive = gameState.players.where((p) => p.isAlive).toList();
       final dead = gameState.players.where((p) => !p.isAlive).toList();
       final isInGame = gameState.phase != GamePhase.lobby;
+      final alivePlayerIds = gameState.players
+          .where((p) => p.isAlive)
+          .map((p) => p.id)
+          .toSet();
+      final pendingDramaSwapTargetIds = <String>{};
+      for (final dramaQueen in gameState.players.where(
+        (p) => p.role.id == RoleIds.dramaQueen && p.isAlive,
+      )) {
+        final targetAId = dramaQueen.dramaQueenTargetAId;
+        final targetBId = dramaQueen.dramaQueenTargetBId;
+        if (targetAId == null || targetBId == null) continue;
+        if (targetAId == targetBId) continue;
+        if (targetAId == dramaQueen.id || targetBId == dramaQueen.id) continue;
+        if (!alivePlayerIds.contains(targetAId) ||
+            !alivePlayerIds.contains(targetBId)) {
+          continue;
+        }
+        pendingDramaSwapTargetIds
+          ..add(targetAId)
+          ..add(targetBId);
+      }
       return DraggableScrollableSheet(
         initialChildSize: 0.6,
         minChildSize: 0.3,
@@ -41,6 +62,7 @@ void showPlayerRoster(
                   player: p,
                   showKill: isInGame,
                   isClaimed: claimedIds.contains(p.id),
+                  hasPendingDramaSwap: pendingDramaSwapTargetIds.contains(p.id),
                 ),
               if (dead.isNotEmpty) ...[
                 const SizedBox(height: CBSpace.x3),
@@ -55,6 +77,7 @@ void showPlayerRoster(
                   RosterTile(
                     player: p,
                     isClaimed: claimedIds.contains(p.id),
+                    hasPendingDramaSwap: pendingDramaSwapTargetIds.contains(p.id),
                   ),
               ],
               const SizedBox(height: CBSpace.x4),

@@ -16,20 +16,32 @@ class _EnhancedLogsPanelState extends State<EnhancedLogsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final scheme = theme.colorScheme;
     final filteredLogs = _filterLogs(widget.logs);
 
     return CBPanel(
-      borderColor: scheme.primary.withValues(alpha: 0.7),
+      borderColor: scheme.primary.withValues(alpha: 0.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CBSectionHeader(
-            title: 'Enhanced Session Logs',
-            icon: Icons.history,
+          CBSectionHeader(
+            title: 'SESSION AUDIT LOGS',
+            icon: Icons.history_edu_rounded,
+            color: scheme.primary,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          Text(
+            '// REAL-TIME STREAM OF ENCRYPTED SESSION DATA.',
+            style: textTheme.labelSmall!.copyWith(
+              color: scheme.primary.withValues(alpha: 0.6),
+              fontSize: 8,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 20),
 
           // Filter chips
           Wrap(
@@ -44,7 +56,7 @@ class _EnhancedLogsPanelState extends State<EnhancedLogsPanel> {
               };
               final icon = switch (filter) {
                 'SYSTEM' => Icons.memory_rounded,
-                'ACTION' => Icons.flash_on_rounded,
+                'ACTION' => Icons.bolt_rounded,
                 'HOST' => Icons.admin_panel_settings_rounded,
                 _ => Icons.all_inclusive_rounded,
               };
@@ -58,13 +70,13 @@ class _EnhancedLogsPanelState extends State<EnhancedLogsPanel> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
           // Search field
           CBTextField(
-            decoration: const InputDecoration(
-              hintText: 'Search logs...',
-              prefixIcon: Icon(Icons.search_rounded),
+            hintText: 'SEARCH AUDIT STREAM...',
+            decoration: InputDecoration(
+              prefixIcon: Icon(Icons.search_rounded, color: scheme.primary, size: 18),
             ),
             onChanged: (value) {
               setState(() => _searchQuery = value);
@@ -73,45 +85,61 @@ class _EnhancedLogsPanelState extends State<EnhancedLogsPanel> {
           const SizedBox(height: 16),
 
           // Log list
-          Container(
-            height: 300,
-            decoration: BoxDecoration(
-              color: scheme.surface.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: ListView.builder(
-              reverse: true,
-              itemCount: filteredLogs.length,
-              itemBuilder: (context, index) {
-                final log = filteredLogs[filteredLogs.length - 1 - index];
-                final isHost = log.contains('[HOST]');
-                return Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '> ',
-                        style: textTheme.bodySmall!.copyWith(
-                          color: isHost ? scheme.error : scheme.tertiary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          log,
-                          style: textTheme.bodySmall!.copyWith(
-                            color: isHost
-                                ? scheme.error
-                                : scheme.onSurface.withValues(alpha: 0.8),
+          CBGlassTile(
+            padding: EdgeInsets.zero,
+            borderColor: scheme.outlineVariant.withValues(alpha: 0.3),
+            child: Container(
+              height: 250,
+              decoration: BoxDecoration(
+                color: scheme.surface.withValues(alpha: 0.2),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: ListView.builder(
+                  reverse: true,
+                  padding: const EdgeInsets.all(12),
+                  itemCount: filteredLogs.length,
+                  itemBuilder: (context, index) {
+                    final log = filteredLogs[filteredLogs.length - 1 - index];
+                    final isHost = log.contains('[HOST]');
+                    final isSystem = log.contains('──') || log.contains('NIGHT') || log.contains('DAY');
+
+                    final logColor = isHost
+                        ? scheme.error
+                        : isSystem
+                            ? scheme.secondary
+                            : scheme.onSurface.withValues(alpha: 0.8);
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '# ',
+                            style: textTheme.labelSmall!.copyWith(
+                              color: logColor.withValues(alpha: 0.5),
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
-                        ),
+                          Expanded(
+                            child: Text(
+                              log.toUpperCase(),
+                              style: textTheme.labelSmall!.copyWith(
+                                color: logColor,
+                                fontSize: 9,
+                                letterSpacing: 0.5,
+                                fontFamily: 'RobotoMono',
+                                fontWeight: (isHost || isSystem) ? FontWeight.w800 : FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ],

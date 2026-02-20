@@ -31,114 +31,126 @@ class EndGameView extends StatelessWidget {
       Team.unknown || null => scheme.onSurface.withValues(alpha: 0.55),
     };
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
+    return CBNeonBackground(
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         children: [
           // Winner Banner
           CBStatusOverlay(
-            icon: Icons.emoji_events,
+            icon: Icons.emoji_events_rounded,
             label: 'GAME OVER',
             color: winColor,
-            detail: '$winnerName WIN',
+            detail: '$winnerName VICTORY',
           ),
+          const SizedBox(height: 24),
+
           // End game report lines
           CBPanel(
-            borderColor: winColor,
+            borderColor: winColor.withValues(alpha: 0.5),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                CBSectionHeader(
+                  title: 'RESOLUTION REPORT',
+                  icon: Icons.summarize_rounded,
+                  color: winColor,
+                ),
+                const SizedBox(height: 16),
                 for (final line in gameState.endGameReport)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
                       line,
                       textAlign: TextAlign.center,
-                      style: textTheme.bodyMedium!,
+                      style: textTheme.bodyMedium!.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.9),
+                      ),
                     ),
                   ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 24),
+
           // Player Final Roster
           CBPanel(
-            borderColor: scheme.onSurface.withValues(alpha: 0.24),
+            borderColor: scheme.outlineVariant.withValues(alpha: 0.3),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CBBadge(text: 'FINAL ROSTER', color: scheme.primary),
-                const SizedBox(height: 12),
+                CBSectionHeader(
+                  title: 'FINAL ROSTER STATUS',
+                  icon: Icons.group_rounded,
+                  color: scheme.onSurface,
+                ),
+                const SizedBox(height: 20),
                 for (final player in gameState.players)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Opacity(
-                            opacity: player.isAlive ? 1.0 : 0.4,
-                            child: Image.asset(
-                              player.role.assetPath,
-                              width: 24,
-                              height: 24,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(
-                                player.isAlive
-                                    ? Icons.check_circle
-                                    : Icons.cancel,
-                                color: player.isAlive
-                                    ? scheme.primary
-                                    : scheme.secondary,
-                                size: 18,
-                              ),
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: CBGlassTile(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      borderColor: player.isAlive ? scheme.tertiary.withValues(alpha: 0.3) : scheme.error.withValues(alpha: 0.3),
+                      child: Row(
+                        children: [
+                          CBRoleAvatar(
+                            assetPath: player.role.assetPath,
+                            color: CBColors.fromHex(player.role.colorHex),
+                            size: 32,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  player.name.toUpperCase(),
+                                  style: textTheme.labelLarge!.copyWith(
+                                    color: player.isAlive
+                                        ? scheme.onSurface
+                                        : scheme.onSurface.withValues(alpha: 0.5),
+                                    fontWeight: FontWeight.w900,
+                                    decoration: player.isAlive ? null : TextDecoration.lineThrough,
+                                  ),
+                                ),
+                                Text(
+                                  player.role.name.toUpperCase(),
+                                  style: textTheme.labelSmall!.copyWith(
+                                    color: CBColors.fromHex(player.role.colorHex),
+                                    fontSize: 9,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            player.name,
-                            style: textTheme.bodyLarge!.copyWith(
-                              color: player.isAlive
-                                  ? null
-                                  : scheme.onSurface.withValues(alpha: 0.38),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          player.role.name.toUpperCase(),
-                          style: textTheme.labelSmall!.copyWith(
+                          CBBadge(
+                            text: switch (player.alliance) {
+                              Team.clubStaff => 'STAFF',
+                              Team.partyAnimals => 'PARTY',
+                              Team.neutral => 'NEUTRAL',
+                              Team.unknown => 'UNKNOWN',
+                            },
                             color: switch (player.alliance) {
                               Team.clubStaff => scheme.primary,
                               Team.partyAnimals => scheme.secondary,
                               Team.neutral => CBColors.alertOrange,
-                              Team.unknown =>
-                                scheme.onSurface.withValues(alpha: 0.55),
+                              Team.unknown => scheme.onSurface.withValues(alpha: 0.5),
                             },
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          switch (player.alliance) {
-                            Team.clubStaff => 'STAFF',
-                            Team.partyAnimals => 'PA',
-                            Team.neutral => 'NEUTRAL',
-                            Team.unknown => 'UNKNOWN',
-                          },
-                          style: textTheme.labelSmall!.copyWith(
-                            color: scheme.onSurface.withValues(alpha: 0.38),
-                            fontSize: 10,
+                          const SizedBox(width: 8),
+                          Icon(
+                            player.isAlive ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                            color: player.isAlive ? scheme.tertiary : scheme.error,
+                            size: 18,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
               ],
             ),
           ),
+          const SizedBox(height: 48),
         ],
       ),
     );

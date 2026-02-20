@@ -139,6 +139,7 @@ class _GamesNightRecapScreenState extends State<GamesNightRecapScreen>
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: CBNeonBackground(
+        showOverlay: false,
         child: Stack(
           children: [
             // ── ANIMATED BACKGROUND ──
@@ -213,25 +214,19 @@ class _GamesNightRecapScreenState extends State<GamesNightRecapScreen>
       scheme.tertiary, // Previously CBColors.matrixGreen
       scheme.primary, // Previously CBColors.neonBlue
       scheme.secondary, // Previously CBColors.neonPurple
-      scheme
-          .secondary, // Previously CBColors.hotPink (assuming secondary for vibrant pinks)
-      scheme
-          .error, // Previously CBColors.bloodOrange (assuming error for blood orange)
+      scheme.secondary, // Previously CBColors.hotPink
+      scheme.error, // Previously CBColors.bloodOrange
     ];
     final color = colors[_currentPage % colors.length];
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 1000),
       decoration: BoxDecoration(
-        color: color.withValues(
-          alpha: 0.25,
-        ),
+        color: color.withValues(alpha: 0.25),
       ),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: ColoredBox(
-            color: scheme.surface.withValues(
-                alpha: 0)), // Changed to use theme surface with alpha 0
+        filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+        child: ColoredBox(color: scheme.surface.withValues(alpha: 0.2)),
       ),
     );
   }
@@ -341,7 +336,7 @@ class _GamesNightRecapScreenState extends State<GamesNightRecapScreen>
         children: [
           Icon(Icons.auto_awesome,
               color: scheme.tertiary,
-              size: 80), // Previously CBColors.matrixGreen
+              size: 80),
           const SizedBox(height: 32),
           Text(
             widget.session.sessionName.toUpperCase(),
@@ -352,8 +347,7 @@ class _GamesNightRecapScreenState extends State<GamesNightRecapScreen>
                   letterSpacing: 4,
                 )
                 .copyWith(
-                    shadows: CBColors.textGlow(
-                        scheme.tertiary)), // Previously CBColors.matrixGreen
+                    shadows: CBColors.textGlow(scheme.tertiary)),
           ),
           const SizedBox(height: 24),
           Text(
@@ -367,7 +361,7 @@ class _GamesNightRecapScreenState extends State<GamesNightRecapScreen>
               Icons.videogame_asset, "${_recap.totalGames} GAMES PLAYED"),
           const SizedBox(height: 16),
           _buildStatRow(Icons.timer,
-              "${_recap.totalDuration.inHours}h ${_recap.totalDuration.inMinutes % 60}m DURATION"),
+              "${_recap.totalDuration.inHours}H ${_recap.totalDuration.inMinutes % 60}M DURATION"),
         ],
       ),
     );
@@ -376,13 +370,10 @@ class _GamesNightRecapScreenState extends State<GamesNightRecapScreen>
   Widget _buildStatRow(IconData icon, String label) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    return Container(
+    return CBGlassTile(
+      isPrismatic: true,
+      borderColor: scheme.onSurface.withValues(alpha: 0.2),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
-        color: scheme.onSurface.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: scheme.onSurface.withValues(alpha: 0.1)),
-      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -409,7 +400,7 @@ class _GamesNightRecapScreenState extends State<GamesNightRecapScreen>
                       color: scheme.primary) // Previously CBColors.neonBlue
                   .copyWith(
                       shadows: CBColors.textGlow(
-                          scheme.primary))), // Previously CBColors.neonBlue
+                          scheme.primary))),
           const SizedBox(height: 48),
           Wrap(
             spacing: 12,
@@ -527,8 +518,7 @@ class _GamesNightRecapScreenState extends State<GamesNightRecapScreen>
                   .copyWith(
                       color: scheme.tertiary) // Previously CBColors.matrixGreen
                   .copyWith(
-                      shadows: CBColors.textGlow(
-                          scheme.tertiary))), // Previously CBColors.matrixGreen
+                      shadows: CBColors.textGlow(scheme.tertiary))),
           const SizedBox(height: 48),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
